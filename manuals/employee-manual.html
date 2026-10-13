@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syneolab PM — Complete Employee &amp; Team Member Manual (100% Platform Guide)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f6f4ef;
+      color: #19221d;
+      margin: 0;
+      padding: 0;
+      line-height: 1.65;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: #172734;
+      color: #eef3f7;
+      padding: 28px 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid #263c4d;
+    }
+    .sidebar h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: #ffffff;
+    }
+    .sidebar .badge {
+      display: inline-block;
+      background: #214059;
+      color: #93d5ff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    .search-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid #2e4a60;
+      background: #1d3242;
+      color: #ffffff;
+      font-size: 13px;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    .search-input::placeholder {
+      color: #8fa6b8;
+    }
+    .nav-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .nav-list li {
+      margin-bottom: 4px;
+    }
+    .nav-list a {
+      display: block;
+      padding: 8px 11px;
+      border-radius: 8px;
+      color: #c5d5e2;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .nav-list a:hover {
+      background: #223b4e;
+      color: #ffffff;
+    }
+    .content {
+      padding: 40px 52px;
+      max-width: 1060px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #1b3142 0%, #27475e 100%);
+      color: #ffffff;
+      padding: 34px 38px;
+      border-radius: 18px;
+      margin-bottom: 32px;
+      box-shadow: 0 12px 32px rgba(23, 39, 52, 0.12);
+    }
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+    .hero p {
+      color: #d3e3f0;
+      font-size: 15px;
+      margin: 0 0 18px;
+      max-width: 780px;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      color: #1b3142;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .section-card {
+      background: #ffffff;
+      border: 1px solid #e4dfd5;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 26px;
+      box-shadow: 0 4px 14px rgba(25, 34, 29, 0.03);
+    }
+    .section-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1b3142;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #213a4d;
+      margin: 22px 0 8px;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #e6f2fb;
+      color: #1d496b;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #e8f3ec;
+      color: #1e462f;
+      border: 1px solid #cce3d4;
+    }
+    .pill.read {
+      background: #e9f2fb;
+      color: #1d4e78;
+      border-color: #cde0f5;
+    }
+    .pill.private {
+      background: #fef5e7;
+      color: #8f5200;
+      border-color: #f6ddb6;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .subcard {
+      background: #faf8f4;
+      border: 1px solid #e7e2d8;
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .subcard h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #19221d;
+    }
+    .subcard p, .subcard ul {
+      margin: 0;
+      font-size: 13px;
+      color: #4a574f;
+    }
+    .subcard ul {
+      padding-left: 18px;
+    }
+    .subcard li {
+      margin-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 11px 13px;
+      border-bottom: 1px solid #e7e2d8;
+      vertical-align: top;
+    }
+    th {
+      background: #f5f2eb;
+      font-weight: 700;
+      color: #24352b;
+    }
+    kbd {
+      background: #f0ede6;
+      border: 1px solid #d6d0c4;
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #19221d;
+    }
+    .callout {
+      background: #ebf4fb;
+      border-left: 4px solid #286491;
+      padding: 13px 16px;
+      border-radius: 0 10px 10px 0;
+      margin-top: 14px;
+      font-size: 13px;
+      color: #1a3a52;
+    }
+    @media print {
+      .sidebar, .hero-actions { display: none !important; }
+      .layout { display: block; }
+      .content { padding: 0; max-width: 100%; }
+      .section-card { break-inside: avoid; box-shadow: none; }
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; }
+      .content { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <svg viewBox="0 0 120 120" width="38" height="38" style="flex-shrink:0;">
+          <defs>
+            <linearGradient id="emp-top" x1="12%" y1="55%" x2="86%" y2="14%">
+              <stop offset="0%" stop-color="#05d5ff" />
+              <stop offset="52%" stop-color="#3b82f6" />
+              <stop offset="100%" stop-color="#8b46ff" />
+            </linearGradient>
+            <linearGradient id="emp-bot" x1="14%" y1="86%" x2="88%" y2="45%">
+              <stop offset="0%" stop-color="#2b8aff" />
+              <stop offset="52%" stop-color="#7c4dff" />
+              <stop offset="100%" stop-color="#e016ff" />
+            </linearGradient>
+          </defs>
+          <path d="M 60 8 L 93 41 L 80 54 L 60 34 L 34 60 L 62 88 L 49 101 L 8 60 Z" fill="url(#emp-top)" />
+          <path d="M 60 112 L 27 79 L 40 66 L 60 86 L 86 60 L 58 32 L 71 19 L 112 60 Z" fill="url(#emp-bot)" />
+        </svg>
+        <div>
+          <h2 style="margin:0;letter-spacing:0.08em;font-size:17px;">SYNEO LAB</h2>
+          <div style="font-size:8px;letter-spacing:0.14em;opacity:0.75;margin-top:2px;">CREATIVITY MEETS INNOVATIONS</div>
+        </div>
+      </div>
+      <span class="badge">Employee Manual · v2.0</span>
+      <input
+        type="text"
+        id="manualSearch"
+        class="search-input"
+        placeholder="Search employee guide…"
+        oninput="filterSections(this.value)"
+      />
+      <ul class="nav-list">
+        <li><a href="#welcome">0. Welcome &amp; Your Access Scope</a></li>
+        <li><a href="#routine">1. Your Daily Workflow in 4 Steps</a></li>
+        <li><a href="#shortcuts">2. Quick Search &amp; Header Bar</a></li>
+        <li><a href="#clock">3. Time Clock, Breaks &amp; Pomodoro</a></li>
+        <li><a href="#standups">4. Posting Your Daily Standup</a></li>
+        <li><a href="#tasks">5. Managing Your Tasks &amp; Blockers</a></li>
+        <li><a href="#projects">6. Viewing Projects &amp; Milestones</a></li>
+        <li><a href="#calendar">7. Using the Multi-Color Calendar</a></li>
+        <li><a href="#leads">8. Capturing &amp; Managing Your Leads</a></li>
+        <li><a href="#meetings">9. Joining Meetings &amp; Google Calendar</a></li>
+        <li><a href="#settings">10. Announcements &amp; Personal Settings</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <header class="hero">
+        <h1>Complete Employee &amp; Team Member Manual</h1>
+        <p>
+          Everything you need to master your daily workflow in Syneolab PM — from clocking in with Pomodoro focus sessions and updating your Kanban tasks, to flagging blockers early, capturing leads, and joining synced Google Meet calls.
+        </p>
+        <div class="hero-actions">
+          <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+          <a class="btn" href="#welcome" style="background:#2d5878;color:#fff;">See Your Access &amp; Privacy Scope →</a>
+        </div>
+      </header>
+
+      <!-- 0. WELCOME & ACCESS SCOPE -->
+      <section class="section-card manual-section" id="welcome">
+        <h2><span class="step-num">0</span> Welcome, Sign-In &amp; Your Least-Privilege Access Scope</h2>
+        <p>
+          Syneolab PM is designed with <strong>Least-Privilege Role-Based Access Control (RBAC)</strong>. This keeps your workspace clean, protects your personal timesheet and lead pipeline from other employees, and ensures you can focus 100% on your deliverables without administrative clutter.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Signing In &amp; First-Time Setup</h4>
+            <ul>
+              <li><strong>Have Credentials?</strong> Enter your work email and temporary password on the Sign In screen, then go to <strong>Settings → Profile</strong> to set your permanent 12+ character password.</li>
+              <li><strong>Need an Account?</strong> Click <strong>Request access</strong> on the login screen, enter your Name, Email, Role/Title, and a short note. An Admin will approve your request and your login details will arrive via email.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Your Privacy Guarantee</h4>
+            <ul>
+              <li><strong>Private Timesheet</strong>: Your past clock-in/out entries, break durations, and session notes are visible <em>only to you and Workspace Admins</em>.</li>
+              <li><strong>Personal Lead Pipeline</strong>: Leads you capture or own are visible <em>only to you and Workspace Admins</em>.</li>
+              <li><strong>Invited Meetings Only</strong>: You only see meetings where you are an invited attendee (or company-wide sessions).</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Quick Reference: What You Can Create, Edit &amp; View</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Workspace Area</th>
+              <th>Your Access Level</th>
+              <th>What You Can Do</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tasks</strong></td>
+              <td><span class="pill">Create &amp; Edit Assigned</span></td>
+              <td>Create personal tasks, and update status (<code>To do</code> → <code>Done</code>), subtasks, deliverable links, blocker flags, and comments on any task assigned to you. View team tasks for context.</td>
+            </tr>
+            <tr>
+              <td><strong>Time Clock</strong></td>
+              <td><span class="pill private">Personal Scope</span></td>
+              <td>Clock in/out, pause/resume breaks, run Pomodoro timers, and view/export <strong>your own</strong> timesheet and 7-day attendance summary.</td>
+            </tr>
+            <tr>
+              <td><strong>Standups &amp; Goals</strong></td>
+              <td><span class="pill">Create &amp; Edit Own</span></td>
+              <td>Post and edit your daily standup (Yesterday / Today / Blockers / Mood). View teammates' standups and company Quarterly Goals (OKRs).</td>
+            </tr>
+            <tr>
+              <td><strong>Leads (CRM)</strong></td>
+              <td><span class="pill private">Personal Pipeline</span></td>
+              <td>Add new leads manually or via the <strong>Lead Assistant Chat</strong>, update stages/notes on your leads, and export your leads to CSV.</td>
+            </tr>
+            <tr>
+              <td><strong>Projects</strong></td>
+              <td><span class="pill read">Read-Only Alignment</span></td>
+              <td>View project briefs, due dates, target hours, and milestone checklists so you always know the big picture.</td>
+            </tr>
+            <tr>
+              <td><strong>Meetings &amp; Calendar</strong></td>
+              <td><span class="pill read">Attend &amp; Sync</span></td>
+              <td>View your invited meetings, click <strong>Join meeting ↗</strong> (Google Meet / Instant Room), and add events to your Google Calendar with 1 click.</td>
+            </tr>
+            <tr>
+              <td><strong>Announcements</strong></td>
+              <td><span class="pill read">Read-Only</span></td>
+              <td>Read company-wide announcements, milestones, and pinned notices.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 1. DAILY ROUTINE -->
+      <section class="section-card manual-section" id="routine">
+        <h2><span class="step-num">1</span> Your Daily Workflow in 4 Simple Steps</h2>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Step 1: Clock In &amp; Pick Your Focus Task</h4>
+            <p>From <strong>Home</strong> or <strong>Time Clock</strong>, choose the task you are working on, add a quick note (e.g., <em>"Building checkout API"</em>), and click <strong>Clock in</strong>.</p>
+          </div>
+          <div class="subcard">
+            <h4>Step 2: Post Your 60-Second Standup</h4>
+            <p>Open <strong>Standups &amp; Goals</strong>, fill in Yesterday, Today, any Blockers, and your Mood, then click <strong>Share standup</strong>.</p>
+          </div>
+          <div class="subcard">
+            <h4>Step 3: Move Tasks &amp; Flag Blockers Early</h4>
+            <p>In <strong>Tasks</strong>, move your active work to <code>In progress</code> or <code>In review</code>, check off subtasks, attach your PR/Figma URL, or flag a blocker if you need help.</p>
+          </div>
+          <div class="subcard">
+            <h4>Step 4: Clock Out Cleanly</h4>
+            <p>Use <strong>Pause for break</strong> during lunch, and click <strong>Clock out</strong> at the end of your workday so your 7-day attendance log stays accurate.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. SHORTCUTS -->
+      <section class="section-card manual-section" id="shortcuts">
+        <h2><span class="step-num">2</span> Quick Search (<kbd>Ctrl+K</kbd>) &amp; Top Header Controls</h2>
+        <ul>
+          <li><strong>Global Search (<kbd>Ctrl + K</kbd> or <kbd>⌘ + K</kbd>)</strong>: Press <kbd>Ctrl + K</kbd> anywhere in the app to instantly search for a task, project, lead, or meeting, or trigger quick actions like <em>New Task</em> or <em>Add Lead</em>.</li>
+          <li><strong>Live Clock Pill (Top Right)</strong>: Shows your live running work timer (in green) or break status (in amber) even while you browse other tabs.</li>
+          <li><strong>Pomodoro Focus Pill (Top Right)</strong>: When you start a Pomodoro sprint in the Time Clock, its live countdown (`24:59`) stays visible in the top header.</li>
+          <li><strong>Notification Bell</strong>: Alerts you to overdue tasks assigned to you and meetings happening today.</li>
+        </ul>
+      </section>
+
+      <!-- 3. TIME CLOCK -->
+      <section class="section-card manual-section" id="clock">
+        <h2><span class="step-num">3</span> Time Clock, Breaks, Pomodoro Timer &amp; My Timesheet</h2>
+        <p>
+          The <strong>Time Clock</strong> tab helps you structure deep work sessions and keeps a transparent personal log of your hours.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Clocking In, Breaks &amp; Clocking Out</h4>
+            <ul>
+              <li><strong>Clock In</strong>: Select an active task from the dropdown (optional), enter what you are focusing on, and click <strong>Clock in</strong>.</li>
+              <li><strong>Taking a Break</strong>: Click <strong>Pause for break</strong> when stepping away. Break time is tracked separately and automatically subtracted from your net worked duration. Click <strong>Resume work</strong> when you return.</li>
+              <li><strong>Clock Out</strong>: Click the red <strong>Clock out</strong> button when your session ends.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Pomodoro Focus Timer &amp; Personal Logs</h4>
+            <ul>
+              <li><strong>Focus Sprints</strong>: Choose <code>25m Focus</code>, <code>50m Deep</code>, <code>5m Break</code>, or <code>15m Recharge</code> and click <strong>Start timer</strong>. You will receive a toast notification as soon as the sprint finishes.</li>
+              <li><strong>My Timesheet &amp; 7-Day Attendance</strong>: View your personal session history and your 7-day focus progress bar (measured against a standard 35h week). Click <strong>Export CSV</strong> to download a copy of your own time logs.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. STANDUPS -->
+      <section class="section-card manual-section" id="standups">
+        <h2><span class="step-num">4</span> Posting Your Daily Standup &amp; Viewing Team Goals</h2>
+        <p>
+          Daily standups replace long status calls with a quick written check-in.
+        </p>
+        <ol style="font-size:13px; padding-left:20px;">
+          <li>Navigate to <strong>Standups &amp; Goals</strong> in the sidebar.</li>
+          <li>At the top, review the <strong>Team Goals &amp; OKRs</strong> cards to see how quarterly company targets are progressing.</li>
+          <li>In the <strong>Check in for today</strong> card:
+            <ul>
+              <li>Select your current <strong>Mood / Energy</strong> (<code>Focused</code>, <code>Energized</code>, <code>Steady</code>, <code>Stretched</code>, or <code>Blocked</code>).</li>
+              <li>Fill in <strong>Yesterday</strong> (what you completed), <strong>Today</strong> (your main focus), and <strong>Blockers</strong> (leave as <code>None</code> if clear, or describe what you need).</li>
+            </ul>
+          </li>
+          <li>Click <strong>Share standup</strong>. If you need to update it later the same day, click <strong>Edit</strong> on your standup card.</li>
+        </ol>
+      </section>
+
+      <!-- 5. TASKS -->
+      <section class="section-card manual-section" id="tasks">
+        <h2><span class="step-num">5</span> Managing Your Tasks, Subtasks, Deliverables &amp; Blockers</h2>
+        <p>
+          In <strong>Tasks</strong>, you can view all project tasks for team visibility and fully edit any task that you created or that an Admin assigned to you.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Finding &amp; Moving Your Work</h4>
+            <ul>
+              <li>Click the <strong>Assigned to me</strong> filter chip to focus solely on your personal queue.</li>
+              <li>Use <strong>List view</strong> to change task status via the inline dropdown, or switch to <strong>Board view</strong> (Kanban) to advance cards across <code>To do</code> → <code>In progress</code> → <code>In review</code> → <code>Done</code>.</li>
+              <li>Click <strong>+ New task</strong> anytime to create a personal task (automatically assigned to you).</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Collaborating Inside a Task Card</h4>
+            <ul>
+              <li><strong>Subtasks Checklist</strong>: Add granular steps (`+ Step`) and check them off as you complete each part of the deliverable.</li>
+              <li><strong>Deliverable / PR / Figma URL</strong>: Paste the link to your pull request, design file, or document before moving the task to <code>In review</code> or <code>Done</code>.</li>
+              <li><strong>Activity &amp; Comments</strong>: Type updates or questions in the comment thread and click <strong>Post</strong>.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout">
+          <strong>How to Flag a Blocker:</strong> If you are waiting on credentials, client feedback, or another dependency, open the task, check <strong>Flag this task as blocked</strong>, type what is needed in the text box, and click <strong>Save</strong>. This immediately highlights the task on the Admin's Home dashboard so they can unblock you fast.
+        </div>
+      </section>
+
+      <!-- 6. PROJECTS -->
+      <section class="section-card manual-section" id="projects">
+        <h2><span class="step-num">6</span> Viewing Projects &amp; Milestone Checklists <span class="pill read">Read-Only</span></h2>
+        <p>
+          Open <strong>Projects</strong> to see every active initiative across the company:
+        </p>
+        <ul>
+          <li>Each card displays the <strong>Project Title</strong>, <strong>Client</strong>, <strong>Status</strong> (`Planning`, `Active`, `Completed`), <strong>Overall Progress %</strong>, completed tasks counter, logged team hours vs. target capacity, and completed milestones.</li>
+          <li>Click <strong>View ↗</strong> on any project card to read the full project description, target hours, due date, and milestone checklist.</li>
+        </ul>
+      </section>
+
+      <!-- 7. CALENDAR -->
+      <section class="section-card manual-section" id="calendar">
+        <h2><span class="step-num">7</span> Using the Multi-Color Calendar &amp; Day Agenda</h2>
+        <p>
+          The <strong>Calendar</strong> tab gives you a color-coded monthly overview of your schedule:
+        </p>
+        <ul>
+          <li><strong>Color-Coded Event Pills</strong>: Every meeting you are invited to, task due date, project deadline, and lead follow-up is displayed in a soft pastel rounded rectangle. Multiple events on the same day automatically use different pastel colors so you can distinguish them at a glance.</li>
+          <li><strong>Day Agenda Panel</strong>: Click any date on the calendar grid to see all events for that day in the right-hand <strong>Agenda</strong> card. From there you can click into a task or click <strong>Join ↗</strong> on a meeting.</li>
+        </ul>
+      </section>
+
+      <!-- 8. LEADS -->
+      <section class="section-card manual-section" id="leads">
+        <h2><span class="step-num">8</span> Capturing &amp; Managing Your Leads <span class="pill private">Personal Pipeline</span></h2>
+        <p>
+          The <strong>Leads</strong> tab is your personal CRM workspace. You only see leads that you created or that an Admin assigned to you.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Adding &amp; Updating Leads</h4>
+            <ul>
+              <li>Click <strong>+ Add lead</strong> to enter a prospect's Name/Title, Company, Email, Phone, Estimated Value, Stage, Follow-up Date, Lead Source, and Win Probability %.</li>
+              <li>Update the <strong>Stage</strong> dropdown directly in the table (`New` → `Contacted` → `Qualified` → `Proposal` → `Won` / `Lost`).</li>
+              <li>Use the <strong>Follow-up due</strong> tab to see prospects that need outreach today.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Fast Capture with the Lead Assistant</h4>
+            <ul>
+              <li>In the right-hand <strong>Lead assistant</strong> panel, type or paste raw notes from a call or email:
+                <br /><code>Name: Maya Shah; Company: Acme; Email: maya@example.com; Value: 5000; Notes: Website redesign</code>
+              </li>
+              <li>Click <strong>Create lead draft ↗</strong> — the assistant automatically parses the fields and opens a pre-filled Lead modal for you to review and save.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. MEETINGS -->
+      <section class="section-card manual-section" id="meetings">
+        <h2><span class="step-num">9</span> Joining Meetings &amp; Syncing with Google Calendar</h2>
+        <p>
+          In <strong>Meetings</strong>, you see all upcoming and past sessions that you are invited to.
+        </p>
+        <ul>
+          <li><strong>Joining a Call</strong>: Click <strong>Join meeting ↗</strong> on any meeting card (or from the Calendar Agenda) to launch the live <strong>Google Meet</strong> or <strong>Instant Room</strong> video call in a new tab.</li>
+          <li><strong>Adding to Your Google Calendar</strong>:
+            <ul>
+              <li><strong>Automatic Email Invite (`.ics`)</strong>: When an Admin schedules a meeting, you receive an email with a native Google Calendar invite attached — simply click <strong>Yes</strong> in Gmail to add it to your calendar.</li>
+              <li><strong>1-Click In-App Button</strong>: You can also click <strong>Open in Calendar ↗</strong> or <strong>+ Google Calendar</strong> on any meeting card in the app.</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 10. ANNOUNCEMENTS & SETTINGS -->
+      <section class="section-card manual-section" id="settings">
+        <h2><span class="step-num">10</span> Announcements &amp; Personalizing Your Settings</h2>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Company Announcements</h4>
+            <ul>
+              <li>Check <strong>Announcements</strong> in the sidebar to read official company updates, policy notes, and milestone celebrations.</li>
+              <li>Important items are marked with a purple <code>Pinned</code> tag at the top of the page.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Settings (Profile &amp; Appearance)</h4>
+            <ul>
+              <li><strong>Profile</strong>: View your account details, review your <strong>Role &amp; Access Scope</strong> summary card, and update your password (12+ characters).</li>
+              <li><strong>Appearance</strong>: Customize your workspace <strong>Accent Color</strong> (6 themes), preferred display <strong>Currency</strong>, and toggle <strong>Compact View</strong> for denser tables. Your preferences are saved automatically on your device.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function filterSections(query) {
+      const q = (query || '').toLowerCase().trim();
+      const sections = document.querySelectorAll('.manual-section');
+      sections.forEach(sec => {
+        const text = sec.innerText.toLowerCase();
+        sec.style.display = !q || text.includes(q) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

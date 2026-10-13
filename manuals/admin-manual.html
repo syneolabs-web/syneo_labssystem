@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syneolab PM — Complete Administrator Manual (100% Platform Guide)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f6f4ef;
+      color: #19221d;
+      margin: 0;
+      padding: 0;
+      line-height: 1.65;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: #14241b;
+      color: #eef3ef;
+      padding: 28px 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid #24382c;
+    }
+    .sidebar h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: #ffffff;
+    }
+    .sidebar .badge {
+      display: inline-block;
+      background: #224432;
+      color: #8ce9b5;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    .search-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid #2e4738;
+      background: #1c3125;
+      color: #ffffff;
+      font-size: 13px;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    .search-input::placeholder {
+      color: #8fa597;
+    }
+    .nav-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .nav-list li {
+      margin-bottom: 4px;
+    }
+    .nav-list a {
+      display: block;
+      padding: 8px 11px;
+      border-radius: 8px;
+      color: #c5d4cb;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .nav-list a:hover {
+      background: #21382b;
+      color: #ffffff;
+    }
+    .content {
+      padding: 40px 52px;
+      max-width: 1060px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #1b3224 0%, #244230 100%);
+      color: #ffffff;
+      padding: 34px 38px;
+      border-radius: 18px;
+      margin-bottom: 32px;
+      box-shadow: 0 12px 32px rgba(20, 36, 27, 0.12);
+    }
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+    .hero p {
+      color: #d1e2d7;
+      font-size: 15px;
+      margin: 0 0 18px;
+      max-width: 780px;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      color: #182e21;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .section-card {
+      background: #ffffff;
+      border: 1px solid #e4dfd5;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 26px;
+      box-shadow: 0 4px 14px rgba(25, 34, 29, 0.03);
+    }
+    .section-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #182e21;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #203829;
+      margin: 22px 0 8px;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #e8f3ec;
+      color: #1e462f;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #eef4f0;
+      color: #244933;
+      border: 1px solid #d4e4d9;
+    }
+    .pill.admin {
+      background: #f3eefe;
+      color: #5528a6;
+      border-color: #dfd2fb;
+    }
+    .pill.warn {
+      background: #fff6e5;
+      color: #965600;
+      border-color: #f5deb3;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .subcard {
+      background: #faf8f4;
+      border: 1px solid #e7e2d8;
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .subcard h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #19221d;
+    }
+    .subcard p, .subcard ul {
+      margin: 0;
+      font-size: 13px;
+      color: #4a574f;
+    }
+    .subcard ul {
+      padding-left: 18px;
+    }
+    .subcard li {
+      margin-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 11px 13px;
+      border-bottom: 1px solid #e7e2d8;
+      vertical-align: top;
+    }
+    th {
+      background: #f5f2eb;
+      font-weight: 700;
+      color: #24352b;
+    }
+    kbd {
+      background: #f0ede6;
+      border: 1px solid #d6d0c4;
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #19221d;
+    }
+    .callout {
+      background: #eef7f1;
+      border-left: 4px solid #2b6a46;
+      padding: 13px 16px;
+      border-radius: 0 10px 10px 0;
+      margin-top: 14px;
+      font-size: 13px;
+      color: #1d3c2a;
+    }
+    @media print {
+      .sidebar, .hero-actions { display: none !important; }
+      .layout { display: block; }
+      .content { padding: 0; max-width: 100%; }
+      .section-card { break-inside: avoid; box-shadow: none; }
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; }
+      .content { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <svg viewBox="0 0 120 120" width="38" height="38" style="flex-shrink:0;">
+          <defs>
+            <linearGradient id="adm-top" x1="12%" y1="55%" x2="86%" y2="14%">
+              <stop offset="0%" stop-color="#05d5ff" />
+              <stop offset="52%" stop-color="#3b82f6" />
+              <stop offset="100%" stop-color="#8b46ff" />
+            </linearGradient>
+            <linearGradient id="adm-bot" x1="14%" y1="86%" x2="88%" y2="45%">
+              <stop offset="0%" stop-color="#2b8aff" />
+              <stop offset="52%" stop-color="#7c4dff" />
+              <stop offset="100%" stop-color="#e016ff" />
+            </linearGradient>
+          </defs>
+          <path d="M 60 8 L 93 41 L 80 54 L 60 34 L 34 60 L 62 88 L 49 101 L 8 60 Z" fill="url(#adm-top)" />
+          <path d="M 60 112 L 27 79 L 40 66 L 60 86 L 86 60 L 58 32 L 71 19 L 112 60 Z" fill="url(#adm-bot)" />
+        </svg>
+        <div>
+          <h2 style="margin:0;letter-spacing:0.08em;font-size:17px;">SYNEO LAB</h2>
+          <div style="font-size:8px;letter-spacing:0.14em;opacity:0.75;margin-top:2px;">CREATIVITY MEETS INNOVATIONS</div>
+        </div>
+      </div>
+      <span class="badge">Administrator Manual · v2.0</span>
+      <input
+        type="text"
+        id="manualSearch"
+        class="search-input"
+        placeholder="Filter manual sections…"
+        oninput="filterSections(this.value)"
+      />
+      <ul class="nav-list">
+        <li><a href="#overview">0. Executive Overview &amp; Rhythm</a></li>
+        <li><a href="#navigation">1. Command Bar &amp; Global Shortcuts</a></li>
+        <li><a href="#home">2. Home &amp; Team Pulse Center</a></li>
+        <li><a href="#projects">3. Projects, Budgets &amp; Milestones</a></li>
+        <li><a href="#tasks">4. Tasks (Kanban, Blockers &amp; Broadcasts)</a></li>
+        <li><a href="#calendar">5. Multi-Color Calendar &amp; Agenda</a></li>
+        <li><a href="#clock">6. Time Clock, Pomodoro &amp; Attendance</a></li>
+        <li><a href="#standups">7. Daily Standups &amp; Quarterly OKRs</a></li>
+        <li><a href="#leads">8. Leads CRM, CSV &amp; AI Capture</a></li>
+        <li><a href="#meetings">9. Meetings, Google Meet &amp; .ics Sync</a></li>
+        <li><a href="#announcements">10. Company Announcements</a></li>
+        <li><a href="#people">11. People, Access Requests &amp; RBAC</a></li>
+        <li><a href="#settings">12. Settings, Webhooks &amp; Queue</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <header class="hero">
+        <h1>Complete Administrator Manual</h1>
+        <p>
+          Your end-to-end operational handbook for running Syneolab PM at 100% capacity — covering portfolio management, client budgets, team velocity, automated Google Meet &amp; Calendar sync, CRM conversions, and Least-Privilege RBAC security.
+        </p>
+        <div class="hero-actions">
+          <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+          <a class="btn" href="#people" style="background:#274c37;color:#fff;">View RBAC Security Matrix →</a>
+        </div>
+      </header>
+
+      <!-- 0. OVERVIEW -->
+      <section class="section-card manual-section" id="overview">
+        <h2><span class="step-num">0</span> Executive Overview &amp; Daily Management Rhythm</h2>
+        <p>
+          As an <strong>Administrator (<code>role: admin</code>)</strong>, you have unrestricted visibility and control over every project, financial budget, employee timesheet, sales lead, meeting room, and workspace integration.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Morning Routine (5 Mins)</h4>
+            <ul>
+              <li>Open <strong>Home</strong> and review the <strong>Team Pulse &amp; Attention Needed</strong> panel.</li>
+              <li>Check <strong>Blocked Tasks</strong> and <strong>Overdue Tasks</strong> to clear bottlenecks immediately.</li>
+              <li>Scan <strong>Standups &amp; Goals</strong> to see who has checked in, their daily priorities, and energy levels.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Midday &amp; Client Operations</h4>
+            <ul>
+              <li>Review <strong>Leads</strong> with <em>Follow-up due</em> tags; convert <strong>Won</strong> leads into active projects with 1 click (<code>→ Project</code>).</li>
+              <li>Schedule team or client calls in <strong>Meetings</strong> using <strong>Generate Google Meet</strong> + <strong>Everyone</strong> invite broadcast.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>End-of-Week Review (10 Mins)</h4>
+            <ul>
+              <li>Open <strong>Time Clock</strong> → inspect the <strong>7-Day Team Attendance &amp; Focus</strong> table against the 35h weekly target.</li>
+              <li>Update <strong>Quarterly Goals (OKRs)</strong> in Standups &amp; Goals and post a Friday milestone in <strong>Announcements</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 1. NAVIGATION -->
+      <section class="section-card manual-section" id="navigation">
+        <h2><span class="step-num">1</span> Command Bar, Header Controls &amp; Keyboard Shortcuts</h2>
+        <p>
+          The top header stays accessible from every screen so you can jump to any record or trigger an action in under two seconds.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Control / Shortcut</th>
+              <th>Where to Find It</th>
+              <th>How It Works</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><kbd>Ctrl + K</kbd> or <kbd>⌘ + K</kbd></td>
+              <td>Top search button (<code>Search or jump…</code>)</td>
+              <td>Opens the <strong>Global Command Palette</strong>. Type any keyword to search across Projects, Tasks, Leads, Meetings, and Team Members, or launch quick actions (<em>New Task, New Project, Add Lead, Schedule Meeting</em>).</td>
+            </tr>
+            <tr>
+              <td><kbd>Esc</kbd></td>
+              <td>Anywhere in the app</td>
+              <td>Immediately closes any open Modal, Command Palette, or Notification drawer.</td>
+            </tr>
+            <tr>
+              <td><strong>Focus Timer Pill</strong></td>
+              <td>Top-right header (when running)</td>
+              <td>Displays live countdown (`MM:SS`) for your active Pomodoro session (`25m Focus` / `50m Deep`). Click it to jump straight to the Time Clock.</td>
+            </tr>
+            <tr>
+              <td><strong>Live Clock Status Button</strong></td>
+              <td>Top-right header (`Clock in` or `01:24:10`)</td>
+              <td>Shows green live timer when clocked in, amber when on break, or `Clock in` when offline. Clicking navigates to the Time Clock.</td>
+            </tr>
+            <tr>
+              <td><strong>Notifications Bell</strong></td>
+              <td>Top-right header icon</td>
+              <td>Shows unread badge count for overdue tasks, pending user access requests, and today's meetings. Includes a <strong>Clear</strong> button.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 2. HOME -->
+      <section class="section-card manual-section" id="home">
+        <h2><span class="step-num">2</span> Home (Executive Command Center)</h2>
+        <p>
+          Your Home view synthesizes delivery health, team attendance, and sales pipeline velocity into one screen.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>4 Executive KPI Cards</h4>
+            <ul>
+              <li><strong>Active Projects</strong>: Count of active engagements + total portfolio count.</li>
+              <li><strong>Completion Rate</strong>: Percentage of tasks marked <code>Done</code> across the workspace.</li>
+              <li><strong>Hours Tracked</strong>: Total team hours logged + live count of who is clocked in right now.</li>
+              <li><strong>Open Leads</strong>: Active CRM opportunities + total pipeline value in your workspace currency.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Team Pulse &amp; Attention Needed</h4>
+            <ul>
+              <li><strong>Clocked In Now</strong>: Avatars and names of every employee currently working or on break.</li>
+              <li><strong>Overdue Tasks</strong>: Tasks past their due date that are not yet <code>Done</code>.</li>
+              <li><strong>Blocked Tasks</strong>: Tasks flagged by employees as blocked (click any item to open and resolve).</li>
+              <li><strong>Follow-ups Due</strong>: Leads whose scheduled follow-up date is today or overdue.</li>
+              <li><strong>7-Day Velocity</strong>: Bar chart of daily logged hours across the last 7 days.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. PROJECTS -->
+      <section class="section-card manual-section" id="projects">
+        <h2><span class="step-num">3</span> Projects, Client Budgets &amp; Milestones <span class="pill admin">Admin Exclusive Write</span></h2>
+        <p>
+          Only Administrators can create, edit, or delete Projects, and only Administrators can view or edit the <strong>Client Budget</strong> field (which is stripped on the server for employees).
+        </p>
+        <h3>How to Create &amp; Manage a Project</h3>
+        <ol style="font-size:13px; padding-left:20px;">
+          <li>Go to <strong>Projects</strong> in the left sidebar and click <strong>+ New project</strong>.</li>
+          <li>Fill in the <strong>Title</strong>, <strong>Description</strong>, <strong>Client</strong> name, and assign a <strong>Project Lead</strong>.</li>
+          <li>Set <strong>Status</strong> (<code>Planning</code>, <code>Active</code>, or <code>Completed</code>) and <strong>Due date</strong>.</li>
+          <li>Enter <strong>Target hours (capacity)</strong> (e.g., <code>120</code> hours) so the project card automatically tracks logged team hours against capacity.</li>
+          <li>Enter <strong>Budget</strong> (visible only to Admins).</li>
+          <li>Under <strong>Milestones</strong>, type each deliverable phase (e.g., <em>Wireframes approved, Beta deployment, Final QA</em>) and click <strong>+ Add</strong>. Checking off milestones updates the milestone completion counter on the project card.</li>
+        </ol>
+        <div class="callout">
+          <strong>Automatic Progress Calculation:</strong> A project's progress percentage automatically updates based on the completion rate of tasks linked to that project or its completed milestones.
+        </div>
+      </section>
+
+      <!-- 4. TASKS -->
+      <section class="section-card manual-section" id="tasks">
+        <h2><span class="step-num">4</span> Tasks (Kanban Board, List View, Blockers &amp; Broadcasts)</h2>
+        <p>
+          Tasks power daily execution. As an Admin, you can assign tasks to any employee, organize work by department, inspect blockers, and trigger Gmail notifications.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Filtering &amp; Views</h4>
+            <ul>
+              <li><strong>Status Tabs</strong>: Filter by <code>All</code>, <code>To do</code>, <code>In progress</code>, <code>In review</code>, or <code>Done</code>.</li>
+              <li><strong>Scope &amp; Department Filters</strong>: Filter by <code>Assigned to me</code>, <code>High priority</code>, or Department (<code>Engineering</code>, <code>Design</code>, <code>Marketing</code>, <code>Management</code>).</li>
+              <li><strong>List vs. Board View</strong>: Toggle between the structured table (with inline status dropdowns) and the 4-column <strong>Kanban Board</strong> with 1-click stage movement buttons.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Inside the Task Modal</h4>
+            <ul>
+              <li><strong>Estimated Hours &amp; Deliverable URL</strong>: Set expected effort and attach a GitHub PR, Figma, or Google Doc link.</li>
+              <li><strong>Blocker Flag</strong>: Check <em>Flag this task as blocked</em> and write what is needed to unblock it. Blocked tasks show a red <code>Blocked</code> badge across the app.</li>
+              <li><strong>Subtasks &amp; Activity Thread</strong>: Break tasks into granular checklist steps (<code>+ Step</code>) and post timestamped comments (<code>Post</code>).</li>
+              <li><strong>Admin Email Controls</strong>: Check <em>Email assignee via Gmail</em> or <em>Email Everyone on the team</em> before clicking Save.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. CALENDAR -->
+      <section class="section-card manual-section" id="calendar">
+        <h2><span class="step-num">5</span> Multi-Color Calendar &amp; Day Agenda</h2>
+        <p>
+          The Calendar unifies four workspace event types into a single visual schedule: <strong>Meetings</strong>, <strong>Task Due Dates</strong>, <strong>Project Deadlines</strong>, and <strong>Lead Follow-ups</strong>.
+        </p>
+        <ul>
+          <li><strong>Distinct Pastel Event Pills</strong>: Every event is rendered in a soft rounded rectangle using a 6-color pastel palette (Sage, Sky Blue, Lavender, Amber, Rose, Teal). Multiple events on the same day are automatically assigned different colors so every item stands out clearly.</li>
+          <li><strong>Interactive Day Selection</strong>: Click any date cell in the month grid to inspect its full schedule in the right-hand <strong>Day Agenda</strong> panel.</li>
+          <li><strong>1-Click Scheduling</strong>: Click <strong>+ Schedule on [Date]</strong> in the right-hand agenda to open the Meeting scheduler pre-filled for that day.</li>
+        </ul>
+      </section>
+
+      <!-- 6. TIME CLOCK -->
+      <section class="section-card manual-section" id="clock">
+        <h2><span class="step-num">6</span> Time Clock, Pomodoro Timer &amp; Team Attendance</h2>
+        <p>
+          Track billable and operational hours across your entire organization while giving employees a distraction-free focus environment.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Live Clock &amp; Pomodoro Focus</h4>
+            <ul>
+              <li>Select a task from <em>Working on (optional)</em>, add a session note, and click <strong>Clock in</strong>.</li>
+              <li>Use <strong>Pause for break</strong> / <strong>Resume work</strong> to track break time separately from net worked hours.</li>
+              <li>Use the built-in <strong>Focus &amp; Pomodoro Timer</strong> (<code>25m Focus</code>, <code>50m Deep</code>, <code>5m Break</code>, <code>15m Recharge</code>) for structured sprints.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Admin Timesheet &amp; 7-Day Attendance</h4>
+            <ul>
+              <li><strong>Employee Filter Dropdown</strong> (Admin Only): Switch between <code>All team members</code> or any individual employee in the <strong>Team Timesheet</strong> card.</li>
+              <li><strong>Team 7-Day Attendance &amp; Focus Table</strong>: Compare every team member's live status, today's hours, 7-day total hours, sessions count, tasks completed, and visual progress bar against the 35h weekly benchmark.</li>
+              <li>Click <strong>Export CSV</strong> to download the complete team timesheet for payroll or client billing.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. STANDUPS & GOALS -->
+      <section class="section-card manual-section" id="standups">
+        <h2><span class="step-num">7</span> Daily Standups &amp; Quarterly Goals (OKRs)</h2>
+        <p>
+          Keep the entire team aligned on high-level quarterly objectives and daily execution without unnecessary status meetings.
+        </p>
+        <ul>
+          <li><strong>Team Goals &amp; OKRs <span class="pill admin">Admin Only Write</span></strong>: Click <strong>+ New goal</strong> to define a quarterly objective (e.g., <em>Close $50k in Q2 retainer leads</em>), assign an owner, set <code>Current value</code> and <code>Target value</code>, and choose a status (<code>On track</code>, <code>At risk</code>, <code>Behind</code>, <code>Completed</code>). Use the <strong>+10%</strong> button on any goal card for rapid progress updates.</li>
+          <li><strong>Daily Standup Check-in</strong>: Post what you completed yesterday, today's priority, any blockers, and your current energy/mood.</li>
+          <li><strong>Active Blockers Banner</strong>: If any team member reports a blocker in their standup today, a highlighted alert card automatically appears under the check-in form so you can intervene early.</li>
+        </ul>
+      </section>
+
+      <!-- 8. LEADS -->
+      <section class="section-card manual-section" id="leads">
+        <h2><span class="step-num">8</span> Leads CRM, Bulk CSV Import &amp; 1-Click Project Conversion</h2>
+        <p>
+          As an Admin, you see the entire company's CRM pipeline across all sales reps and team members.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Pipeline Management &amp; Conversion</h4>
+            <ul>
+              <li><strong>Stage Progression</strong>: Move leads through <code>New</code> → <code>Contacted</code> → <code>Qualified</code> → <code>Proposal</code> → <code>Won</code> / <code>Lost</code> directly from the table dropdown.</li>
+              <li><strong>Follow-up Alerts</strong>: Leads with a follow-up date of today or earlier automatically display a red <code>Follow-up due</code> badge and appear in the <code>Follow-up due</code> tab.</li>
+              <li><strong>1-Click <code>→ Project</code> Button <span class="pill admin">Admin Only</span></strong>: As soon as a lead is marked <code>Won</code>, click <strong>→ Project</strong> to open a new Project modal pre-populated with the lead's company, value as budget, and notes.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Bulk CSV Import &amp; Lead Assistant</h4>
+            <ul>
+              <li><strong>Import CSV <span class="pill admin">Admin Only</span></strong>: Click <strong>Import CSV</strong> to bulk-upload leads from a spreadsheet. Supported headers: <code>Name</code> (or <code>Title</code>), <code>Company</code>, <code>Email</code>, <code>Phone</code>, <code>Value</code>, <code>Stage</code>, <code>Source</code>, <code>Notes</code>, and <code>Followup</code>.</li>
+              <li><strong>Lead Assistant Chat Capture</strong>: Paste unstructured notes in the right-hand chat box (e.g., <code>Name: Maya Shah; Company: Acme; Email: maya@acme.com; Value: 5000; Notes: Mobile app</code>) and click <strong>Create lead draft ↗</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. MEETINGS -->
+      <section class="section-card manual-section" id="meetings">
+        <h2><span class="step-num">9</span> Meetings, Live Google Meet Generation &amp; Calendar Sync <span class="pill admin">Admin Exclusive Write</span></h2>
+        <p>
+          Schedule meetings that automatically generate real Google Meet video rooms, sync to your Google Calendar, and send native <code>.ics</code> calendar invitations to attendees.
+        </p>
+        <h3>Step-by-Step: Scheduling a Synced Google Meet Session</h3>
+        <ol style="font-size:13px; padding-left:20px;">
+          <li>Go to <strong>Meetings</strong> and click <strong>+ Schedule meeting</strong>.</li>
+          <li>Enter the <strong>Title</strong> (e.g., <em>Weekly Product &amp; Delivery Sync</em>), <strong>Start</strong> time, and <strong>End</strong> time.</li>
+          <li>In the <strong>Meeting link</strong> section:
+            <ul>
+              <li>Click <strong>Generate Google Meet</strong> to call your connected Google Apps Script webhook and create a live <code>https://meet.google.com/...</code> link immediately, <em>or</em> leave the link blank with <strong>Auto-create Google Meet room &amp; sync to Google Calendar</strong> checked so the server generates it upon saving.</li>
+              <li>Alternatively, click <strong>Generate Instant Room</strong> if you want a zero-login Jitsi video room.</li>
+            </ul>
+          </li>
+          <li>Under <strong>Attendees</strong>, click <strong>Everyone (All team)</strong> to select all active workspace members, or click individual member chips.</li>
+          <li>Ensure <strong>Email calendar invite (.ics) to Everyone</strong> is checked and click <strong>Save</strong>.</li>
+        </ol>
+        <div class="callout">
+          <strong>What Happens When You Click Save:</strong> Every attendee receives a formatted HTML email with a 1-click <strong>Join Google Meet</strong> button, a <strong>+ Add to Google Calendar</strong> link, and an attached <code>invite.ics</code> file (`METHOD:REQUEST`) that automatically renders native <strong>Yes / Maybe / No</strong> RSVP buttons in Gmail and Google Calendar.
+        </div>
+      </section>
+
+      <!-- 10. ANNOUNCEMENTS -->
+      <section class="section-card manual-section" id="announcements">
+        <h2><span class="step-num">10</span> Company Announcements <span class="pill admin">Admin Exclusive Write</span></h2>
+        <p>
+          Broadcast official updates, policy changes, and team celebrations.
+        </p>
+        <ul>
+          <li>Click <strong>+ Post announcement</strong>, enter a headline and message body, and choose a <strong>Category</strong> (<code>General</code>, <code>Milestone</code>, <code>Policy</code>, or <code>Celebration</code>).</li>
+          <li>Check <strong>Pin to top of announcements</strong> to keep critical notices at the top of the feed with a purple <code>Pinned</code> badge.</li>
+          <li>Check <strong>Email Everyone on the team</strong> to simultaneously deliver the announcement to every active member's inbox.</li>
+        </ul>
+      </section>
+
+      <!-- 11. PEOPLE & RBAC -->
+      <section class="section-card manual-section" id="people">
+        <h2><span class="step-num">11</span> People, Access Requests &amp; Least-Privilege RBAC <span class="pill admin">Admin Only View</span></h2>
+        <p>
+          The <strong>People</strong> tab is visible exclusively to Administrators. From here you control who can enter the workspace and what role they hold.
+        </p>
+        <div class="grid-2">
+          <div class="subcard">
+            <h4>Onboarding New Team Members</h4>
+            <ul>
+              <li><strong>Option A — Approve Access Requests</strong>: When an employee clicks <em>Request access</em> on the login page, their request appears under <strong>Access requests</strong>. Click <strong>Approve</strong> to automatically create their account, generate a temporary password, and email their login credentials.</li>
+              <li><strong>Option B — Direct Invite</strong>: Click <strong>+ Invite member</strong>, enter their Name, Email, Title, Role (<code>Member</code> or <code>Admin</code>), and check <em>Email login details via Gmail</em>.</li>
+            </ul>
+          </div>
+          <div class="subcard">
+            <h4>Managing Existing Accounts</h4>
+            <ul>
+              <li><strong>Role Toggle</strong>: Click <strong>Make admin</strong> or <strong>Make member</strong> on any user row. (The system prevents demoting the last remaining Admin.)</li>
+              <li><strong>Password Reset</strong>: Click <strong>Reset password</strong> to generate a fresh temporary password (displayed in a banner and emailed to the user).</li>
+              <li><strong>Revoke Access</strong>: Click <strong>Remove</strong> to soft-delete a user and immediately invalidate all of their active login sessions.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Complete Server &amp; UI Least-Privilege RBAC Matrix</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Feature / Data Domain</th>
+              <th>Administrator (<code>admin</code>)</th>
+              <th>Employee (<code>member</code>) — Least Privilege</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Projects &amp; Budgets</strong></td>
+              <td>Full create/edit/delete; full visibility of client <code>budget</code> values.</td>
+              <td>Read-only view of project briefs &amp; milestones. <strong>Client <code>budget</code> is stripped by the server</strong> and hidden in UI.</td>
+            </tr>
+            <tr>
+              <td><strong>Tasks</strong></td>
+              <td>Full CRUD across all tasks; can assign to anyone and trigger Gmail / Everyone broadcasts.</td>
+              <td>Can create personal tasks and update status, subtasks, blockers, and comments on <strong>tasks assigned to them</strong>. Cannot edit others' tasks, reassign tasks, or send email broadcasts.</td>
+            </tr>
+            <tr>
+              <td><strong>Time Clock &amp; Timesheets</strong></td>
+              <td>View and export all employees' timesheets and 7-day attendance table.</td>
+              <td>Can clock in/out and view/export <strong>only their own timesheet &amp; 7-day attendance</strong>. Other employees' past logs &amp; notes are redacted by the server.</td>
+            </tr>
+            <tr>
+              <td><strong>Leads &amp; CRM</strong></td>
+              <td>View all leads, bulk Import CSV, and convert <code>Won</code> leads <code>→ Project</code>.</td>
+              <td>Server returns <strong>only leads created by or assigned to that employee</strong>. Bulk CSV import and project conversion are hidden.</td>
+            </tr>
+            <tr>
+              <td><strong>Meetings</strong></td>
+              <td>Schedule/edit/delete meetings, generate Google Meet links, email <code>.ics</code> invites to Everyone.</td>
+              <td>Server returns <strong>only meetings the employee is invited to</strong> (or public sessions). Read-only details + 1-click Join &amp; Add to Calendar.</td>
+            </tr>
+            <tr>
+              <td><strong>Standups &amp; OKRs</strong></td>
+              <td>Create/edit Quarterly Goals (OKRs) and view all daily standups.</td>
+              <td>Post/edit own daily standups; read-only view of team standups and Quarterly Goals.</td>
+            </tr>
+            <tr>
+              <td><strong>People &amp; Integrations</strong></td>
+              <td>Full access to <strong>People</strong> directory, Access Requests, and <strong>Settings → Integrations</strong>.</td>
+              <td><strong>No access</strong> (hidden in UI and blocked with HTTP <code>403</code> on the server).</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 12. SETTINGS & INTEGRATIONS -->
+      <section class="section-card manual-section" id="settings">
+        <h2><span class="step-num">12</span> Settings, Integrations &amp; Delivery Queue</h2>
+        <p>
+          Configure your personal preferences under <strong>Profile</strong> and <strong>Appearance</strong>, and manage workspace-wide webhooks under <strong>Integrations</strong> (<span class="pill admin">Admin Only</span>).
+        </p>
+        <ul>
+          <li><strong>Profile</strong>: View your role scope summary and update your password (minimum 12 characters; updating automatically signs out old sessions).</li>
+          <li><strong>Appearance</strong>: Choose from 6 executive accent colors (<em>Botanical Green, Editorial Terracotta, Royal Indigo, Warm Amber,Rosewood, Ocean Teal</em>), set your workspace display currency (<code>$</code>, <code>€</code>, <code>₹</code>, <code>£</code>, <code>AED</code>), and toggle Compact Table Mode.</li>
+          <li><strong>Integrations (Admin Only)</strong>:
+            <ul>
+              <li><strong>Gmail SMTP</strong>: Sends welcome credentials, task alerts, announcements, and meeting <code>.ics</code> invites. Click <strong>Send test email to me</strong> to verify.</li>
+              <li><strong>Google Sheets Webhook</strong>: Mirrors new leads and time clock entries to your Google Sheet.</li>
+              <li><strong>Google Calendar + Auto Google Meet Webhook</strong>: Connects your Google Apps Script deployment so meetings automatically create real <code>meet.google.com</code> links and sync to Google Calendar. Click <strong>Test Calendar &amp; Meet sync</strong> to verify.</li>
+              <li><strong>Delivery Queue</strong>: Inspect the 8 most recent background email/webhook jobs (`sent` or `failed`) and click <strong>Retry failed deliveries</strong> at any time.</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function filterSections(query) {
+      const q = (query || '').toLowerCase().trim();
+      const sections = document.querySelectorAll('.manual-section');
+      sections.forEach(sec => {
+        const text = sec.innerText.toLowerCase();
+        sec.style.display = !q || text.includes(q) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 320" fill="none">
+  <defs>
+    <linearGradient id="syneo-full-tl" x1="354" y1="24" x2="294" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#05d5ff" />
+      <stop offset="48%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#8b46ff" />
+    </linearGradient>
+    <linearGradient id="syneo-full-br" x1="378" y1="72" x2="322" y2="176" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2b8aff" />
+      <stop offset="52%" stop-color="#7c4dff" />
+      <stop offset="100%" stop-color="#e016ff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Emblem Mark Centered at Top (x offset 240, scale 2.0) -->
+  <g transform="translate(240, 2) scale(2.0)">
+    <path
+      d="M 46.6 13.2 Q 47.8 12 49 13.2 L 59.4 23.6 Q 60.6 24.8 59.4 26 L 36.2 49.2 Q 35 50.4 36.2 51.6 L 47.8 63.2 Q 48.6 64 47.4 64 L 32.5 64 Q 29.8 64 27.9 62.1 L 17.5 51.7 Q 14.5 48.7 17.5 45.7 Z"
+      fill="url(#syneo-full-tl)"
+    />
+    <path
+      d="M 53.4 86.8 Q 52.2 88 51 86.8 L 40.6 76.4 Q 39.4 75.2 40.6 74 L 63.8 50.8 Q 65 49.6 63.8 48.4 L 52.2 36.8 Q 51.4 36 52.6 36 L 67.5 36 Q 70.2 36 72.1 37.9 L 82.5 48.3 Q 85.5 51.3 82.5 54.3 Z"
+      fill="url(#syneo-full-br)"
+    />
+  </g>
+
+  <!-- Custom Futuristic Geometric Wordmark: SYNEO LAB -->
+  <g fill="#07091e">
+    <!-- S -->
+    <path d="M 164 205 C 164 191 151 184 134 184 C 116 184 104 192 104 204 C 104 216 115 221 133 224 C 146 226 151 229 151 235 C 151 241 144 245 133 245 C 121 245 114 240 113 232 L 101 232 C 102 247 114 256 133 256 C 152 256 164 247 164 234 C 164 221 153 216 135 213 C 122 211 116 208 116 203 C 116 198 123 194 133 194 C 144 194 151 198 152 205 Z" />
+    <!-- Y (left stem + floating right slash) -->
+    <path d="M 169 185 L 194 223 L 194 255 L 206 255 L 206 219 L 183 185 Z" />
+    <path d="M 214 185 L 202 204 L 209 214 L 228 185 Z" />
+    <!-- N + E Connected Bottom Bar + N Vertical Stem -->
+    <path d="M 235 206 L 235 255 L 247 255 L 247 224 Z" />
+    <path d="M 235 185 L 281 255 L 331 255 L 331 244 L 288 244 L 249 185 Z" />
+    <!-- E Top & Middle Bars -->
+    <rect x="284" y="185" width="47" height="11" />
+    <rect x="284" y="214" width="43" height="11" />
+    <!-- O (Open Top-Left Geometric Ring) -->
+    <path d="M 366 184 L 366 196 C 379 196 389 206 389 220 C 389 234 379 244 366 244 C 353 244 343 234 343 220 L 331 220 C 331 240 346 256 366 256 C 386 256 401 240 401 220 C 401 200 386 184 366 184 Z" />
+    <!-- L -->
+    <path d="M 432 185 L 432 255 L 481 255 L 481 244 L 444 244 L 444 185 Z" />
+    <!-- A (Futuristic Chevron) -->
+    <path d="M 513 185 L 486 255 L 499 255 L 519 201 L 539 255 L 552 255 L 525 185 Z" />
+    <!-- B (Open-Left Geometric B) -->
+    <path d="M 559 185 L 559 196 L 589 196 C 596 196 601 200 601 205 C 601 210 596 214 589 214 L 559 214 L 559 225 L 592 225 C 600 225 605 229 605 235 C 605 240 600 244 592 244 L 559 244 L 559 255 L 593 255 C 608 255 618 247 618 235 C 618 227 613 221 605 219 C 611 216 614 211 614 204 C 614 192 604 185 590 185 Z" />
+  </g>
+
+  <!-- Tagline -->
+  <text
+    x="340"
+    y="292"
+    text-anchor="middle"
+    fill="#0c102b"
+    font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif"
+    font-size="15.5"
+    font-weight="600"
+    letter-spacing="4.2"
+  >
+    “WHERE CREATIVITY MEETS INNOVATIONS”
+  </text>
+</svg>

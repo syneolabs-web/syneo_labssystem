@@ -1,0 +1,8148 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { themes, getThemePalette, key, worked, breakDuration, series, completion, points } from '@/lib/metrics';
+
+const paths = {
+  dashboard: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
+  projects: 'M3 7h18v13H3z M3 7V4h7l3 3',
+  tasks: 'M5 3h14v18H5z M8 8l1 1 2-2 M13 8h3 M8 14l1 1 2-2 M13 14h3',
+  calendar: 'M3 5h18v16H3z M7 3v4 M17 3v4 M3 10h18',
+  clock: 'M12 8v5l3 2 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
+  team: 'M16 21v-3a4 4 0 0 0-8 0v3 M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M19 11a3 3 0 0 1 3 3v4 M2 18v-4a4 4 0 0 1 3-3',
+  leads: 'M4 4h16v13H8l-4 4z M8 8h8 M8 12h5',
+  meetings: 'M3 6h12v12H3z M15 10l6-4v12l-6-4',
+  announcements: 'M3 9v6h4l11 5V4L7 9z M7 15l2 6h3',
+  analytics: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
+  settings: 'M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2',
+  search: 'M20 20l-5-5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',
+  plus: 'M12 5v14 M5 12h14',
+  arrow: 'M6 18L18 6 M7 6h11v11',
+  logout: 'M9 3H3v18h6 M9 12h12 M17 8l4 4-4 4',
+  bell: 'M5 17h14l-2-4V8a5 5 0 0 0-10 0v5z M10 21h4',
+  play: 'M8 5l11 7-11 7z',
+  pause: 'M8 5v14 M16 5v14',
+  stop: 'M6 6h12v12H6z',
+  download: 'M12 3v12 M8 11l4 4 4-4 M4 17v4h16v-4',
+  upload: 'M12 15V3 M8 7l4-4 4 4 M4 17v4h16v-4',
+  pulse: 'M2 12h4l3-7 4 14 3-7h6',
+  menu: 'M3 6h18 M3 12h18 M3 18h18',
+  check: 'M5 12l4 4L19 6',
+  link: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
+  sun: 'M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8 M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M4.93 19.07l1.41-1.41 M17.66 6.34l1.41-1.41',
+  moon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'
+};
+
+const Icon = ({ name, className = 'icon' }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path d={paths[name] || paths.projects} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SyneoLogo = ({ size = 30, idPrefix = 'syneo' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    fill="none"
+    aria-hidden="true"
+    style={{ flexShrink: 0, display: 'inline-block', filter: 'drop-shadow(0 2px 6px rgba(91, 76, 245, 0.22))' }}
+  >
+    <defs>
+      <linearGradient id={`${idPrefix}-tl`} x1="56" y1="12" x2="24" y2="65" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#05d5ff" />
+        <stop offset="48%" stopColor="#3b82f6" />
+        <stop offset="100%" stopColor="#8b46ff" />
+      </linearGradient>
+      <linearGradient id={`${idPrefix}-br`} x1="68" y1="36" x2="40" y2="88" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#2b8aff" />
+        <stop offset="52%" stopColor="#7c4dff" />
+        <stop offset="100%" stopColor="#e016ff" />
+      </linearGradient>
+    </defs>
+    <path
+      d="M 46.6 13.2 Q 47.8 12 49 13.2 L 59.4 23.6 Q 60.6 24.8 59.4 26 L 36.2 49.2 Q 35 50.4 36.2 51.6 L 47.8 63.2 Q 48.6 64 47.4 64 L 32.5 64 Q 29.8 64 27.9 62.1 L 17.5 51.7 Q 14.5 48.7 17.5 45.7 Z"
+      fill={`url(#${idPrefix}-tl)`}
+    />
+    <path
+      d="M 53.4 86.8 Q 52.2 88 51 86.8 L 40.6 76.4 Q 39.4 75.2 40.6 74 L 63.8 50.8 Q 65 49.6 63.8 48.4 L 52.2 36.8 Q 51.4 36 52.6 36 L 67.5 36 Q 70.2 36 72.1 37.9 L 82.5 48.3 Q 85.5 51.3 82.5 54.3 Z"
+      fill={`url(#${idPrefix}-br)`}
+    />
+  </svg>
+);
+
+const SyneoWordmark = ({ height = 17, color = 'currentColor' }) => (
+  <svg
+    height={height}
+    viewBox="98 180 524 80"
+    fill={color}
+    aria-label="SYNEO LAB"
+    style={{ display: 'inline-block', width: 'auto', flexShrink: 0 }}
+  >
+    {/* S */}
+    <path d="M 164 205 C 164 191 151 184 134 184 C 116 184 104 192 104 204 C 104 216 115 221 133 224 C 146 226 151 229 151 235 C 151 241 144 245 133 245 C 121 245 114 240 113 232 L 101 232 C 102 247 114 256 133 256 C 152 256 164 247 164 234 C 164 221 153 216 135 213 C 122 211 116 208 116 203 C 116 198 123 194 133 194 C 144 194 151 198 152 205 Z" />
+    {/* Y */}
+    <path d="M 169 185 L 194 223 L 194 255 L 206 255 L 206 219 L 183 185 Z" />
+    <path d="M 214 185 L 202 204 L 209 214 L 228 185 Z" />
+    {/* N + E Connected Bottom Bar */}
+    <path d="M 235 206 L 235 255 L 247 255 L 247 224 Z" />
+    <path d="M 235 185 L 281 255 L 331 255 L 331 244 L 288 244 L 249 185 Z" />
+    <rect x="284" y="185" width="47" height="11" />
+    <rect x="284" y="214" width="43" height="11" />
+    {/* O */}
+    <path d="M 366 184 L 366 196 C 379 196 389 206 389 220 C 389 234 379 244 366 244 C 353 244 343 234 343 220 L 331 220 C 331 240 346 256 366 256 C 386 256 401 240 401 220 C 401 200 386 184 366 184 Z" />
+    {/* L */}
+    <path d="M 432 185 L 432 255 L 481 255 L 481 244 L 444 244 L 444 185 Z" />
+    {/* A */}
+    <path d="M 513 185 L 486 255 L 499 255 L 519 201 L 539 255 L 552 255 L 525 185 Z" />
+    {/* B */}
+    <path d="M 559 185 L 559 196 L 589 196 C 596 196 601 200 601 205 C 601 210 596 214 589 214 L 559 214 L 559 225 L 592 225 C 600 225 605 229 605 235 C 605 240 600 244 592 244 L 559 244 L 559 255 L 593 255 C 608 255 618 247 618 235 C 618 227 613 221 605 219 C 611 216 614 211 614 204 C 614 192 604 185 590 185 Z" />
+  </svg>
+);
+
+const colors = ['#f1dcd5', '#d5e9d7', '#dedcf2', '#f6e8bf', '#d5e9ec'];
+const initials = name => (name || '').split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase();
+
+const Avatar = ({ user, big = false }) => {
+  const bg = colors[(user?.name || '').length % 5];
+  return (
+    <span className={`avatar ${big ? 'big' : ''}`} style={{ background: bg }} title={user?.name || ''}>
+      {initials(user?.name || '?')}
+    </span>
+  );
+};
+
+const duration = n => {
+  n = Math.max(0, Math.floor(n));
+  return [Math.floor(n / 3600), Math.floor(n / 60) % 60, n % 60]
+    .map(x => String(x).padStart(2, '0'))
+    .join(':');
+};
+
+const fmtDate = v => (v ? new Date(v.length === 10 ? v + 'T12:00:00' : v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No due date');
+// ISO/epoch → value for <input type="datetime-local"> in the viewer's own time zone
+const toLocalInput = v => {
+  if (v === undefined || v === null || v === '') return '';
+  const d = new Date(typeof v === 'number' ? v * 1000 : v);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
+const fmtTime = v => new Date(v).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
+export default function SyneolabApp() {
+  const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [signupOpen, setSignupOpen] = useState(false);
+  const [connError, setConnError] = useState('');
+  const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup' | 'requested'
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState('dashboard');
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+
+  const navigate = targetPage => {
+    setPage(targetPage);
+    setFilter('All');
+    setSearch('');
+    setSidebarOpen(false);
+  };
+  const [month, setMonth] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(new Date());
+  const [toastMsg, setToastMsg] = useState('');
+  const [modal, setModal] = useState(null); // { type, id, data }
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [workspaceDefaults, setWorkspaceDefaults] = useState({
+    defaultAccent: '#4f46e5',
+    defaultDarkMode: false,
+    defaultWeekStart: 'Sunday',
+    defaultCurrency: 'USD'
+  });
+  const [accent, setAccent] = useState('#4f46e5');
+  const [darkMode, setDarkMode] = useState(false);
+  const [currency, setCurrency] = useState('USD');
+  const [weekStart, setWeekStart] = useState('Sunday');
+  const [analyticsDays, setAnalyticsDays] = useState(30);
+  const [perfPeriod, setPerfPeriod] = useState('weekly'); // 'daily' | 'weekly' | 'monthly'
+  const [perfDate, setPerfDate] = useState(() => key(new Date()));
+  const [perfEmployee, setPerfEmployee] = useState('all');
+  const [taskProjectFilter, setTaskProjectFilter] = useState('all');
+  const [taskMemberFilter, setTaskMemberFilter] = useState('all');
+  const [goalPeriodFilter, setGoalPeriodFilter] = useState('all'); // 'all' | 'daily' | 'weekly' | 'monthly' | 'quarterly'
+  const [goalMemberFilter, setGoalMemberFilter] = useState('all'); // 'all' | 'mine' | <userId>
+  const [activityFilter, setActivityFilter] = useState('all'); // 'all' | 'tasks' | 'clock' | 'standups' | 'leads' | 'goals'
+  const [activityEmployee, setActivityEmployee] = useState('all');
+  const [liveAlert, setLiveAlert] = useState(null);
+  const [settingsTab, setSettingsTab] = useState('Profile');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [timesheetPerson, setTimesheetPerson] = useState('all');
+  const [timesheetProject, setTimesheetProject] = useState('all');
+  const [timesheetNoteFilter, setTimesheetNoteFilter] = useState('all'); // 'all' | 'with_notes' | 'active' | 'completed'
+  const [timesheetSearch, setTimesheetSearch] = useState('');
+  const [timesheetDateFilter, setTimesheetDateFilter] = useState('');
+  const [timesheetLimit, setTimesheetLimit] = useState(50);
+  const [currentTime, setCurrentTime] = useState(Date.now() / 1000);
+
+  // Core State
+  const [state, setState] = useState({
+    projects: [],
+    tasks: [],
+    leads: [],
+    meetings: [],
+    announcements: [],
+    standups: [],
+    goals: [],
+    users: [],
+    clocks: [],
+    acknowledgements: [],
+    activities: [],
+    integrations: { gmail: false, sheets: false },
+    jobs: [],
+    beacon: { status: 'awake', lastPing: '', totalPings: 1, netGrowthBytes: 0 }
+  });
+
+  const toastTimerRef = useRef(null);
+  const liveAlertTimerRef = useRef(null);
+  const lastSeenActivityIdRef = useRef(null);
+  const userRef = useRef(null);
+  userRef.current = user;
+  const csvInputRef = useRef(null);
+
+  const showToast = msg => {
+    setToastMsg(msg);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastMsg(''), 3500);
+  };
+
+  const playNotificationChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.11); // A5
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.36);
+    } catch {}
+  };
+
+  const applyTheme = (colorHex, isDark = darkMode) => {
+    if (typeof document === 'undefined') return getThemePalette(colorHex, isDark);
+    const palette = getThemePalette(colorHex, isDark);
+    Object.entries(palette).forEach(([k, v]) => {
+      if (k !== 'name') document.documentElement.style.setProperty('--' + k, v);
+    });
+    document.documentElement.dataset.theme = palette.name;
+    document.documentElement.dataset.dark = isDark ? 'true' : 'false';
+    return palette;
+  };
+
+  // Enforce Admin Workspace Default when logged out, and apply per-user preferences only after login
+  const syncActivePreferences = (activeUser, defaults = workspaceDefaults) => {
+    const defAccent = defaults?.defaultAccent || '#4f46e5';
+    const defDark = Boolean(defaults?.defaultDarkMode);
+    const defWeek = defaults?.defaultWeekStart || 'Sunday';
+    const defCurr = defaults?.defaultCurrency || 'USD';
+
+    if (!activeUser) {
+      setAccent(defAccent);
+      setDarkMode(defDark);
+      setWeekStart(defWeek);
+      setCurrency(defCurr);
+      applyTheme(defAccent, defDark);
+      return;
+    }
+
+    const userPrefs = activeUser.preferences || {};
+    const localAccent = typeof localStorage !== 'undefined' ? localStorage.getItem(`accent_${activeUser.id}`) : null;
+    const localDark = typeof localStorage !== 'undefined' ? localStorage.getItem(`darkMode_${activeUser.id}`) : null;
+    const localWeek = typeof localStorage !== 'undefined' ? localStorage.getItem(`weekStart_${activeUser.id}`) : null;
+    const localCurr = typeof localStorage !== 'undefined' ? localStorage.getItem(`currency_${activeUser.id}`) : null;
+
+    const resolvedAccent = userPrefs.accent || localAccent || defAccent;
+    const resolvedDark =
+      userPrefs.darkMode !== undefined
+        ? Boolean(userPrefs.darkMode)
+        : localDark !== null
+        ? localDark === 'true'
+        : defDark;
+    const resolvedWeek = userPrefs.weekStart || localWeek || defWeek;
+    const resolvedCurr = userPrefs.currency || localCurr || defCurr;
+
+    setAccent(resolvedAccent);
+    setDarkMode(resolvedDark);
+    setWeekStart(resolvedWeek);
+    setCurrency(resolvedCurr);
+    applyTheme(resolvedAccent, resolvedDark);
+  };
+
+  const toggleDarkMode = async () => {
+    const nextDark = !darkMode;
+    setDarkMode(nextDark);
+    applyTheme(accent, nextDark);
+    if (user) {
+      try {
+        localStorage.setItem(`darkMode_${user.id}`, String(nextDark));
+        const res = await handleApi('/api/preferences', { darkMode: nextDark });
+        setUser(prev => (prev ? { ...prev, preferences: res.preferences } : prev));
+        if (res.workspaceDefaults) setWorkspaceDefaults(res.workspaceDefaults);
+        showToast(`${nextDark ? 'Dark' : 'Light'} mode saved`);
+      } catch {
+        showToast(`${nextDark ? 'Dark' : 'Light'} mode enabled`);
+      }
+    }
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      localStorage.removeItem('accent');
+      localStorage.removeItem('weekStart');
+      localStorage.removeItem('currency');
+    } catch {}
+    applyTheme('#4f46e5', false);
+    fetchSession();
+    fetch('/api/beacon?source=app-boot', { method: 'POST' }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      syncActivePreferences(user, workspaceDefaults);
+    }
+  }, [user, workspaceDefaults, mounted]);
+
+  const fetchSession = async () => {
+    try {
+      const res = await fetch('/api/session');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to connect to workspace database');
+      setConnError('');
+      const defaults = data.workspaceDefaults || workspaceDefaults;
+      setWorkspaceDefaults(defaults);
+      setUser(data.user);
+      syncActivePreferences(data.user, defaults);
+      setNeedsSetup(data.needsSetup);
+      setSignupOpen(Boolean(data.signupOpen));
+      if (data.user) {
+        await refreshState(data.user);
+      }
+    } catch (e) {
+      console.error(e);
+      setConnError(e.message || 'Unable to connect to workspace database');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshState = async (overrideUser) => {
+    try {
+      const res = await fetch('/api/state');
+      if (res.ok) {
+        const data = await res.json();
+        const activeU = overrideUser || userRef.current;
+        const incomingActs = data.activities || [];
+        if (incomingActs.length > 0) {
+          const newestId = incomingActs[0].id;
+          if (!lastSeenActivityIdRef.current) {
+            lastSeenActivityIdRef.current = newestId;
+          } else if (newestId !== lastSeenActivityIdRef.current) {
+            const prevIdx = incomingActs.findIndex(a => a.id === lastSeenActivityIdRef.current);
+            const freshList = prevIdx === -1 ? incomingActs.slice(0, 5) : incomingActs.slice(0, prevIdx);
+            lastSeenActivityIdRef.current = newestId;
+            if (activeU?.role === 'admin') {
+              const empEvents = freshList.filter(a => a.actorId !== activeU.id);
+              if (empEvents.length > 0) {
+                setLiveAlert({ ...empEvents[0], extraCount: empEvents.length - 1 });
+                playNotificationChime();
+                if (liveAlertTimerRef.current) clearTimeout(liveAlertTimerRef.current);
+                liveAlertTimerRef.current = setTimeout(() => setLiveAlert(null), 9000);
+              }
+            } else if (activeU) {
+              const notifyEmp = freshList.find(a => {
+                if (a.actorId === activeU.id || a.actorRole !== 'admin') return false;
+                const tIds = Array.isArray(a.targetUserIds) ? a.targetUserIds : [];
+                return (
+                  a.targetUserId === activeU.id ||
+                  a.targetUserId === 'all' ||
+                  tIds.includes(activeU.id) ||
+                  tIds.includes('all') ||
+                  (a.category === 'announcements' && a.type !== 'announcement_completed')
+                );
+              });
+              if (notifyEmp) {
+                setLiveAlert(notifyEmp);
+                playNotificationChime();
+                if (liveAlertTimerRef.current) clearTimeout(liveAlertTimerRef.current);
+                liveAlertTimerRef.current = setTimeout(() => setLiveAlert(null), 9000);
+              }
+            }
+          }
+        }
+        setState(data);
+        if (data.workspaceDefaults) {
+          setWorkspaceDefaults(data.workspaceDefaults);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Re-sync session or workspace state immediately when the tab regains focus or becomes visible.
+  useEffect(() => {
+    const onSync = () => {
+      if (document.visibilityState === 'hidden') return;
+      setCurrentTime(Date.now() / 1000);
+      if (user) refreshState();
+      else fetchSession();
+    };
+    window.addEventListener('focus', onSync);
+    document.addEventListener('visibilitychange', onSync);
+    return () => {
+      window.removeEventListener('focus', onSync);
+      document.removeEventListener('visibilitychange', onSync);
+    };
+  }, [user]);
+
+  // Timer Tick
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now() / 1000);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 10s Real-Time Poll for Immediate Admin Notifications (skips hidden tabs to save MongoDB ops) + 10m Zero-Growth MongoDB Beacon
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      refreshState();
+    }, 10000);
+    const beaconInterval = setInterval(() => {
+      fetch('/api/beacon?source=active-session', { method: 'POST' }).catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(beaconInterval);
+    };
+  }, [user]);
+
+  // Global K shortcut
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'Escape') setModal(null);
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('search-input')?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const activeClock = state.clocks?.find(c => c.user_id === user?.id && !c.end);
+  const activeClockSeconds = activeClock ? worked(activeClock, currentTime) : 0;
+  const activeBreakSeconds = activeClock ? breakDuration(activeClock, currentTime) : 0;
+  const isAdmin = user?.role === 'admin';
+  const isNotificationVisibleToUser = (a, activeU = user) => {
+    if (!a || !activeU) return false;
+    if (activeU.role === 'admin') return true;
+    if (a.actorId === activeU.id) return true;
+    if (a.actorRole !== 'admin') return false;
+    const tIds = Array.isArray(a.targetUserIds) ? a.targetUserIds : [];
+    return (
+      a.targetUserId === activeU.id ||
+      a.targetUserId === 'all' ||
+      tIds.includes(activeU.id) ||
+      tIds.includes('all') ||
+      (a.category === 'announcements' && a.type !== 'announcement_completed')
+    );
+  };
+  const lastSeenActivityAt =
+    user?.preferences?.lastSeenActivityAt ||
+    (typeof localStorage !== 'undefined' && user ? localStorage.getItem(`lastSeenAct_${user.id}`) : '') ||
+    '';
+  const unreadActivities = (state.activities || []).filter(
+    a =>
+      a.actorId !== user?.id &&
+      isNotificationVisibleToUser(a, user) &&
+      (!lastSeenActivityAt || String(a.createdAt || '') > lastSeenActivityAt)
+  );
+  const markActivitiesSeen = () => {
+    const nowIso = new Date().toISOString();
+    if (user) {
+      try {
+        localStorage.setItem(`lastSeenAct_${user.id}`, nowIso);
+      } catch {}
+      setUser(prev =>
+        prev ? { ...prev, preferences: { ...(prev.preferences || {}), lastSeenActivityAt: nowIso } } : prev
+      );
+      handleApi('/api/preferences', { lastSeenActivityAt: nowIso }).catch(() => {});
+    }
+  };
+  const departments = (() => {
+    const base =
+      (Array.isArray(state.settings?.departments) && state.settings.departments.length
+        ? state.settings.departments
+        : null) ||
+      (Array.isArray(workspaceDefaults?.departments) && workspaceDefaults.departments.length
+        ? workspaceDefaults.departments
+        : ['Engineering', 'Design', 'Marketing', 'Management']);
+    const seen = new Set(base.map(d => String(d).toLowerCase()));
+    const merged = [...base];
+    (state.users || []).forEach(u => {
+      const dep = String(u.department || '').trim();
+      if (dep && !seen.has(dep.toLowerCase())) {
+        seen.add(dep.toLowerCase());
+        merged.push(dep);
+      }
+    });
+    return merged;
+  })();
+
+  const handleCreateDepartment = async rawName => {
+    const name = String(rawName || '').trim().slice(0, 40);
+    if (!name) return null;
+    if (departments.some(d => d.toLowerCase() === name.toLowerCase())) {
+      const existing = departments.find(d => d.toLowerCase() === name.toLowerCase());
+      showToast(`Department "${existing}" already exists`);
+      return existing;
+    }
+    const nextDepts = [...departments, name];
+    setWorkspaceDefaults(prev => ({ ...prev, departments: nextDepts }));
+    setState(prev => ({
+      ...prev,
+      settings: prev.settings ? { ...prev.settings, departments: nextDepts } : { departments: nextDepts }
+    }));
+    showToast(`Department "${name}" created`);
+    try {
+      const res = await handleApi('/api/users', { action: 'addDepartment', name });
+      if (Array.isArray(res?.departments)) {
+        setWorkspaceDefaults(prev => ({ ...prev, departments: res.positions ? prev.departments : res.departments }));
+        setState(prev => ({
+          ...prev,
+          settings: prev.settings ? { ...prev.settings, departments: res.departments } : { departments: res.departments }
+        }));
+      }
+      refreshState();
+      return name;
+    } catch (err) {
+      refreshState();
+      showToast(err.message);
+      return null;
+    }
+  };
+
+  const handleRemoveDepartment = async deptName => {
+    if (departments.length <= 1) {
+      showToast('At least one department must remain in the workspace');
+      return;
+    }
+    const assignedCount = (state.users || []).filter(u => u.department === deptName).length;
+    const msg = assignedCount
+      ? `Remove "${deptName}" from department options? (${assignedCount} member${assignedCount > 1 ? 's' : ''} currently have this department)`
+      : `Remove "${deptName}" department?`;
+    if (!confirm(msg)) return;
+    const nextDepts = departments.filter(d => d !== deptName);
+    if (filter === deptName) setFilter('All');
+    setWorkspaceDefaults(prev => ({ ...prev, departments: nextDepts }));
+    setState(prev => ({
+      ...prev,
+      settings: prev.settings ? { ...prev.settings, departments: nextDepts } : { departments: nextDepts }
+    }));
+    showToast(`Department "${deptName}" removed`);
+    try {
+      const res = await handleApi('/api/users', { action: 'removeDepartment', name: deptName });
+      if (Array.isArray(res?.departments)) {
+        setWorkspaceDefaults(prev => ({ ...prev, departments: res.departments }));
+        setState(prev => ({
+          ...prev,
+          settings: prev.settings ? { ...prev.settings, departments: res.departments } : { departments: res.departments }
+        }));
+      }
+      refreshState();
+    } catch (err) {
+      refreshState();
+      showToast(err.message);
+    }
+  };
+
+  const promptCreateDepartment = async onCreated => {
+    const input = prompt('Enter new department name (e.g. Sales, Operations, QA, Support, HR):');
+    if (!input || !input.trim()) return;
+    const created = await handleCreateDepartment(input);
+    if (created && typeof onCreated === 'function') {
+      onCreated(created);
+    }
+  };
+
+  const getUserPositions = u => {
+    if (!u) return [];
+    if (Array.isArray(u.positions) && u.positions.length > 0) {
+      const cleaned = [
+        ...new Set(
+          u.positions
+            .flatMap(p => String(p || '').split(/[,·]+/))
+            .map(s => s.trim())
+            .filter(Boolean)
+        )
+      ];
+      if (cleaned.length > 0) return cleaned;
+    }
+    if (typeof u.position === 'string' && u.position.trim()) {
+      const cleaned = [
+        ...new Set(
+          u.position
+            .split(/[,·]+/)
+            .map(s => s.trim())
+            .filter(Boolean)
+        )
+      ];
+      if (cleaned.length > 0) return cleaned;
+    }
+    return (isAdmin || u.id === user?.id) && u.role === 'admin' ? ['Founder', 'CEO'] : ['Team Member'];
+  };
+
+  const positions = (() => {
+    const defaultPos = [
+      'Founder',
+      'CEO',
+      'Co-Founder',
+      'Marketing Head',
+      'Analyst',
+      'Engineering Lead',
+      'Software Engineer',
+      'Product Designer',
+      'Project Manager',
+      'Operations Lead'
+    ];
+    const base =
+      (Array.isArray(state.settings?.positions) && state.settings.positions.length
+        ? state.settings.positions
+        : null) ||
+      (Array.isArray(workspaceDefaults?.positions) && workspaceDefaults.positions.length
+        ? workspaceDefaults.positions
+        : defaultPos);
+    const seen = new Set();
+    const merged = [];
+    ['Founder', 'CEO', ...base].forEach(p => {
+      const clean = String(p || '').trim();
+      if (clean && !seen.has(clean.toLowerCase())) {
+        seen.add(clean.toLowerCase());
+        merged.push(clean);
+      }
+    });
+    (state.users || []).forEach(u => {
+      getUserPositions(u).forEach(pos => {
+        if (pos && !seen.has(pos.toLowerCase())) {
+          seen.add(pos.toLowerCase());
+          merged.push(pos);
+        }
+      });
+    });
+    return merged;
+  })();
+
+  const handleSaveMemberPositions = async (targetUser, rawPositionsInput, extraChanges = {}) => {
+    if (!targetUser?.id) return;
+    const rawList = Array.isArray(rawPositionsInput)
+      ? rawPositionsInput.flatMap(p => String(p || '').split(/[,·]+/))
+      : String(rawPositionsInput || '').split(/[,·]+/);
+    const seen = new Set();
+    const cleanList = [];
+    for (const item of rawList) {
+      const trimmed = item.trim().slice(0, 50);
+      if (!trimmed) continue;
+      const lower = trimmed.toLowerCase();
+      if (seen.has(lower)) continue;
+      seen.add(lower);
+      cleanList.push(trimmed);
+    }
+    const finalPositions = cleanList.length
+      ? cleanList
+      : targetUser.role === 'admin'
+      ? ['Founder', 'CEO']
+      : ['Team Member'];
+    const joinedPosition = finalPositions.join(', ');
+
+    // 0ms optimistic UI update across state.users, active modal, and current user
+    setState(prev => ({
+      ...prev,
+      users: (prev.users || []).map(item =>
+        item.id === targetUser.id
+          ? { ...item, ...extraChanges, positions: finalPositions, position: joinedPosition }
+          : item
+      )
+    }));
+    if (targetUser.id === user?.id) {
+      setUser(prev =>
+        prev ? { ...prev, ...extraChanges, positions: finalPositions, position: joinedPosition } : prev
+      );
+    }
+    setModal(prev =>
+      prev && prev.type === 'person' && prev.data?.id === targetUser.id
+        ? { ...prev, data: { ...prev.data, ...extraChanges, positions: finalPositions, position: joinedPosition } }
+        : prev
+    );
+
+    try {
+      await handleApi('/api/users', {
+        action: 'update',
+        id: targetUser.id,
+        ...extraChanges,
+        positions: finalPositions,
+        position: joinedPosition
+      });
+      refreshState();
+      showToast(`Positions updated: ${joinedPosition}`);
+    } catch (err) {
+      refreshState();
+      showToast(err.message);
+    }
+  };
+
+  const handleCreatePosition = async rawName => {
+    const names = String(rawName || '')
+      .split(/[,·]+/)
+      .map(s => s.trim().slice(0, 50))
+      .filter(Boolean);
+    if (!names.length) return null;
+    const name = names[0];
+    if (positions.some(p => p.toLowerCase() === name.toLowerCase())) {
+      const existing = positions.find(p => p.toLowerCase() === name.toLowerCase());
+      showToast(`Position "${existing}" already exists`);
+      return existing;
+    }
+    const nextPositions = [...positions, name];
+    setWorkspaceDefaults(prev => ({ ...prev, positions: nextPositions }));
+    setState(prev => ({
+      ...prev,
+      settings: prev.settings ? { ...prev.settings, positions: nextPositions } : { positions: nextPositions }
+    }));
+    showToast(`Position "${name}" created`);
+    try {
+      const res = await handleApi('/api/users', { action: 'addPosition', name });
+      if (Array.isArray(res?.positions)) {
+        setWorkspaceDefaults(prev => ({ ...prev, positions: res.positions }));
+        setState(prev => ({
+          ...prev,
+          settings: prev.settings ? { ...prev.settings, positions: res.positions } : { positions: res.positions }
+        }));
+      }
+      refreshState();
+      return name;
+    } catch (err) {
+      refreshState();
+      showToast(err.message);
+      return null;
+    }
+  };
+
+  const handleRemovePosition = async posName => {
+    if (positions.length <= 1) {
+      showToast('At least one position must remain in the workspace');
+      return;
+    }
+    const assignedCount = (state.users || []).filter(u =>
+      getUserPositions(u).some(p => p.toLowerCase() === posName.toLowerCase())
+    ).length;
+    const msg = assignedCount
+      ? `Remove "${posName}" from position options? (${assignedCount} member${assignedCount > 1 ? 's' : ''} currently hold this position)`
+      : `Remove "${posName}" position?`;
+    if (!confirm(msg)) return;
+    const nextPositions = positions.filter(p => p !== posName);
+    setWorkspaceDefaults(prev => ({ ...prev, positions: nextPositions }));
+    setState(prev => ({
+      ...prev,
+      settings: prev.settings ? { ...prev.settings, positions: nextPositions } : { positions: nextPositions }
+    }));
+    showToast(`Position "${posName}" removed`);
+    try {
+      const res = await handleApi('/api/users', { action: 'removePosition', name: posName });
+      if (Array.isArray(res?.positions)) {
+        setWorkspaceDefaults(prev => ({ ...prev, positions: res.positions }));
+        setState(prev => ({
+          ...prev,
+          settings: prev.settings ? { ...prev.settings, positions: res.positions } : { positions: res.positions }
+        }));
+      }
+      refreshState();
+    } catch (err) {
+      refreshState();
+      showToast(err.message);
+    }
+  };
+
+  const promptCreatePosition = async onCreated => {
+    const input = prompt('Enter new position / job title (e.g. Founder, CEO, Marketing Head, Analyst, CTO):');
+    if (!input || !input.trim()) return;
+    const created = await handleCreatePosition(input);
+    if (created && typeof onCreated === 'function') {
+      onCreated(created);
+    }
+  };
+
+  // Strict RBAC project list: Admins see all projects; Employees only see projects explicitly assigned to them
+  const assignedProjects = isAdmin
+    ? state.projects || []
+    : (state.projects || []).filter(
+        p =>
+          p.lead === user?.id ||
+          p.owner === user?.id ||
+          (Array.isArray(p.members) && p.members.includes(user?.id)) ||
+          (state.tasks || []).some(
+            t =>
+              t.project === p.id &&
+              (t.assignee === user?.id || (Array.isArray(t.assignees) && t.assignees.includes(user?.id)))
+          )
+      );
+  const isGoalAssignedToUser = (goal = {}, uidVal = user?.id) => {
+    if (!uidVal || !goal) return false;
+    const isTeamWide =
+      (!goal.assignee || goal.assignee === 'all') &&
+      (!Array.isArray(goal.assignees) || goal.assignees.length === 0);
+    return (
+      isTeamWide ||
+      goal.owner === uidVal ||
+      goal.assignee === uidVal ||
+      (Array.isArray(goal.assignees) && goal.assignees.includes(uidVal))
+    );
+  };
+
+  // Mirrors the server rules: admins change anything; members change tasks/leads/standups/goals they own, are assigned, or collaborate on.
+  const canEdit = (kind, record = {}) =>
+    isAdmin ||
+    (['tasks', 'leads', 'standups', 'goals'].includes(kind) &&
+      (!record.id ||
+        record.owner === user?.id ||
+        record.assignee === user?.id ||
+        (Array.isArray(record.assignees) && record.assignees.includes(user?.id)) ||
+        (kind === 'goals' && isGoalAssignedToUser(record, user?.id))));
+  const canDelete = (kind, record = {}) =>
+    isAdmin || (['tasks', 'leads', 'standups', 'goals'].includes(kind) && record.owner === user?.id);
+
+  const formatMoney = v =>
+    new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency || 'USD',
+      maximumFractionDigits: 0
+    }).format(Number(v) || 0);
+
+  const handleApi = async (url, body, method = 'POST') => {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  };
+
+  const getDefaultGoalDue = (period = 'weekly') => {
+    const d = new Date();
+    if (period === 'daily') return key(d);
+    if (period === 'weekly') {
+      const endW = new Date(d);
+      endW.setDate(d.getDate() + (7 - d.getDay()));
+      return key(endW);
+    }
+    if (period === 'monthly') {
+      const endM = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      return key(endM);
+    }
+    const endQ = new Date(d.getFullYear(), d.getMonth() + 3, 0);
+    return key(endQ);
+  };
+
+  const quickUpdateGoal = async (goal, patch, toastText = 'Goal progress synced with team') => {
+    if (!goal?.id || !canEdit('goals', goal)) return;
+    const prevGoals = state.goals || [];
+    const nextGoal = { ...goal, ...patch };
+    const targetVal = Math.max(1, Number(nextGoal.targetValue || 100));
+    const curVal = Math.max(0, Number(nextGoal.currentValue || 0));
+    if (curVal >= targetVal) {
+      nextGoal.status = 'Completed';
+    } else if (nextGoal.status === 'Completed' && curVal < targetVal) {
+      nextGoal.status = 'On track';
+    }
+    // 0ms optimistic UI update
+    setState(prev => ({
+      ...prev,
+      goals: (prev.goals || []).map(g => (g.id === goal.id ? nextGoal : g))
+    }));
+    if (toastText) showToast(toastText);
+    try {
+      await handleApi('/api/record', { kind: 'goals', id: goal.id, body: nextGoal });
+      refreshState();
+    } catch (err) {
+      setState(prev => ({ ...prev, goals: prevGoals }));
+      showToast(err.message);
+    }
+  };
+
+  // Clock Actions — 'stop' always requires a work summary note via the Clock-Out Modal
+  const requestClockOut = () => {
+    if (!activeClock) return;
+    setModal({
+      type: 'clockOut',
+      data: {
+        project: activeClock.project || '',
+        task: activeClock.task || '',
+        note: activeClock.note || '',
+        markTaskStatus: ''
+      }
+    });
+  };
+
+  const handleClock = async (action, extra = {}) => {
+    if (action === 'stop' && (!extra.note || String(extra.note).trim().length < 3)) {
+      requestClockOut();
+      return;
+    }
+    try {
+      await handleApi('/api/clock', { action, ...extra });
+      await refreshState();
+      showToast(
+        action === 'stop'
+          ? 'Clocked out. Work summary note & shift hours saved.'
+          : action === 'break'
+          ? 'Break started — break timer is now running'
+          : action === 'resume'
+          ? 'Break ended — work timer resumed'
+          : action === 'switch'
+          ? 'Active focus switched'
+          : 'Time tracker updated'
+      );
+    } catch (e) {
+      showToast(e.message);
+    }
+  };
+
+  // Export CSV (Least privilege: employees export only their own time entries / leads)
+  const exportCSV = kind => {
+    const dateStr = key(new Date());
+    const visibleTimeRows = isAdmin ? state.clocks : state.clocks.filter(c => c.user_id === user.id);
+    const rows =
+      kind === 'leads'
+        ? [
+            ['Name', 'Company', 'Email', 'Phone', 'Value', 'Stage', 'Follow up', 'Source', 'Notes'],
+            ...state.leads.map(l => [l.title, l.company, l.email, l.phone, l.value, l.stage, l.followup, l.source || '', l.description])
+          ]
+        : [
+            ['Member', 'Project', 'Start UTC', 'End UTC', 'Work duration', 'Break duration', 'Break seconds', 'Focused hours', 'Note'],
+            ...visibleTimeRows.map(c => [
+              state.users.find(u => u.id === c.user_id)?.name || 'Unknown',
+              state.projects.find(p => p.id === c.project)?.title || 'General work',
+              new Date(c.start * 1000).toISOString(),
+              c.end ? new Date(c.end * 1000).toISOString() : 'Active',
+              duration(worked(c, currentTime)),
+              duration(breakDuration(c, currentTime)),
+              Math.round(breakDuration(c, currentTime)),
+              (worked(c, currentTime) / 3600).toFixed(3),
+              c.note
+            ])
+          ];
+    const csvContent = rows
+      .map(r => r.map(v => '"' + String(v ?? '').replace(/^[=+@-]/, "'$&").replace(/"/g, '""') + '"').join(','))
+      .join('\r\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `syneolab-${kind}-${dateStr}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  // Import Leads CSV
+  const importLeadsCSV = async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) throw new Error('CSV file must have a header row and at least one lead row');
+      const parseRow = row => {
+        const out = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < row.length; i++) {
+          const ch = row[i];
+          if (ch === '"') {
+            if (inQ && row[i + 1] === '"') { cur += '"'; i++; }
+            else inQ = !inQ;
+          } else if (ch === ',' && !inQ) {
+            out.push(cur.trim());
+            cur = '';
+          } else cur += ch;
+        }
+        out.push(cur.trim());
+        return out;
+      };
+      const headers = parseRow(lines[0]).map(h => h.toLowerCase());
+      const idx = name => headers.findIndex(h => h.includes(name));
+      const validStages = ['New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost'];
+      let imported = 0;
+      for (const line of lines.slice(1, 101)) {
+        const cols = parseRow(line);
+        const title = cols[idx('name') >= 0 ? idx('name') : 0] || '';
+        if (!title) continue;
+        const rawStage = cols[idx('stage')] || 'New';
+        const stage = validStages.find(s => s.toLowerCase() === rawStage.toLowerCase()) || 'New';
+        await handleApi('/api/record', {
+          kind: 'leads',
+          body: {
+            title,
+            company: cols[idx('company')] || '',
+            email: cols[idx('email')] || '',
+            phone: cols[idx('phone')] || '',
+            value: Number(String(cols[idx('value')] || '0').replace(/[^\d.]/g, '')) || 0,
+            stage,
+            followup: cols[idx('follow')] || '',
+            source: cols[idx('source')] || 'CSV Import',
+            description: cols[idx('note')] || ''
+          }
+        });
+        imported++;
+      }
+      await refreshState();
+      showToast(`Imported ${imported} lead${imported === 1 ? '' : 's'} into MongoDB`);
+    } catch (err) {
+      showToast(err.message || 'Could not import CSV');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  // Natural Language Lead Capture
+  const parseLeadText = text => {
+    const get = k => {
+      const m = text.match(new RegExp('(?:^|[;\\n])\\s*' + k + '\\s*:\\s*([^;\\n]+)', 'i'));
+      return m ? m[1].trim() : '';
+    };
+    return {
+      title: get('Name') || text.split(/[;\n]/)[0].replace(/^name:\s*/i, '').slice(0, 100),
+      company: get('Company'),
+      email: get('Email') || (text.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i) || [''])[0],
+      phone: get('Phone'),
+      value: get('Value').replace(/[^\d.]/g, '') || 0,
+      description: get('Notes') || text,
+      stage: 'New'
+    };
+  };
+
+  // RENDER: Loading or Auth Page if not logged in
+  if (!mounted) {
+    return <div style={{ minHeight: '100vh', background: '#f3f6f2' }} />;
+  }
+
+  if (!user) {
+    return (
+      <div className="auth">
+        <div className="auth-art">
+          <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+            <SyneoLogo size={56} idPrefix="auth" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <SyneoWordmark height={24} color="#ffffff" />
+              <span style={{ fontSize: 9.5, letterSpacing: '0.19em', color: 'rgba(255,255,255,0.72)', fontWeight: 600 }}>
+                “WHERE CREATIVITY MEETS INNOVATIONS”
+              </span>
+            </div>
+          </div>
+          <div className="eyebrow" style={{ marginLeft: 0, color: '#8fbfa0' }}>
+            A little structure. A lot of possibility.
+          </div>
+          <h1>Great work.<br />Better, together.</h1>
+          <p>One thoughtful space for your people, projects, and everything that moves your business forward.</p>
+        </div>
+        <div className="auth-form">
+          {connError ? (
+            <div style={{ maxWidth: 380 }}>
+              <div className="eyebrow" style={{ marginLeft: 0 }}>CONNECTION STATUS</div>
+              <h2>Unable to reach database</h2>
+              <p className="sub" style={{ marginBottom: 20 }}>
+                {connError}. If using MongoDB Atlas, ensure your current IP address (or <code>0.0.0.0/0</code>) is added under <b>Security → Network Access</b>.
+              </p>
+              <button className="primary" onClick={() => { setLoading(true); fetchSession(); }}>
+                Retry connection <Icon name="arrow" />
+              </button>
+            </div>
+          ) : authMode === 'requested' && !needsSetup ? (
+            <div>
+              <div className="eyebrow" style={{ marginLeft: 0 }}>REQUEST SENT</div>
+              <h2>Thanks — you're on the list.</h2>
+              <p className="sub" style={{ marginBottom: 20 }}>
+                An administrator needs to approve your account. Once approved, sign in with the email and password you just chose.
+              </p>
+              <button className="primary" onClick={() => setAuthMode('signin')}>
+                Back to sign in <Icon name="arrow" />
+              </button>
+            </div>
+          ) : authMode === 'signup' && !needsSetup ? (
+            <form
+              onSubmit={async e => {
+                e.preventDefault();
+                const payload = Object.fromEntries(new FormData(e.target));
+                if (payload.password !== payload.confirm) return alert('The two passwords do not match.');
+                try {
+                  await handleApi('/api/signup', payload);
+                  setAuthMode('requested');
+                  fetchSession();
+                } catch (err) {
+                  alert(err.message);
+                  fetchSession();
+                }
+              }}
+            >
+              <div className="eyebrow" style={{ marginLeft: 0 }}>SYNEOLAB WORKSPACE</div>
+              <h2>Request access</h2>
+              <p className="sub">For employees. An administrator will review your request before you can sign in.</p>
+              <div className="field">
+                <label>Full name</label>
+                <input name="name" type="text" required autoComplete="name" />
+              </div>
+              <div className="field">
+                <label>Work email</label>
+                <input name="email" type="email" required autoComplete="username" />
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Department</label>
+                  <select name="department" defaultValue={departments[0] || 'Engineering'}>
+                    {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Position / title</label>
+                  <select name="position" defaultValue={positions.find(p => p !== 'CEO') || positions[0] || 'Analyst'}>
+                    {positions.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Password (12+ characters)</label>
+                  <input name="password" type="password" required minLength="12" autoComplete="new-password" />
+                </div>
+                <div className="field">
+                  <label>Confirm password</label>
+                  <input name="confirm" type="password" required minLength="12" autoComplete="new-password" />
+                </div>
+              </div>
+              <button className="primary" style={{ marginTop: 15 }}>
+                Send request <Icon name="arrow" />
+              </button>
+              <p className="sub" style={{ marginTop: 18 }}>
+                Already approved?{' '}
+                <button type="button" className="auth-link" onClick={() => setAuthMode('signin')}>
+                  Sign in
+                </button>
+              </p>
+            </form>
+          ) : (
+            <form
+              onSubmit={async e => {
+                e.preventDefault();
+                const payload = Object.fromEntries(new FormData(e.target));
+                try {
+                  const res = await handleApi(needsSetup ? '/api/setup' : '/api/login', payload);
+                  setUser(res.user);
+                  await refreshState();
+                } catch (err) {
+                  // Someone already created the workspace (e.g. in another tab): switch to sign-in.
+                  if (needsSetup && /already configured/i.test(err.message)) {
+                    setNeedsSetup(false);
+                    alert('This workspace already has an administrator. Please sign in.');
+                  } else {
+                    alert(err.message);
+                  }
+                }
+              }}
+            >
+              <div className="eyebrow" style={{ marginLeft: 0 }}>SYNEOLAB WORKSPACE</div>
+              <h2>{needsSetup ? 'Make space for great work.' : 'Welcome back.'}</h2>
+              <p className="sub">
+                {needsSetup ? 'Create the administrator account for your company.' : 'Sign in to pick up where your team left off.'}
+              </p>
+              {needsSetup && (
+                <div className="field">
+                  <label>Your name</label>
+                  <input name="name" type="text" required placeholder="Administrator name" />
+                </div>
+              )}
+              <div className="field">
+                <label>Work email</label>
+                <input name="email" type="email" required autoComplete="username" />
+              </div>
+              <div className="field">
+                <label>Password</label>
+                <input name="password" type="password" required minLength="12" autoComplete={needsSetup ? 'new-password' : 'current-password'} />
+              </div>
+              {needsSetup && <p className="sub">Use at least 12 characters. This account manages your team.</p>}
+              <button className="primary" style={{ marginTop: 15 }}>
+                {needsSetup ? 'Create workspace' : 'Sign in'} <Icon name="arrow" />
+              </button>
+              {!needsSetup && (
+                <p className="sub" style={{ marginTop: 18 }}>
+                  {signupOpen ? (
+                    <>
+                      New employee?{' '}
+                      <button type="button" className="auth-link" onClick={() => setAuthMode('signup')}>
+                        Request access
+                      </button>
+                    </>
+                  ) : (
+                    'New employee? Sign-ups are currently closed — ask your administrator to add you.'
+                  )}
+                </p>
+              )}
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // --- VIEWS ---
+
+  const isUserAssignedToTask = (t, uid) =>
+    Boolean(t && uid && (t.assignee === uid || (Array.isArray(t.assignees) && t.assignees.includes(uid))));
+
+  const getProjectProgressPct = p => {
+    if (!p || p.empty) return 0;
+    const pTasks = state.tasks.filter(t => t.project === p.id);
+    if (pTasks.length > 0) {
+      return Math.round((pTasks.filter(t => t.status === 'Done').length / pTasks.length) * 100);
+    }
+    const milestones = Array.isArray(p.milestones) ? p.milestones : [];
+    if (milestones.length > 0) {
+      return Math.round((milestones.filter(m => m.done).length / milestones.length) * 100);
+    }
+    if (p.status === 'Completed') return 100;
+    return Math.min(100, Math.max(0, Math.round(Number(p.progress || 0))));
+  };
+
+  // 1. Dashboard View
+  const renderDashboard = () => {
+    const todayStr = key(new Date());
+    const doneTasks = state.tasks.filter(t => t.status === 'Done').length;
+    const blockedTasks = state.tasks.filter(t => t.blocked && t.status !== 'Done');
+    const overdueTasks = state.tasks.filter(t => t.due && t.due < todayStr && t.status !== 'Done');
+    const dueLeads = state.leads.filter(l => l.followup && l.followup <= todayStr && !['Won', 'Lost'].includes(l.stage));
+    const todayStandups = (state.standups || []).filter(s => (s.created || '').slice(0, 10) === todayStr);
+    const workingCount = state.clocks.filter(c => !c.end && !c.break_start).length;
+    const breakCount = state.clocks.filter(c => !c.end && c.break_start).length;
+
+    const nextMeeting = state.meetings
+      .filter(m => new Date(m.end) > new Date())
+      .sort((a, b) => a.start.localeCompare(b.start))[0];
+
+    const maxTasks = Math.max(1, ...state.projects.map(p => state.tasks.filter(t => t.project === p.id).length));
+    const comp = completion(state.tasks);
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Dashboard</h1>
+            <p className="sub">Everything your team is building, in one calm place.</p>
+          </div>
+          <div className="actions">
+            <button onClick={() => setModal({ type: 'standups', data: {} })}>
+              <Icon name="pulse" /> Daily check-in
+            </button>
+            {isAdmin && (
+              <button className="primary" onClick={() => setModal({ type: 'projects', data: {} })}>
+                <Icon name="plus" /> Add project
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="stats dashboard-stats">
+          <div className="stat green">
+            <span>Total projects</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.projects.length}</span>
+            <span className="sub">Every idea has a home</span>
+          </div>
+          <div className="stat">
+            <span>Ended projects</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.projects.filter(p => p.status === 'Completed').length}</span>
+            <span className="sub">Completed and delivered</span>
+          </div>
+          <div className="stat">
+            <span>Running projects</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.projects.filter(p => p.status === 'Active').length}</span>
+            <span className="sub">Moving forward together</span>
+          </div>
+          <div className="stat">
+            <span>Pending projects</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.projects.filter(p => p.status === 'Planning').length}</span>
+            <span className="sub">Awaiting their next chapter</span>
+          </div>
+        </div>
+
+        {/* Executive Alignment & Attention Bar */}
+        <div className="attention-bar">
+          <button
+            type="button"
+            className={`attention-pill ${blockedTasks.length ? 'alert' : ''}`}
+            onClick={() => { navigate('tasks'); setFilter('Blocked'); }}
+          >
+            <i className="dot" style={{ background: blockedTasks.length ? '#c6463d' : 'var(--green)' }} />
+            <span><b>{blockedTasks.length}</b> Blocked tasks</span>
+          </button>
+          <button
+            type="button"
+            className={`attention-pill ${overdueTasks.length ? 'warn' : ''}`}
+            onClick={() => { navigate('tasks'); setFilter('Overdue'); }}
+          >
+            <i className="dot" style={{ background: overdueTasks.length ? '#d69e2e' : 'var(--green)' }} />
+            <span><b>{overdueTasks.length}</b> Overdue tasks</span>
+          </button>
+          <button
+            type="button"
+            className={`attention-pill ${dueLeads.length ? 'warn' : ''}`}
+            onClick={() => { navigate('leads'); setFilter('Follow-up due'); }}
+          >
+            <i className="dot" style={{ background: dueLeads.length ? '#d69e2e' : 'var(--green)' }} />
+            <span><b>{dueLeads.length}</b> Lead follow-ups due</span>
+          </button>
+          <button
+            type="button"
+            className="attention-pill"
+            onClick={() => navigate('clock')}
+          >
+            <i className="dot" />
+            <span><b>{workingCount}</b> Working · <b>{breakCount}</b> On break</span>
+          </button>
+          <button
+            type="button"
+            className="attention-pill"
+            onClick={() => navigate('pulse')}
+          >
+            <i className="dot" style={{ background: 'var(--mid)' }} />
+            <span><b>{todayStandups.length}</b> Team check-ins today · <b>{(state.goals || []).length}</b> Goals</span>
+          </button>
+        </div>
+
+        <div className="bento-grid">
+          {/* Project Analytics Pillars */}
+          <section className="card project-analytics">
+            <div className="card-head">
+              <div>
+                <h3>Project analytics</h3>
+                <p className="sub">Task volume and completion, at a glance.</p>
+              </div>
+              <span className="mini-label">Completion %</span>
+            </div>
+            <div className="project-bars">
+              {(state.projects.length
+                ? state.projects.slice(0, 7)
+                : Array.from({ length: 7 }, (_, i) => ({ id: `empty-${i}`, title: 'No project', empty: true }))
+              ).map((p, i) => {
+                const pTasks = p.empty ? [] : state.tasks.filter(t => t.project === p.id);
+                const c = completion(pTasks);
+                const pctVal = p.empty ? 0 : getProjectProgressPct(p);
+                const colorVars = ['mid', 'green', 'soft', 'deep', 'mid', 'soft', 'green'];
+                const barHeight = c.total ? 50 + (50 * c.total) / maxTasks : pctVal > 0 ? 60 : 50;
+                return (
+                  <button
+                    key={p.id}
+                    className="project-bar-item"
+                    style={{
+                      '--bar-height': `${barHeight}%`,
+                      '--bar-color': `var(--${colorVars[i % colorVars.length]})`
+                    }}
+                    onClick={() => {
+                      if (!p.empty) setModal({ type: 'projects', id: p.id, data: p });
+                      else if (isAdmin) setModal({ type: 'projects', data: {} });
+                    }}
+                    aria-label={`${p.title}: ${pctVal}% complete, ${c.done} of ${c.total} tasks`}
+                  >
+                    <span className="bar-tooltip" role="tooltip">
+                      <strong>{p.title}</strong>
+                      <b>{pctVal}% complete</b>
+                      <small>{c.total ? `${c.done} / ${c.total} tasks finished` : p.status || 'No tasks yet'}</small>
+                    </span>
+                    <span className="pill-track">
+                      <span className="pill-fill" style={{ height: `${pctVal}%` }}></span>
+                    </span>
+                    <span className="pill-label">
+                      {p.empty ? '—' : p.title.split(' ').map(x => x[0]).join('').slice(0, 3).toUpperCase()}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="chart-foot">
+              <span><i className="dot"></i>Completed tasks</span>
+              <span><i className="dot striped"></i>Remaining tasks</span>
+            </div>
+          </section>
+
+          {/* Up Next Reminder */}
+          <section className="card reminder">
+            <div>
+              <div className="card-head">
+                <h3>Reminders</h3>
+                <Icon name="calendar" />
+              </div>
+              <span className="mini-label">{nextMeeting ? fmtDate(nextMeeting.start) : 'Your next conversation'}</span>
+              {nextMeeting ? (
+                <>
+                  <h2>{nextMeeting.title}</h2>
+                  <p className="sub">Time: {fmtTime(nextMeeting.start)} – {fmtTime(nextMeeting.end)}</p>
+                  <div className="avatar-stack">
+                    {(nextMeeting.attendees || []).slice(0, 4).map(uid => (
+                      <Avatar key={uid} user={state.users.find(u => u.id === uid)} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="empty">
+                  <strong>A moment to focus</strong>Your next meeting will appear here.
+                </div>
+              )}
+            </div>
+            {nextMeeting?.link ? (
+              <a className="primary meeting-join" target="_blank" rel="noopener noreferrer" href={nextMeeting.link}>
+                <Icon name="meetings" /> Join meeting ↗
+              </a>
+            ) : (
+              <button className="primary" onClick={() => navigate('meetings')}>
+                <Icon name="meetings" /> View meetings
+              </button>
+            )}
+          </section>
+
+          {/* Projects List */}
+          <section className="card dashboard-projects">
+            <div className="card-head">
+              <h3>Projects</h3>
+              <button className="small" onClick={() => navigate('projects')}>View all ↗</button>
+            </div>
+            {state.projects.slice(0, 5).map((p, i) => {
+              const progressPct = getProjectProgressPct(p);
+              return (
+                <div key={p.id} className="list-row" onClick={() => setModal({ type: 'projects', id: p.id, data: p })} style={{ cursor: 'pointer' }}>
+                  <div className={`project-symbol project-symbol-${i % 4}`}>
+                    {['◈', '✳', '▥', '◒'][i % 4]}
+                  </div>
+                  <div className="grow">
+                    <strong>{p.title}</strong>
+                    <span className="sub">{p.due ? `Due ${fmtDate(p.due)}` : 'No deadline set'}</span>
+                  </div>
+                  <span className="project-percent">{progressPct}%</span>
+                </div>
+              );
+            })}
+            {state.projects.length === 0 && (
+              <div className="empty">
+                <strong>Ideas start here</strong>Create your first project.
+              </div>
+            )}
+          </section>
+
+          {/* Team Collaboration */}
+          <section className="card dashboard-team">
+            <div className="card-head">
+              <h3>Team collaboration</h3>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button className="small" onClick={() => navigate('pulse')}>Goals & sync ↗</button>
+                <button className="small" onClick={() => navigate('team')}>Team ↗</button>
+              </div>
+            </div>
+            {state.users.slice(0, 4).map(u => {
+              const isSelfOrAdmin = isAdmin || u.id === user.id;
+              const activeTask = isSelfOrAdmin
+                ? state.tasks.find(t => isUserAssignedToTask(t, u.id) && t.status !== 'Done')
+                : null;
+              const uGoals = isSelfOrAdmin
+                ? (state.goals || []).filter(g => isGoalAssignedToUser(g, u.id))
+                : [];
+              const activeGoal = uGoals.find(g => g.status !== 'Completed') || uGoals[0];
+              const uClock = state.clocks.find(c => c.user_id === u.id && !c.end);
+              const uPositions = getUserPositions(u);
+              return (
+                <div key={u.id} className="list-row" onClick={() => setModal({ type: 'person', id: u.id, data: u })} style={{ cursor: 'pointer' }}>
+                  <Avatar user={u} />
+                  <div className="grow">
+                    <strong>{u.name}</strong>
+                    <span className="sub">
+                      {activeTask
+                        ? activeTask.title
+                        : activeGoal
+                        ? `🎯 ${activeGoal.title}`
+                        : uPositions.length
+                        ? `${uPositions.join(' · ')} · ${u.department}`
+                        : u.department}
+                    </span>
+                  </div>
+                  <span className={`tag ${uClock ? (uClock.break_start ? 'yellow' : 'green') : activeTask ? 'yellow' : ''}`}>
+                    {uClock ? (uClock.break_start ? 'On break' : 'Clocked in') : activeTask ? activeTask.status : 'Available'}
+                  </span>
+                </div>
+              );
+            })}
+          </section>
+
+          {/* Project Progress Gauge */}
+          <section className="card dashboard-progress">
+            <div className="card-head">
+              <h3>Project progress</h3>
+              <span className="mini-label">All tasks</span>
+            </div>
+            <div className="gauge-wrap">
+              <svg className="semi-gauge" viewBox="0 0 260 150" role="img" aria-label={`${comp.percent}% tasks completed`}>
+                <defs>
+                  <pattern id="gauge-stripes" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)">
+                    <rect width="5" height="5" fill="var(--bg)" />
+                    <path d="M0 0V5" stroke="var(--stripe)" strokeWidth="2" />
+                  </pattern>
+                </defs>
+                <path d="M28 126 A102 102 0 0 1 232 126" fill="none" stroke="url(#gauge-stripes)" strokeWidth="29" strokeLinecap="round" />
+                {comp.done > 0 && (
+                  <path
+                    d="M28 126 A102 102 0 0 1 232 126"
+                    pathLength="100"
+                    fill="none"
+                    stroke="var(--green)"
+                    strokeWidth="29"
+                    strokeDasharray={`${comp.doneShare * 100} 100`}
+                    strokeLinecap="round"
+                  />
+                )}
+                {comp.ongoing > 0 && (
+                  <path
+                    d="M28 126 A102 102 0 0 1 232 126"
+                    pathLength="100"
+                    fill="none"
+                    stroke={darkMode ? 'var(--mid)' : 'var(--deep)'}
+                    strokeWidth="29"
+                    strokeDasharray={`${comp.ongoingShare * 100} 100`}
+                    strokeDashoffset={`-${comp.doneShare * 100}`}
+                    strokeLinecap={comp.done ? 'butt' : 'round'}
+                  />
+                )}
+              </svg>
+              <div className="gauge-label">
+                <b>{comp.percent}%</b>
+                <span>Tasks completed</span>
+              </div>
+            </div>
+            <div className="gauge-legend">
+              <span><i className="dot"></i>Completed <b>{comp.done}</b></span>
+              <span><i className="dot deep"></i>In progress <b>{comp.ongoing}</b></span>
+              <span><i className="dot striped"></i>Pending <b>{comp.pending}</b></span>
+            </div>
+          </section>
+
+          {/* Time Tracker Card */}
+          <section className={`card timer-card ${activeClock?.break_start ? 'is-on-break' : ''}`}>
+            <div className="card-head">
+              <h3>Time tracker</h3>
+              <span className="timer-state">
+                <i></i>{activeClock ? (activeClock.break_start ? 'On break' : 'Tracking') : 'Ready'}
+              </span>
+            </div>
+            <p className="sub timer-project">
+              {activeClock
+                ? `${state.projects.find(p => p.id === activeClock.project)?.title || 'Focused work'} · In at ${fmtTime(activeClock.start * 1000)}`
+                : 'Make a little space for focused work.'}
+            </p>
+            <div className="time-digits">{duration(activeClock?.break_start ? activeBreakSeconds : activeClockSeconds)}</div>
+            {activeClock && (
+              <div className="timer-metrics">
+                <div className={`timer-metric ${!activeClock.break_start ? 'active' : ''}`}>
+                  <span>Work time</span>
+                  <b>{duration(activeClockSeconds)}</b>
+                </div>
+                <div className={`timer-metric ${activeClock.break_start ? 'active break' : ''}`}>
+                  <span>Break time</span>
+                  <b>{duration(activeBreakSeconds)}</b>
+                </div>
+              </div>
+            )}
+            <div className="timer-controls">
+              {activeClock ? (
+                <>
+                  <button
+                    onClick={() => handleClock(activeClock.break_start ? 'resume' : 'break')}
+                    className="break-button"
+                  >
+                    <Icon name={activeClock.break_start ? 'play' : 'pause'} />
+                    {activeClock.break_start ? 'Resume work' : 'Start break'}
+                  </button>
+                  <button className="stop" onClick={() => handleClock('stop')}>
+                    <Icon name="stop" /> Clock out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="start-button" onClick={() => setModal({ type: 'clock', data: {} })}>
+                    <Icon name="play" /> Clock in
+                  </button>
+                  <button className="break-button" disabled title="Clock in to take a break">
+                    <Icon name="pause" /> Break
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="timer-caption">
+              {activeClock?.break_start
+                ? 'Break timer is running on server. Work timer is paused until you resume or clock out.'
+                : activeClock
+                ? 'Runs on server even if you close this tab — stops only when you clock out.'
+                : 'Your timer keeps running on the server when you close this tab.'}
+            </div>
+          </section>
+        </div>
+      </>
+    );
+  };
+
+  // 2. Tasks Kanban Board
+  const renderTasks = () => {
+    const todayStr = key(new Date());
+    const isUserOnTask = (t, uid) =>
+      t.assignee === uid || (Array.isArray(t.assignees) && t.assignees.includes(uid));
+
+    let filtered = state.tasks.filter(t => {
+      if (taskProjectFilter !== 'all' && (t.project || '') !== taskProjectFilter) return false;
+      if (taskMemberFilter !== 'all' && !isUserOnTask(t, taskMemberFilter)) return false;
+      if (filter === 'All') return true;
+      if (filter === 'My tasks') return isUserOnTask(t, user.id);
+      if (filter === 'High priority') return t.priority === 'High';
+      if (filter === 'Blocked') return Boolean(t.blocked) && t.status !== 'Done';
+      if (filter === 'Overdue') return Boolean(t.due && t.due < todayStr && t.status !== 'Done');
+      if (filter === 'Due this week') {
+        if (!t.due) return false;
+        const d = new Date(t.due);
+        const start = new Date(new Date().setHours(0, 0, 0, 0));
+        return d >= start && d < new Date(Date.now() + 7 * 864e5);
+      }
+      return true;
+    });
+
+    const columns = ['To do', 'In progress', 'In review', 'Done'];
+    const dots = ['#819281', '#d6b86a', '#9983bd', '#328264'];
+
+    const moveTaskStatus = async (task, targetStatus) => {
+      if (!task || task.status === targetStatus) return;
+      const prevStatus = task.status;
+      const updatedTask = { ...task, status: targetStatus };
+      // Instant 0ms optimistic UI update
+      setState(prev => ({
+        ...prev,
+        tasks: prev.tasks.map(item => (item.id === task.id ? updatedTask : item))
+      }));
+      showToast(`Task moved to ${targetStatus}`);
+      try {
+        await handleApi('/api/record', {
+          kind: 'tasks',
+          id: task.id,
+          body: updatedTask
+        });
+        refreshState();
+      } catch (err) {
+        // Roll back on error
+        setState(prev => ({
+          ...prev,
+          tasks: prev.tasks.map(item => (item.id === task.id ? { ...item, status: prevStatus } : item))
+        }));
+        showToast(err.message);
+      }
+    };
+
+    const onDropTask = (e, targetStatus) => {
+      e.preventDefault();
+      const taskId = e.dataTransfer.getData('text/plain');
+      const task = state.tasks.find(t => t.id === taskId);
+      if (task && task.status !== targetStatus) {
+        moveTaskStatus(task, targetStatus);
+      }
+    };
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Tasks</h1>
+            <p className="sub">A little clarity for every next step. Drag cards or click stage arrows to move work forward instantly.</p>
+          </div>
+          <div className="actions">
+            <button
+              className="primary"
+              onClick={() =>
+                setModal({
+                  type: 'tasks',
+                  data: {
+                    project: taskProjectFilter !== 'all' ? taskProjectFilter : (assignedProjects[0]?.id || ''),
+                    assignee: taskMemberFilter !== 'all' ? taskMemberFilter : user.id,
+                    assignees: [taskMemberFilter !== 'all' ? taskMemberFilter : user.id]
+                  }
+                })
+              }
+            >
+              <Icon name="plus" /> New task
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
+          <div className="tabs" style={{ marginBottom: 0 }}>
+            {['All', 'My tasks', 'High priority', 'Blocked', 'Overdue', 'Due this week'].map(tab => (
+              <button key={tab} className={filter === tab ? 'active' : ''} onClick={() => setFilter(tab)}>
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              aria-label="Filter by project"
+              value={taskProjectFilter}
+              onChange={e => setTaskProjectFilter(e.target.value)}
+              style={{ width: 'auto', minWidth: 160, padding: '7px 11px', fontSize: 12 }}
+            >
+              <option value="all">{isAdmin ? 'All projects' : 'My assigned projects'}</option>
+              {assignedProjects.map(p => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+            {isAdmin ? (
+              <select
+                aria-label="Filter by assigned member"
+                value={taskMemberFilter}
+                onChange={e => setTaskMemberFilter(e.target.value)}
+                style={{ width: 'auto', minWidth: 160, padding: '7px 11px', fontSize: 12 }}
+              >
+                <option value="all">All team members</option>
+                {state.users.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            ) : (
+              <span className="tag" title="RBAC Least Privilege: You only view tasks assigned to you or created by you.">
+                🔒 Assigned &amp; Personal Scope · Least Privilege
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="board">
+          {columns.map((col, idx) => {
+            const colTasks = filtered.filter(t => t.status === col);
+            return (
+              <section
+                key={col}
+                className="column"
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => onDropTask(e, col)}
+              >
+                <div className="column-head">
+                  <span>
+                    <i className="dot" style={{ background: dots[idx] }}></i>
+                    {col}
+                  </span>
+                  <span className="muted">{colTasks.length}</span>
+                </div>
+                {colTasks.map(t => {
+                  const subtasks = Array.isArray(t.subtasks) ? t.subtasks : [];
+                  const subDone = subtasks.filter(s => s.done).length;
+                  const comments = Array.isArray(t.comments) ? t.comments : [];
+                  const taskHours = state.clocks
+                    .filter(c => c.task === t.id)
+                    .reduce((n, c) => n + worked(c, currentTime) / 3600, 0);
+                  const isOverdue = t.due && t.due < todayStr && t.status !== 'Done';
+                  const proj = state.projects.find(p => p.id === t.project);
+                  const assignedIds = [...new Set([t.assignee, ...(Array.isArray(t.assignees) ? t.assignees : [])].filter(Boolean))];
+                  const editableTask = canEdit('tasks', t);
+                  const prevCol = idx > 0 ? columns[idx - 1] : null;
+                  const nextCol = idx < columns.length - 1 ? columns[idx + 1] : null;
+
+                  return (
+                    <article
+                      key={t.id}
+                      className={`task ${t.blocked && t.status !== 'Done' ? 'is-blocked' : ''}`}
+                      draggable={editableTask}
+                      onDragStart={e => e.dataTransfer.setData('text/plain', t.id)}
+                      style={editableTask ? undefined : { cursor: 'pointer' }}
+                      onClick={() => setModal({ type: 'tasks', id: t.id, data: t })}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className={`tag ${t.department === 'Design' ? 'purple' : ''}`}>
+                          {t.department || 'General'}
+                        </span>
+                        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                          {t.blocked && t.status !== 'Done' && <span className="tag red">⚑ Blocked</span>}
+                          <span className="sub">
+                            {t.priority === 'High' ? '↗ ' : ''}
+                            {t.priority || 'Medium'}
+                          </span>
+                        </div>
+                      </div>
+                      <h4>{t.title}</h4>
+                      {proj && <div className="sub" style={{ marginTop: -8, marginBottom: 8 }}>◈ {proj.title}</div>}
+                      {t.blocked && t.blockerNote && t.status !== 'Done' && (
+                        <div className="task-blocker-note">⚠ {t.blockerNote}</div>
+                      )}
+                      {subtasks.length > 0 && (
+                        <div style={{ marginBottom: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>
+                            <span>Checklist</span>
+                            <b>{subDone}/{subtasks.length}</b>
+                          </div>
+                          <div className="progress">
+                            <i style={{ width: `${Math.round((subDone / subtasks.length) * 100)}%` }}></i>
+                          </div>
+                        </div>
+                      )}
+                      {col === 'Done' && subtasks.length === 0 && (
+                        <div className="progress"><i style={{ width: '100%' }}></i></div>
+                      )}
+                      {(taskHours > 0 || Number(t.estimateHours) > 0 || comments.length > 0 || t.deliverableUrl) && (
+                        <div className="task-badges">
+                          {(taskHours > 0 || Number(t.estimateHours) > 0) && (
+                            <span className="sub">
+                              ⏱ {taskHours.toFixed(1)}h{Number(t.estimateHours) > 0 ? ` / ${t.estimateHours}h` : ''}
+                            </span>
+                          )}
+                          {comments.length > 0 && <span className="sub">💬 {comments.length}</span>}
+                          {t.deliverableUrl && <span className="sub">🔗 Link</span>}
+                        </div>
+                      )}
+                      <div className="task-meta">
+                        <span style={isOverdue ? { color: '#b53833', fontWeight: 600 } : undefined}>
+                          <Icon name="calendar" /> {fmtDate(t.due)}{isOverdue ? ' · Overdue' : ''}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {editableTask && (
+                            <div
+                              style={{ display: 'inline-flex', gap: 3 }}
+                              onClick={e => e.stopPropagation()}
+                            >
+                              {prevCol && (
+                                <button
+                                  type="button"
+                                  className="small"
+                                  style={{ padding: '2px 6px', fontSize: 10.5, borderRadius: 6 }}
+                                  title={`Move back to ${prevCol}`}
+                                  onClick={() => moveTaskStatus(t, prevCol)}
+                                >
+                                  ←
+                                </button>
+                              )}
+                              {nextCol && (
+                                <button
+                                  type="button"
+                                  className="small"
+                                  style={{ padding: '2px 7px', fontSize: 10.5, borderRadius: 6 }}
+                                  title={`Move forward to ${nextCol}`}
+                                  onClick={() => moveTaskStatus(t, nextCol)}
+                                >
+                                  {nextCol === 'Done' ? '✓ Done' : '→'}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          <div className="avatar-stack">
+                            {assignedIds.slice(0, 4).map(uid => (
+                              <Avatar key={uid} user={state.users.find(u => u.id === uid)} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+                {colTasks.length === 0 && (
+                  <div className="empty">A clear space for what’s next.</div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      </>
+    );
+  };
+
+  // 3. Projects View
+  const renderProjects = () => {
+    const todayStr = key(new Date());
+    const list = state.projects.filter(p => {
+      if (filter === 'All') return true;
+      if (filter === 'My projects') {
+        const teamIds = [...new Set([p.lead, p.owner, ...(Array.isArray(p.members) ? p.members : [])].filter(Boolean))];
+        return teamIds.includes(user.id);
+      }
+      return p.status === filter;
+    });
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Projects</h1>
+            <p className="sub">
+              {isAdmin
+                ? 'From the first idea to the final detail. Assign team members and track milestones.'
+                : 'Projects assigned to you under role-based least-privilege access.'}
+            </p>
+          </div>
+          <div className="actions">
+            {isAdmin ? (
+              <button className="primary" onClick={() => setModal({ type: 'projects', data: { lead: user.id, members: [user.id] } })}>
+                <Icon name="plus" /> Add project
+              </button>
+            ) : (
+              <span className="tag" title="RBAC Least Privilege: Only projects assigned to you are visible.">
+                🔒 Assigned Projects · Least Privilege
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="tabs">
+          {['All', 'My projects', 'Active', 'Planning', 'Completed'].map(t => (
+            <button key={t} className={filter === t ? 'active' : ''} onClick={() => setFilter(t)}>
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <div className="project-grid">
+          {list.map(p => {
+            const pTasks = state.tasks.filter(t => t.project === p.id);
+            const pct = getProjectProgressPct(p);
+            const loggedHours = state.clocks
+              .filter(c => c.project === p.id)
+              .reduce((n, c) => n + worked(c, currentTime) / 3600, 0);
+            const blockedCount = pTasks.filter(t => t.blocked && t.status !== 'Done').length;
+            const isOverdue = p.due && p.due < todayStr && p.status !== 'Completed';
+            const milestones = Array.isArray(p.milestones) ? p.milestones : [];
+            const mDone = milestones.filter(m => m.done).length;
+            const leadUser = state.users.find(u => u.id === (p.lead || p.owner));
+            const teamMemberIds = [...new Set([p.lead || p.owner, ...(Array.isArray(p.members) ? p.members : [])].filter(Boolean))];
+            const teamUsers = teamMemberIds.map(uid => state.users.find(u => u.id === uid)).filter(Boolean);
+
+            const health =
+              p.status === 'Completed'
+                ? { label: 'Delivered', cls: '' }
+                : blockedCount > 0
+                ? { label: `${blockedCount} Blocked`, cls: 'red' }
+                : isOverdue
+                ? { label: 'Overdue', cls: 'red' }
+                : Number(p.targetHours) > 0 && loggedHours > Number(p.targetHours)
+                ? { label: 'Over hours', cls: 'yellow' }
+                : { label: 'On track', cls: '' };
+
+            return (
+              <article key={p.id} className="card">
+                <div className="card-head">
+                  <div className="project-symbol">✳</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <span className={`tag ${health.cls}`}>{health.label}</span>
+                    <span className="tag">{p.status}</span>
+                  </div>
+                </div>
+                <h3>{p.title}</h3>
+                {p.client && <div className="sub" style={{ marginTop: 4, fontWeight: 600 }}>Client: {p.client}</div>}
+                <p className="sub" style={{ margin: '10px 0 14px' }}>
+                  {p.description || 'Your next big thing.'}
+                </p>
+
+                {/* Assigned Project Team Bar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 10px', borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--line)', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <div className="avatar-stack">
+                      {teamUsers.slice(0, 5).map(u => (
+                        <Avatar key={u.id} user={u} />
+                      ))}
+                    </div>
+                    <span className="sub" style={{ fontSize: 11 }}>
+                      {teamUsers.length ? `${teamUsers.length} member${teamUsers.length === 1 ? '' : 's'}` : 'No members'}
+                      {leadUser ? ` · Lead: ${leadUser.name.split(' ')[0]}` : ''}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="small"
+                    onClick={() =>
+                      setModal({
+                        type: 'tasks',
+                        data: {
+                          project: p.id,
+                          assignee: isAdmin ? p.lead || user.id : user.id,
+                          assignees: isAdmin ? (teamMemberIds.length ? teamMemberIds : [user.id]) : [user.id]
+                        }
+                      })
+                    }
+                    title={isAdmin ? 'Assign a new task to this project' : 'Add a personal task under this assigned project'}
+                  >
+                    {isAdmin ? '+ Task' : '+ My task'}
+                  </button>
+                </div>
+
+                <div className="project-metrics-row">
+                  <div>
+                    <span className="sub">{isAdmin ? 'Tasks' : 'My project tasks'}</span>
+                    <b>{pTasks.filter(t => t.status === 'Done').length}/{pTasks.length} ({pct}%)</b>
+                  </div>
+                  <div>
+                    <span className="sub">{isAdmin ? 'Hours logged' : 'My hours'}</span>
+                    <b>{loggedHours.toFixed(1)}h{Number(p.targetHours) > 0 ? ` / ${p.targetHours}h` : ''}</b>
+                  </div>
+                  {milestones.length > 0 && (
+                    <div>
+                      <span className="sub">Milestones</span>
+                      <b>{mDone}/{milestones.length}</b>
+                    </div>
+                  )}
+                </div>
+                <div className="progress" style={{ marginTop: 10 }}>
+                  <i style={{ width: `${pct}%` }}></i>
+                </div>
+                <div className="list-row" style={{ marginTop: 15 }}>
+                  <div className="grow" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div>
+                      <span className="sub">Due {fmtDate(p.due)}</span>
+                      {isAdmin && Number(p.budget) > 0 && <span className="sub"> · {formatMoney(p.budget)}</span>}
+                    </div>
+                  </div>
+                  <div className="actions">
+                    <button
+                      className="small"
+                      onClick={() => {
+                        setTaskProjectFilter(p.id);
+                        navigate('tasks');
+                      }}
+                    >
+                      Tasks ({pTasks.length})
+                    </button>
+                    <button className="small primary" onClick={() => setModal({ type: 'projects', id: p.id, data: p })}>
+                      {isAdmin ? 'Assign & edit' : 'View project'}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+          {list.length === 0 && (
+            <div className="card empty" style={{ gridColumn: '1 / -1' }}>
+              <strong>{isAdmin ? 'Room for your next idea' : 'No projects assigned yet'}</strong>
+              {isAdmin
+                ? 'Create your first project to get started.'
+                : 'When an administrator assigns you to a project or project task, it will appear here automatically.'}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
+
+  // 4. Calendar View
+  const renderCalendar = () => {
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    const offset = weekStart === 'Monday' ? 1 : 0;
+    const start = new Date(y, m, 1);
+    const pad = (start.getDay() - offset + 7) % 7;
+    const days = Array.from({ length: 42 }, (_, i) => new Date(y, m, 1 - pad + i));
+
+    const EVENT_PALETTES = darkMode
+      ? [
+          { bg: 'rgba(37, 99, 235, 0.22)', border: 'rgba(96, 165, 250, 0.38)', accent: '#60a5fa', text: '#dbeafe', tagBg: 'rgba(37, 99, 235, 0.32)' },
+          { bg: 'rgba(124, 58, 237, 0.22)', border: 'rgba(167, 139, 250, 0.38)', accent: '#a78bfa', text: '#ede9fe', tagBg: 'rgba(124, 58, 237, 0.32)' },
+          { bg: 'rgba(22, 121, 77, 0.24)', border: 'rgba(74, 222, 128, 0.38)', accent: '#4ade80', text: '#dcfce7', tagBg: 'rgba(22, 121, 77, 0.34)' },
+          { bg: 'rgba(220, 61, 67, 0.22)', border: 'rgba(248, 113, 113, 0.38)', accent: '#f87171', text: '#fee2e2', tagBg: 'rgba(220, 61, 67, 0.32)' },
+          { bg: 'rgba(8, 127, 140, 0.24)', border: 'rgba(34, 211, 238, 0.38)', accent: '#22d3ee', text: '#cffafe', tagBg: 'rgba(8, 127, 140, 0.34)' },
+          { bg: 'rgba(202, 122, 8, 0.22)', border: 'rgba(251, 191, 36, 0.38)', accent: '#fbbf24', text: '#fef3c7', tagBg: 'rgba(202, 122, 8, 0.32)' }
+        ]
+      : [
+          { bg: '#e8f1fd', border: '#c3dafc', accent: '#2563eb', text: '#1d4ed8', tagBg: '#dbeafe' },
+          { bg: '#f1ecfe', border: '#d8c9fb', accent: '#7c3aed', text: '#5b21b6', tagBg: '#ede9fe' },
+          { bg: '#e6f4ec', border: '#bce3cc', accent: '#16794d', text: '#115e3b', tagBg: '#d1fae5' },
+          { bg: '#fdeeed', border: '#f7c7c5', accent: '#dc3d43', text: '#9f2325', tagBg: '#fee2e2' },
+          { bg: '#e3f6f8', border: '#b4e4ea', accent: '#087f8c', text: '#0b5c66', tagBg: '#cffafe' },
+          { bg: '#fef3dc', border: '#f5da9c', accent: '#ca7a08', text: '#925405', tagBg: '#fef0c7' }
+        ];
+
+    const hashPaletteIndex = (ev, idx = 0) => {
+      const seed = String(ev?.id || ev?.title || idx);
+      let h = 0;
+      for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+      return ev?.type === 'tasks' ? 5 : h % EVENT_PALETTES.length;
+    };
+
+    const eventsOn = dStr => {
+      const raw = [
+        ...state.meetings.filter(ev => key(new Date(ev.start)) === dStr).map(x => ({ ...x, type: 'meetings' })),
+        ...state.tasks.filter(t => t.due === dStr).map(x => ({ ...x, type: 'tasks' }))
+      ];
+      const used = new Set();
+      return raw.map((ev, idx) => {
+        let pIdx = hashPaletteIndex(ev, idx);
+        while (used.has(pIdx) && used.size < EVENT_PALETTES.length) {
+          pIdx = (pIdx + 1) % EVENT_PALETTES.length;
+        }
+        used.add(pIdx);
+        return { ...ev, palette: EVENT_PALETTES[pIdx] };
+      });
+    };
+
+    const selectedKey = key(selectedDay);
+    const dayEvents = eventsOn(selectedKey);
+    const upcomingMeetings = state.meetings
+      .filter(ev => new Date(ev.start) > new Date())
+      .sort((a, b) => a.start.localeCompare(b.start))
+      .slice(0, 5);
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Calendar</h1>
+            <p className="sub">Meetings, milestones, and a little breathing room.</p>
+          </div>
+          <div className="actions">
+            <button onClick={() => { setMonth(new Date()); setSelectedDay(new Date()); }}>
+              <Icon name="calendar" /> Today
+            </button>
+            {isAdmin && (
+              <button className="primary" onClick={() => setModal({ type: 'meetings', data: {} })}>
+                <Icon name="plus" /> New event
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="calendar-layout">
+          <section className="card">
+            <div className="calendar-head">
+              <h2>{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
+              <div className="actions">
+                <button
+                  className="small"
+                  aria-label="Previous month"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                >
+                  ‹
+                </button>
+                <button
+                  className="small"
+                  aria-label="Next month"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+            <div className="calendar-grid">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+                <div key={d} className="weekday">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][(i + offset) % 7]}
+                </div>
+              ))}
+              {days.map((d, i) => {
+                const dKey = key(d);
+                const evs = eventsOn(dKey);
+                const isSelected = dKey === selectedKey;
+                const isToday = dKey === key(new Date());
+                const isOutside = d.getMonth() !== m;
+                return (
+                  <button
+                    key={i}
+                    className={`day ${isOutside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+                    onClick={() => setSelectedDay(d)}
+                  >
+                    <span className="daynum">{d.getDate()}</span>
+                    {evs.slice(0, 3).map((e, ei) => (
+                      <span
+                        key={ei}
+                        className={`event-pill ${e.type === 'tasks' ? 'task-event' : ''}`}
+                        style={{
+                          background: e.palette.bg,
+                          color: e.palette.text,
+                          borderColor: e.palette.border,
+                          borderLeftColor: e.palette.accent
+                        }}
+                      >
+                        {e.title}
+                      </span>
+                    ))}
+                    {evs.length > 3 && <span className="sub">More…</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="legend">
+              <span><i className="dot"></i>Meeting</span>
+              <span><i className="dot" style={{ background: '#ca7a08' }}></i>Task deadline</span>
+            </div>
+          </section>
+
+          <aside className="agenda">
+            <section className="card">
+              <p className="eyebrow" style={{ margin: '0 0 8px' }}>
+                {selectedDay.toLocaleDateString(undefined, { weekday: 'long' })}
+              </p>
+              <h2 style={{ margin: '0 0 20px', fontSize: 24 }}>
+                {selectedDay.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+              </h2>
+              {dayEvents.length > 0 ? (
+                dayEvents.map((e, idx) => (
+                  <div
+                    key={idx}
+                    className="agenda-event"
+                    onClick={() => setModal({ type: e.type, id: e.id, data: e })}
+                    style={{
+                      cursor: 'pointer',
+                      background: e.palette.bg,
+                      borderColor: e.palette.border,
+                      borderLeftColor: e.palette.accent
+                    }}
+                  >
+                    <span className="sub" style={{ color: e.palette.text, opacity: 0.8 }}>
+                      {e.start ? fmtTime(e.start) : 'Task deadline'}
+                    </span>
+                    <strong style={{ color: e.palette.text }}>{e.title}</strong>
+                    <span
+                      className="tag"
+                      style={{
+                        background: e.palette.tagBg,
+                        color: e.palette.text,
+                        border: `1px solid ${e.palette.border}`
+                      }}
+                    >
+                      {e.type === 'tasks' ? 'Task' : 'Meeting'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="empty">
+                  <strong>Your day, open</strong>No meetings or deadlines scheduled.
+                </div>
+              )}
+            </section>
+            <section className="card">
+              <h3>Coming up</h3>
+              {upcomingMeetings.map((e, idx) => {
+                const pal = EVENT_PALETTES[hashPaletteIndex(e, idx)];
+                return (
+                  <div
+                    key={e.id}
+                    className="list-row"
+                    onClick={() => setModal({ type: 'meetings', id: e.id, data: e })}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div
+                      className="meeting-time"
+                      style={{
+                        background: pal.bg,
+                        color: pal.text,
+                        border: `1px solid ${pal.border}`
+                      }}
+                    >
+                      <span>{new Date(e.start).toLocaleDateString(undefined, { month: 'short' })}</span>
+                      <b>{new Date(e.start).getDate()}</b>
+                    </div>
+                    <div>
+                      <strong>{e.title}</strong>
+                      <span className="sub">{fmtTime(e.start)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {upcomingMeetings.length === 0 && (
+                <div className="empty">
+                  <strong>Nothing around the corner</strong>New meetings will show up here.
+                </div>
+              )}
+            </section>
+          </aside>
+        </div>
+      </>
+    );
+  };
+
+  // Comprehensive Daily / Weekly / Monthly Employee Time Tracking, Performance & Activity Suite
+  const renderEmployeePerformanceSuite = (context = 'analytics') => {
+    const refDateObj = perfDate ? new Date(`${perfDate}T23:59:59`) : new Date();
+    const periodDays = perfPeriod === 'daily' ? 1 : perfPeriod === 'weekly' ? 7 : 30;
+    const targetHoursPerMember = perfPeriod === 'daily' ? 8 : perfPeriod === 'weekly' ? 40 : 160;
+    const targetActiveDays = perfPeriod === 'daily' ? 1 : perfPeriod === 'weekly' ? 5 : 22;
+
+    const startWindow = new Date(refDateObj);
+    startWindow.setHours(0, 0, 0, 0);
+    startWindow.setDate(startWindow.getDate() - (periodDays - 1));
+    const startKey = key(startWindow);
+    const endKey = key(refDateObj);
+    const todayStr = key(new Date());
+
+    const visibleMembers = isAdmin
+      ? state.users.filter(u => perfEmployee === 'all' || u.id === perfEmployee)
+      : state.users.filter(u => u.id === user.id);
+
+    const periodClocksAll = state.clocks.filter(c => {
+      if (!isAdmin && c.user_id !== user.id) return false;
+      const k = key(new Date(c.start * 1000));
+      return (k >= startKey && k <= endKey) || (!c.end && endKey >= todayStr && startKey <= todayStr);
+    });
+
+    const memberRows = visibleMembers.map(u => {
+      const uClocks = periodClocksAll.filter(c => c.user_id === u.id);
+      const workSec = uClocks.reduce((n, c) => n + worked(c, currentTime), 0);
+      const breakSec = uClocks.reduce((n, c) => n + breakDuration(c, currentTime), 0);
+      const workHours = workSec / 3600;
+      const breakHours = breakSec / 3600;
+      const totalSpanSec = workSec + breakSec;
+      const breakRatio = totalSpanSec > 0 ? Math.round((breakSec / totalSpanSec) * 100) : 0;
+      const sessions = uClocks.length;
+      const completedShiftsList = uClocks.filter(c => Boolean(c.end));
+      const completedShifts = completedShiftsList.length;
+      const notesLogged = uClocks.filter(c => c.note && String(c.note).trim().length > 0).length;
+      const completedNotesLogged = completedShiftsList.filter(c => c.note && String(c.note).trim().length > 0).length;
+      const noteCompliancePct =
+        completedShifts > 0
+          ? Math.min(100, Math.round((completedNotesLogged / completedShifts) * 100))
+          : sessions > 0 && notesLogged > 0
+          ? 100
+          : 100;
+      const activeDays = new Set(
+        uClocks
+          .filter(c => worked(c, currentTime) > 0 || !c.end)
+          .map(c => key(new Date(c.start * 1000)))
+      ).size;
+      const avgShiftHours = sessions > 0 ? workHours / sessions : 0;
+
+      // Daily overtime calculation (>8h in a single day)
+      const byDay = {};
+      uClocks.forEach(c => {
+        const dKey = key(new Date(c.start * 1000));
+        byDay[dKey] = (byDay[dKey] || 0) + worked(c, currentTime) / 3600;
+      });
+      const overtimeHours = Object.values(byDay).reduce((sum, h) => sum + Math.max(0, h - 8), 0);
+      const utilizationPct = targetHoursPerMember > 0 ? Math.round((workHours / targetHoursPerMember) * 100) : 0;
+
+      // Tasks assigned to this member (either primary assignee or in assignees array)
+      const memberTasks = state.tasks.filter(t => isUserAssignedToTask(t, u.id));
+      const doneTasks = memberTasks.filter(t => t.status === 'Done').length;
+      const inProgressTasks = memberTasks.filter(t => t.status === 'In progress' || t.status === 'In review').length;
+      const todoTasks = memberTasks.filter(t => t.status === 'To do').length;
+      const blockedTasks = memberTasks.filter(t => t.blocked && t.status !== 'Done').length;
+      const overdueTasks = memberTasks.filter(t => t.due && t.due < todayStr && t.status !== 'Done').length;
+      const totalAssigned = memberTasks.length;
+      const taskCompletionPct = totalAssigned > 0 ? Math.round((doneTasks / totalAssigned) * 100) : 0;
+      const onTimeRate = totalAssigned > 0 ? Math.max(0, Math.round(((totalAssigned - overdueTasks) / totalAssigned) * 100)) : 100;
+
+      // Composite Performance Score (0 - 100)
+      const capScore = Math.min(100, Math.round((workHours / targetHoursPerMember) * 100));
+      const attendanceScore = Math.min(100, Math.round((activeDays / targetActiveDays) * 100));
+      const focusDiscipline = sessions > 0 ? (breakRatio <= 20 ? 100 : Math.max(40, 100 - (breakRatio - 20) * 2)) : 0;
+      const effectiveTaskScore =
+        totalAssigned > 0
+          ? Math.min(100, Math.round(((doneTasks + inProgressTasks * 0.5) / totalAssigned) * 100))
+          : capScore;
+      const effectiveOnTime = totalAssigned > 0 ? onTimeRate : sessions > 0 ? 100 : 0;
+      const effectiveNoteScore = completedShifts > 0 ? noteCompliancePct : sessions > 0 ? 100 : 0;
+      const score =
+        sessions === 0 && totalAssigned === 0
+          ? 0
+          : Math.min(
+              100,
+              Math.max(
+                0,
+                Math.round(
+                  capScore * 0.35 +
+                    attendanceScore * 0.15 +
+                    effectiveTaskScore * 0.25 +
+                    effectiveOnTime * 0.15 +
+                    ((focusDiscipline + effectiveNoteScore) / 2) * 0.10
+                )
+              )
+            );
+
+      return {
+        user: u,
+        uClocks,
+        workHours,
+        breakSec,
+        breakHours,
+        breakRatio,
+        sessions,
+        completedShifts,
+        notesLogged,
+        completedNotesLogged,
+        noteCompliancePct,
+        activeDays,
+        avgShiftHours,
+        overtimeHours,
+        utilizationPct,
+        totalAssigned,
+        doneTasks,
+        inProgressTasks,
+        todoTasks,
+        blockedTasks,
+        overdueTasks,
+        taskCompletionPct,
+        onTimeRate,
+        score
+      };
+    });
+
+    const totalWorkHours = memberRows.reduce((n, r) => n + r.workHours, 0);
+    const totalBreakSec = memberRows.reduce((n, r) => n + r.breakSec, 0);
+    const avgScore = memberRows.length
+      ? Math.round(memberRows.reduce((n, r) => n + r.score, 0) / memberRows.length)
+      : 0;
+
+    const filteredClocksForNotes = periodClocksAll.filter(c =>
+      isAdmin ? (perfEmployee === 'all' || c.user_id === perfEmployee) : c.user_id === user.id
+    );
+
+    const activitiesList = (state.activities || []).filter(a => {
+      if (!isNotificationVisibleToUser(a, user)) return false;
+      if (isAdmin && activityEmployee !== 'all' && a.actorId !== activityEmployee) return false;
+      if (activityFilter === 'tasks') return String(a.type || '').startsWith('task_') || a.category === 'tasks';
+      if (activityFilter === 'goals') return String(a.type || '').startsWith('goal_') || a.category === 'goals';
+      if (activityFilter === 'clock') return String(a.type || '').startsWith('clock_') || a.category === 'clocks';
+      if (activityFilter === 'announcements') return String(a.type || '').startsWith('announcement_') || a.category === 'announcements';
+      if (activityFilter === 'standups') return a.type === 'standup_posted' || a.category === 'standups';
+      if (activityFilter === 'leads') return a.type === 'lead_updated' || a.category === 'leads';
+      return true;
+    });
+
+    return (
+      <>
+        <section className="card" style={{ marginTop: 22 }}>
+          <div className="card-head" style={{ flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+            <div>
+              <span className="eyebrow" style={{ margin: 0 }}>
+                {isAdmin ? 'Admin Executive Performance Intelligence' : 'Personal Time & Performance Metrics'}
+              </span>
+              <h3 style={{ marginTop: 4 }}>
+                {perfPeriod === 'daily'
+                  ? `Daily Employee Time & Performance (${fmtDate(endKey)})`
+                  : perfPeriod === 'weekly'
+                  ? `Weekly Employee Time & Performance (${fmtDate(startKey)} – ${fmtDate(endKey)})`
+                  : `Monthly Employee Time & Performance (${fmtDate(startKey)} – ${fmtDate(endKey)})`}
+              </h3>
+              <p className="sub" style={{ marginTop: 4 }}>
+                Complete breakdown of focused hours, break ratios, shift lengths, overtime, utilization vs. {targetHoursPerMember}h target, task execution, and clock-out work notes.
+              </p>
+            </div>
+            <div className="actions" style={{ flexWrap: 'wrap', gap: 8 }}>
+              <div className="period-switch">
+                {[
+                  ['daily', 'Daily (8h)'],
+                  ['weekly', 'Weekly (40h)'],
+                  ['monthly', 'Monthly (160h)']
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={perfPeriod === id ? 'active' : ''}
+                    onClick={() => setPerfPeriod(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="date"
+                aria-label="Reference date"
+                value={perfDate}
+                onChange={e => setPerfDate(e.target.value || key(new Date()))}
+                style={{ width: 'auto', padding: '7px 10px', fontSize: 12 }}
+              />
+              {perfDate !== key(new Date()) && (
+                <button type="button" className="small" onClick={() => setPerfDate(key(new Date()))}>
+                  Today
+                </button>
+              )}
+              {isAdmin && (
+                <select
+                  aria-label="Filter employee performance"
+                  value={perfEmployee}
+                  onChange={e => setPerfEmployee(e.target.value)}
+                  style={{ width: 'auto', minWidth: 170 }}
+                >
+                  <option value="all">All employees ({state.users.length})</option>
+                  {state.users.map(u => (
+                    <option key={u.id} value={u.id}>{u.name} ({u.department})</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          <div className="stats" style={{ marginBottom: 18 }}>
+            <div className="stat green">
+              <span>{perfPeriod === 'daily' ? 'Daily' : perfPeriod === 'weekly' ? 'Weekly' : 'Monthly'} focused work</span>
+              <span className="value">{totalWorkHours.toFixed(1)}<small>h</small></span>
+              <span className="sub">
+                Target: {(targetHoursPerMember * visibleMembers.length).toFixed(0)}h across {visibleMembers.length} {visibleMembers.length === 1 ? 'member' : 'members'}
+              </span>
+            </div>
+            <div className="stat">
+              <span>Break time &amp; ratio</span>
+              <span className="value">{duration(totalBreakSec)}</span>
+              <span className="sub">
+                {totalWorkHours * 3600 + totalBreakSec > 0
+                  ? `${Math.round((totalBreakSec / (totalWorkHours * 3600 + totalBreakSec)) * 100)}% of total clocked span`
+                  : 'No breaks logged in window'}
+              </span>
+            </div>
+            <div className="stat">
+              <span>Shifts &amp; work notes</span>
+              <span className="value">{filteredClocksForNotes.length}</span>
+              <span className="sub">
+                {filteredClocksForNotes.filter(c => c.note && String(c.note).trim()).length} shift summary notes recorded
+              </span>
+            </div>
+            <div className="stat">
+              <span>Avg performance score</span>
+              <span className="value">{avgScore}<small>/100</small></span>
+              <span className="sub">
+                {avgScore >= 85 ? 'Excellent team velocity' : avgScore >= 65 ? 'Steady delivery pace' : 'Capacity building'}
+              </span>
+            </div>
+          </div>
+
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Focused work</th>
+                  <th>Break &amp; ratio</th>
+                  <th>Shifts &amp; days</th>
+                  <th>Avg shift / OT</th>
+                  <th>Utilization ({targetHoursPerMember}h)</th>
+                  <th>Tasks (Done / Active / Blocked)</th>
+                  <th>On-time rate</th>
+                  <th>Shift notes</th>
+                  <th>Performance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {memberRows.map(r => {
+                  const scoreBadge =
+                    r.score >= 85
+                      ? { cls: 'green', label: 'Excellent' }
+                      : r.score >= 65
+                      ? { cls: '', label: 'Strong' }
+                      : r.score >= 45
+                      ? { cls: 'yellow', label: 'Building' }
+                      : { cls: 'red', label: 'Low activity' };
+                  return (
+                    <tr key={r.user.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Avatar user={r.user} />
+                          <div>
+                            <strong>{r.user.name}</strong>
+                            <div className="sub">
+                              {r.user.position ? `${r.user.position} · ` : ''}{r.user.department}{isAdmin ? ` · ${r.user.role === 'admin' ? 'Admin' : 'Employee'}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <strong>{r.workHours.toFixed(1)}h</strong>
+                        <div className="sub">of {targetHoursPerMember}h target</div>
+                      </td>
+                      <td>
+                        <span>{duration(r.breakSec)}</span>
+                        <div className="sub">{r.breakRatio}% break ratio</div>
+                      </td>
+                      <td>
+                        <strong>{r.sessions}</strong> shifts
+                        <div className="sub">{r.activeDays}/{targetActiveDays}d active</div>
+                      </td>
+                      <td>
+                        <span>{r.avgShiftHours.toFixed(1)}h avg</span>
+                        <div className="sub">
+                          {r.overtimeHours > 0 ? (
+                            <span style={{ color: 'var(--green)', fontWeight: 600 }}>+{r.overtimeHours.toFixed(1)}h OT</span>
+                          ) : (
+                            '0.0h OT'
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ minWidth: 130 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                          <strong>{r.utilizationPct}%</strong>
+                          <span className="sub">{r.workHours.toFixed(1)}/{targetHoursPerMember}h</span>
+                        </div>
+                        <div className="progress">
+                          <i style={{ width: `${Math.min(100, r.utilizationPct)}%` }}></i>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          <span className="tag green" title="Completed tasks">{r.doneTasks} done</span>
+                          <span className="tag" title="In progress / review">{r.inProgressTasks} active</span>
+                          {r.blockedTasks > 0 && (
+                            <span className="tag red" title="Blocked tasks">{r.blockedTasks} blocked</span>
+                          )}
+                        </div>
+                        <div className="sub" style={{ marginTop: 4 }}>
+                          {r.totalAssigned} assigned ({r.taskCompletionPct}% completion)
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`tag ${r.onTimeRate >= 85 ? 'green' : r.onTimeRate >= 60 ? 'yellow' : 'red'}`}>
+                          {r.onTimeRate}% on-time
+                        </span>
+                        {r.overdueTasks > 0 && (
+                          <div className="sub" style={{ color: '#a13522', marginTop: 3 }}>{r.overdueTasks} overdue</div>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`tag ${r.noteCompliancePct === 100 ? 'green' : 'yellow'}`}>
+                          {r.notesLogged}/{r.completedShifts || r.sessions} notes
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <strong style={{ fontSize: 15 }}>{r.score}</strong>
+                          <span className={`tag ${scoreBadge.cls}`}>{scoreBadge.label}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Shift-by-Shift Clock-Out Work Notes Log */}
+          <div className="timesheet-notes-section" style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
+            <div className="card-head" style={{ marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+              <div>
+                <h4 style={{ margin: 0, fontSize: 15 }}>Shift Clock-Out Work Summaries &amp; Notes ({filteredClocksForNotes.length})</h4>
+                <p className="sub" style={{ marginTop: 3 }}>
+                  Every employee work summary submitted at clock-out during this {perfPeriod} window.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span className="tag green">
+                  {filteredClocksForNotes.filter(c => c.note && String(c.note).trim()).length} with notes
+                </span>
+                <span className="tag">
+                  {filteredClocksForNotes.filter(c => Boolean(c.end)).length} completed
+                </span>
+              </div>
+            </div>
+            {filteredClocksForNotes.length > 0 ? (
+              <div className="table-wrap">
+                <table className="timesheet-table">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Date &amp; shift</th>
+                      <th>Project &amp; task</th>
+                      <th>Focused / Break</th>
+                      <th>Clock-out work summary note</th>
+                      {isAdmin && <th></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClocksForNotes.slice(0, 25).map(c => {
+                      const emp = state.users.find(u => u.id === c.user_id);
+                      const proj = state.projects.find(p => p.id === c.project);
+                      const tsk = c.task ? state.tasks.find(t => t.id === c.task) : null;
+                      const wSec = worked(c, currentTime);
+                      const bSec = breakDuration(c, currentTime);
+                      return (
+                        <tr key={c.id}>
+                          <td>
+                            <div className="timesheet-member-cell">
+                              <Avatar user={emp} />
+                              <div>
+                                <strong>{emp?.name || 'Unknown'}</strong>
+                                {emp?.department && <div className="sub">{emp.department}</div>}
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="shift-date-label">{fmtDate(new Date(c.start * 1000).toISOString())}</div>
+                            <span className={`shift-time-pill ${!c.end ? 'active' : ''}`}>
+                              {fmtTime(c.start * 1000)} → {c.end ? fmtTime(c.end * 1000) : 'Active now'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="shift-project-stack">
+                              <span className="shift-project-badge">
+                                📁 {proj?.title || 'Assigned project'}
+                              </span>
+                              {tsk ? (
+                                <span className="shift-task-sub" title={tsk.title}>
+                                  ✓ {tsk.title}
+                                </span>
+                              ) : (
+                                <span className="sub" style={{ fontSize: 11.5 }}>General project focus</span>
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <div className="shift-duration-main">{duration(wSec)}</div>
+                            <div className="shift-duration-sub">
+                              {(wSec / 3600).toFixed(1)}h work · {bSec > 0 ? `${duration(bSec)} break` : 'No break'}
+                            </div>
+                          </td>
+                          <td className="timesheet-note-cell">
+                            {c.note && String(c.note).trim() ? (
+                              <div className={`timesheet-note-box ${!c.end ? 'is-live' : ''}`}>
+                                <div className="timesheet-note-meta">
+                                  <span>{c.end ? '📝 Clock-out work summary' : '⚡ Active session focus'}</span>
+                                  <span>{(wSec / 3600).toFixed(1)}h</span>
+                                </div>
+                                <div className="timesheet-note-text">{c.note}</div>
+                              </div>
+                            ) : (
+                              <span className={`tag ${c.end ? 'yellow' : ''}`}>
+                                {c.end ? 'No summary note' : 'Shift in progress — summary at clock-out'}
+                              </span>
+                            )}
+                          </td>
+                          {isAdmin && (
+                            <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                              <button
+                                type="button"
+                                className="small"
+                                onClick={() => setModal({ type: 'timeEntry', id: c.id, data: c })}
+                              >
+                                Edit
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="empty">
+                <strong>No shifts recorded in this {perfPeriod} window</strong>
+                Adjust the date or period selector above to inspect earlier shifts.
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Real-Time Employee Activity & Task Change Audit Trail */}
+        {context === 'analytics' && (
+          <section className="card" style={{ marginTop: 22 }}>
+            <div className="card-head" style={{ flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+              <div>
+                <span className="eyebrow" style={{ margin: 0 }}>Real-Time Operations &amp; Notification Feed</span>
+                <h3 style={{ marginTop: 4 }}>
+                  {isAdmin ? 'Employee Task Changes, Clock-Outs, Announcements & Activity Audit Log' : 'My Recent Workspace Activity'}
+                </h3>
+                <p className="sub" style={{ marginTop: 4 }}>
+                  {isAdmin
+                    ? 'Instant tracking of every employee task status change, announcement completion, blocker alert, clock-in/clock-out work summary, standup, and lead update.'
+                    : 'Only notifications assigned to you by Admin and your own workspace updates are displayed.'}
+                </p>
+              </div>
+              <div className="actions" style={{ flexWrap: 'wrap', gap: 8 }}>
+                <div className="period-switch">
+                  {[
+                    ['all', 'All Events'],
+                    ['tasks', 'Task Changes'],
+                    ['goals', 'Goals'],
+                    ['clock', 'Clock In / Out'],
+                    ['announcements', 'Announcements'],
+                    ['standups', 'Standups'],
+                    ['leads', 'Leads']
+                  ].map(([k, lbl]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      className={activityFilter === k ? 'active' : ''}
+                      onClick={() => setActivityFilter(k)}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                {isAdmin && (
+                  <select
+                    aria-label="Filter activity by employee"
+                    value={activityEmployee}
+                    onChange={e => setActivityEmployee(e.target.value)}
+                    style={{ width: 'auto', minWidth: 165 }}
+                  >
+                    <option value="all">All employees</option>
+                    {state.users.map(u => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Team member</th>
+                    <th>Event</th>
+                    <th>Activity &amp; work summary detail</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activitiesList.slice(0, 40).map(act => {
+                    const actor = state.users.find(u => u.id === act.actorId) || { name: act.actorName || 'Team member' };
+                    const isClockOut = act.type === 'clock_out';
+                    const isBlocker = act.type === 'task_blocker';
+                    const isAnnDone = act.type === 'announcement_completed';
+                    const isTask = String(act.type || '').startsWith('task_');
+                    return (
+                      <tr key={act.id}>
+                        <td style={{ whiteSpace: 'nowrap', fontSize: 12 }} className="sub">
+                          {act.createdAt ? new Date(act.createdAt).toLocaleString() : 'Just now'}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Avatar user={actor} />
+                            <div>
+                              <strong>{actor.name}</strong>
+                              {isAdmin && <div className="sub">{act.actorRole === 'admin' ? 'Admin' : 'Employee'}</div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`tag ${isBlocker ? 'red' : isClockOut || isAnnDone || act.type === 'task_status' ? 'green' : isTask ? 'yellow' : ''}`}>
+                            {String(act.type || 'activity').replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td>
+                          <strong>{act.summary}</strong>
+                          {act.detail && (
+                            <div
+                              style={{
+                                marginTop: 4,
+                                padding: isClockOut ? '6px 10px' : 0,
+                                background: isClockOut ? 'var(--bg)' : 'transparent',
+                                border: isClockOut ? '1px solid var(--line)' : 'none',
+                                borderRadius: 8,
+                                fontSize: 12.5,
+                                color: 'var(--ink)'
+                              }}
+                            >
+                              {act.detail}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {activitiesList.length === 0 && (
+                    <tr>
+                      <td colSpan={4}>
+                        <div className="empty">No matching employee activity recorded yet.</div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+      </>
+    );
+  };
+
+  // 5. Time Tracking View
+  const renderClock = () => {
+    const person = isAdmin ? (timesheetPerson === 'me' ? user.id : timesheetPerson) : user.id;
+    const baseRows = state.clocks.filter(c => (isAdmin && person === 'all') || c.user_id === person);
+    const searchQuery = timesheetSearch.trim().toLowerCase();
+
+    const allRows = baseRows.filter(c => {
+      if (timesheetProject !== 'all' && (c.project || '') !== timesheetProject) return false;
+      if (timesheetDateFilter) {
+        const entryDate = key(new Date(c.start * 1000));
+        if (entryDate !== timesheetDateFilter) return false;
+      }
+      if (timesheetNoteFilter === 'with_notes' && !(c.note && String(c.note).trim())) return false;
+      if (timesheetNoteFilter === 'active' && Boolean(c.end)) return false;
+      if (timesheetNoteFilter === 'completed' && !c.end) return false;
+      if (searchQuery) {
+        const empName = (state.users.find(u => u.id === c.user_id)?.name || '').toLowerCase();
+        const projTitle = (state.projects.find(p => p.id === c.project)?.title || '').toLowerCase();
+        const taskTitle = (c.task ? state.tasks.find(t => t.id === c.task)?.title || '' : '').toLowerCase();
+        const noteText = String(c.note || '').toLowerCase();
+        if (
+          !empName.includes(searchQuery) &&
+          !projTitle.includes(searchQuery) &&
+          !taskTitle.includes(searchQuery) &&
+          !noteText.includes(searchQuery)
+        ) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    const rows = allRows.slice(0, timesheetLimit);
+    const filteredWorkSec = allRows.reduce((n, c) => n + worked(c, currentTime), 0);
+    const filteredBreakSec = allRows.reduce((n, c) => n + breakDuration(c, currentTime), 0);
+    const filteredSpanSec = filteredWorkSec + filteredBreakSec;
+    const filteredBreakRatio = filteredSpanSec > 0 ? Math.round((filteredBreakSec / filteredSpanSec) * 100) : 0;
+    const completedRowsCount = allRows.filter(c => Boolean(c.end)).length;
+    const activeRowsCount = allRows.filter(c => !c.end).length;
+    const notesRowsCount = allRows.filter(c => c.note && String(c.note).trim().length > 0).length;
+    const completedWithNotesCount = allRows.filter(c => Boolean(c.end) && c.note && String(c.note).trim().length > 0).length;
+    const notesCompliancePct =
+      completedRowsCount > 0 ? Math.min(100, Math.round((completedWithNotesCount / completedRowsCount) * 100)) : 100;
+
+    const manageEntry = async (action, c) => {
+      const name = state.users.find(u => u.id === c.user_id)?.name || 'this person';
+      if (!confirm(`Clock out ${name} now?`)) return;
+      try {
+        await handleApi('/api/timesheet', { action, id: c.id });
+        await refreshState();
+        showToast(`${name} was clocked out`);
+      } catch (err) {
+        showToast(err.message);
+      }
+    };
+    const todayStr = key(new Date());
+    const todayClocks = state.clocks.filter(c => {
+      if (!isAdmin && c.user_id !== user.id) return false;
+      const startKey = key(new Date(c.start * 1000));
+      return startKey === todayStr || !c.end;
+    });
+
+    // Last 7 days attendance matrix
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return {
+        key: key(d),
+        label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' }),
+        isToday: i === 6
+      };
+    });
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Time tracking</h1>
+            <p className="sub">Make every focused hour count.</p>
+          </div>
+          <div className="actions">
+            <button onClick={() => exportCSV('time')}>
+              <Icon name="download" /> {isAdmin ? 'Export CSV' : 'Export my CSV'}
+            </button>
+            {!activeClock && (
+              <button className="primary" onClick={() => setModal({ type: 'clock', data: {} })}>
+                ＋ Clock in
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="stats">
+          <div className="stat green">
+            <span>Working now</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.clocks.filter(c => !c.end && !c.break_start).length}</span>
+            <span className="sub">People in their flow</span>
+          </div>
+          <div className="stat">
+            <span>On a break</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.clocks.filter(c => !c.end && c.break_start).length}</span>
+            <span className="sub">Rest is part of good work</span>
+          </div>
+          <div className="stat">
+            <span>{isAdmin ? 'Hours today' : 'My sessions'}</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">
+              {isAdmin
+                ? (todayClocks.reduce((n, c) => n + worked(c, currentTime) / 3600, 0)).toFixed(1)
+                : state.clocks.filter(c => c.user_id === user.id).length}
+            </span>
+            <span className="sub">
+              {isAdmin
+                ? `Break today: ${duration(todayClocks.reduce((n, c) => n + breakDuration(c, currentTime), 0))}`
+                : 'Total sessions logged'}
+            </span>
+          </div>
+          <div className="stat">
+            <span>Your hours today</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">
+              {(todayClocks.filter(c => c.user_id === user.id).reduce((n, c) => n + worked(c, currentTime) / 3600, 0)).toFixed(1)}
+            </span>
+            <span className="sub">
+              Break today: {duration(todayClocks.filter(c => c.user_id === user.id).reduce((n, c) => n + breakDuration(c, currentTime), 0))}
+            </span>
+          </div>
+        </div>
+
+        {/* Top Grid: Live Time Tracker + 7-Day Attendance & Capacity Matrix */}
+        <div className="clock-top-grid">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <section className={`card timer-card ${activeClock?.break_start ? 'is-on-break' : ''}`} style={{ flex: 1 }}>
+              <div className="card-head">
+                <h3>Time tracker</h3>
+                <span className="timer-state">
+                  <i></i>{activeClock ? (activeClock.break_start ? 'On break' : 'Tracking') : 'Ready'}
+                </span>
+              </div>
+              <p className="sub timer-project">
+                {activeClock
+                  ? `${state.projects.find(p => p.id === activeClock.project)?.title || 'Focused work'} · In at ${fmtTime(activeClock.start * 1000)}`
+                  : 'Ready when you are.'}
+              </p>
+              <div className="time-digits">{duration(activeClock?.break_start ? activeBreakSeconds : activeClockSeconds)}</div>
+              {activeClock && (
+                <>
+                  <div className="timer-metrics">
+                    <div className={`timer-metric ${!activeClock.break_start ? 'active' : ''}`}>
+                      <span>Work time</span>
+                      <b>{duration(activeClockSeconds)}</b>
+                    </div>
+                    <div className={`timer-metric ${activeClock.break_start ? 'active break' : ''}`}>
+                      <span>Break time</span>
+                      <b>{duration(activeBreakSeconds)}</b>
+                    </div>
+                  </div>
+                  <div className="timer-switch-box">
+                    <label className="sub" style={{ display: 'block', marginBottom: 6, fontSize: 11 }}>
+                      Switch active focus (without clocking out)
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <select
+                        aria-label="Switch active project"
+                        value={activeClock.project || ''}
+                        onChange={e => handleClock('switch', { project: e.target.value, task: activeClock.task || '', note: activeClock.note || '' })}
+                      >
+                        {assignedProjects.length === 0 && (
+                          <option value="">No assigned projects</option>
+                        )}
+                        {assignedProjects.map(p => (
+                          <option key={p.id} value={p.id}>{p.title}</option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Switch active task"
+                        value={activeClock.task || ''}
+                        onChange={e => handleClock('switch', { project: activeClock.project || '', task: e.target.value, note: activeClock.note || '' })}
+                      >
+                        <option value="">No specific task</option>
+                        {state.tasks.filter(t => t.status !== 'Done').map(t => (
+                          <option key={t.id} value={t.id}>{t.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="timer-controls">
+                {activeClock ? (
+                  <>
+                    <button
+                      onClick={() => handleClock(activeClock.break_start ? 'resume' : 'break')}
+                      className="break-button"
+                    >
+                      <Icon name={activeClock.break_start ? 'play' : 'pause'} />
+                      {activeClock.break_start ? 'Resume work' : 'Start break'}
+                    </button>
+                    <button className="stop" onClick={() => handleClock('stop')}>
+                      <Icon name="stop" /> Clock out
+                    </button>
+                  </>
+                ) : (
+                  <button className="start-button" onClick={() => setModal({ type: 'clock', data: {} })}>
+                    <Icon name="play" /> Clock in
+                  </button>
+                )}
+              </div>
+            </section>
+            <div className="note" style={{ margin: 0 }}>
+              Both work time and break time run on the server — even if you close this tab or sign out, your session continues until you clock out.
+            </div>
+          </div>
+
+          {/* 7-Day Attendance & Capacity Matrix */}
+          <section className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div className="card-head">
+                <div>
+                  <h3>{isAdmin ? 'Weekly team attendance & capacity (Last 7 days)' : 'My 7-day attendance & focus (Last 7 days)'}</h3>
+                  <p className="sub" style={{ marginTop: 4 }}>
+                    {isAdmin
+                      ? 'Daily focused hours per team member vs. 40h weekly benchmark.'
+                      : 'Your daily focused hours and break balance vs. 40h weekly benchmark.'}
+                  </p>
+                </div>
+                <span className="tag">40h weekly target</span>
+              </div>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Team member</th>
+                      {last7Days.map(d => (
+                        <th key={d.key} style={{ textAlign: 'center', fontWeight: d.isToday ? 700 : 500 }}>
+                          {d.label}
+                        </th>
+                      ))}
+                      <th>7d Work</th>
+                      <th>7d Break</th>
+                      <th>Capacity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(isAdmin ? state.users : state.users.filter(u => u.id === user.id)).map(u => {
+                      const uClocks = state.clocks.filter(c => c.user_id === u.id);
+                      let weekWorkSec = 0;
+                      let weekBreakSec = 0;
+                      const dayHours = last7Days.map(d => {
+                        const dayClocks = uClocks.filter(c => key(new Date(c.start * 1000)) === d.key);
+                        const wSec = dayClocks.reduce((n, c) => n + worked(c, currentTime), 0);
+                        const bSec = dayClocks.reduce((n, c) => n + breakDuration(c, currentTime), 0);
+                        weekWorkSec += wSec;
+                        weekBreakSec += bSec;
+                        return wSec / 3600;
+                      });
+                      const weekHours = weekWorkSec / 3600;
+                      const utilPct = Math.round((weekHours / 40) * 100);
+                      return (
+                        <tr key={u.id}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <Avatar user={u} />
+                              <div>
+                                <strong>{u.name}</strong>
+                                <div className="sub">{u.department}</div>
+                              </div>
+                            </div>
+                          </td>
+                          {dayHours.map((hrs, idx) => (
+                            <td key={last7Days[idx].key} style={{ textAlign: 'center' }}>
+                              {hrs > 0 ? (
+                                <span className={`tag ${hrs >= 7.5 ? 'green' : hrs >= 4 ? '' : 'yellow'}`}>
+                                  {hrs.toFixed(1)}h
+                                </span>
+                              ) : (
+                                <span className="sub">—</span>
+                              )}
+                            </td>
+                          ))}
+                          <td><strong>{weekHours.toFixed(1)}h</strong></td>
+                          <td className="sub">{duration(weekBreakSec)}</td>
+                          <td style={{ minWidth: 120 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div className="progress" style={{ flex: 1, margin: 0 }}>
+                                <i style={{ width: `${Math.min(100, utilPct)}%` }}></i>
+                              </div>
+                              <span className="sub" style={{ minWidth: 34 }}>{utilPct}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Full-Width Executive Timesheet & Shift Work Notes Card */}
+        <section className="card timesheet-card" style={{ marginTop: 22 }}>
+          <div className="timesheet-header">
+            <div>
+              <span className="eyebrow" style={{ margin: 0 }}>
+                {isAdmin ? 'Workspace Shift & Work Note Ledger' : 'Personal Shift & Work Note Ledger'}
+              </span>
+              <h3 style={{ marginTop: 4 }}>{isAdmin ? 'Timesheet & shift work notes' : 'My timesheet & shift notes'}</h3>
+              <p className="sub" style={{ marginTop: 4 }}>
+                Detailed breakdown of shift clock-in/out times, focused work hours, break durations, and shift wrap-up notes.
+              </p>
+            </div>
+            <div className="timesheet-toolbar">
+              <div className="period-switch">
+                {[
+                  ['all', `All (${baseRows.length})`],
+                  ['with_notes', 'With notes'],
+                  ['active', 'Active now'],
+                  ['completed', 'Completed']
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={timesheetNoteFilter === id ? 'active' : ''}
+                    onClick={() => {
+                      setTimesheetNoteFilter(id);
+                      setTimesheetLimit(50);
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {isAdmin ? (
+                <select
+                  aria-label="Show time for"
+                  value={timesheetPerson}
+                  onChange={e => { setTimesheetPerson(e.target.value); setTimesheetLimit(50); }}
+                  style={{ width: 'auto', minWidth: 160 }}
+                >
+                  <option value="all">Everyone ({state.users.length})</option>
+                  <option value="me">My time ({user.name})</option>
+                  {state.users.filter(u => u.id !== user.id).map(u => (
+                    <option key={u.id} value={u.id}>{u.name} ({u.department})</option>
+                  ))}
+                </select>
+              ) : (
+                <span className="tag">Personal log · Least privilege</span>
+              )}
+              <select
+                aria-label="Filter timesheet by project"
+                value={timesheetProject}
+                onChange={e => { setTimesheetProject(e.target.value); setTimesheetLimit(50); }}
+                style={{ width: 'auto', minWidth: 155 }}
+              >
+                <option value="all">All projects</option>
+                {state.projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                aria-label="Filter timesheet by date"
+                value={timesheetDateFilter}
+                onChange={e => { setTimesheetDateFilter(e.target.value); setTimesheetLimit(50); }}
+                style={{ width: 'auto', padding: '7px 10px', fontSize: 12 }}
+              />
+              <input
+                type="search"
+                aria-label="Search shift notes or tasks"
+                placeholder="Search notes, tasks, members…"
+                value={timesheetSearch}
+                onChange={e => { setTimesheetSearch(e.target.value); setTimesheetLimit(50); }}
+                style={{ width: 'auto', minWidth: 200, padding: '7px 12px', fontSize: 12.5 }}
+              />
+              {(timesheetProject !== 'all' || timesheetNoteFilter !== 'all' || timesheetDateFilter || timesheetSearch) && (
+                <button
+                  type="button"
+                  className="small"
+                  onClick={() => {
+                    setTimesheetProject('all');
+                    setTimesheetNoteFilter('all');
+                    setTimesheetDateFilter('');
+                    setTimesheetSearch('');
+                  }}
+                >
+                  Reset filters
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filtered Summary KPI Strip */}
+          <div className="timesheet-summary-strip">
+            <div className="timesheet-summary-item">
+              <span className="timesheet-summary-label">Matching shifts</span>
+              <strong className="timesheet-summary-value">{allRows.length}</strong>
+              <span className="sub">{completedRowsCount} completed · {activeRowsCount} active</span>
+            </div>
+            <div className="timesheet-summary-item">
+              <span className="timesheet-summary-label">Total focused time</span>
+              <strong className="timesheet-summary-value">{(filteredWorkSec / 3600).toFixed(1)}h</strong>
+              <span className="sub">{duration(filteredWorkSec)} net work</span>
+            </div>
+            <div className="timesheet-summary-item">
+              <span className="timesheet-summary-label">Total break time</span>
+              <strong className="timesheet-summary-value">{duration(filteredBreakSec)}</strong>
+              <span className="sub">{filteredBreakRatio}% of total clocked span</span>
+            </div>
+            <div className="timesheet-summary-item">
+              <span className="timesheet-summary-label">Shift work notes</span>
+              <strong className="timesheet-summary-value">{notesRowsCount}</strong>
+              <span className="sub">{notesCompliancePct}% clock-out note compliance</span>
+            </div>
+          </div>
+
+          <div className="table-wrap">
+            <table className="timesheet-table">
+              <thead>
+                <tr>
+                  <th>Team member</th>
+                  <th>In → out</th>
+                  <th>Project / task &amp; work note</th>
+                  <th>Focused time</th>
+                  <th>Break time</th>
+                  <th>Status</th>
+                  {isAdmin && <th></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(c => {
+                  const emp = state.users.find(u => u.id === c.user_id);
+                  const proj = state.projects.find(p => p.id === c.project);
+                  const taskObj = c.task ? state.tasks.find(t => t.id === c.task) : null;
+                  const wSec = worked(c, currentTime);
+                  const bSec = breakDuration(c, currentTime);
+                  const spanSec = wSec + bSec;
+                  const bRatio = spanSec > 0 ? Math.round((bSec / spanSec) * 100) : 0;
+                  const isLongActive = !c.end && currentTime - c.start > 36000;
+                  return (
+                    <tr key={c.id} className={!c.end ? 'is-active-shift-row' : ''}>
+                      <td>
+                        <div className="timesheet-member-cell">
+                          <Avatar user={emp} />
+                          <div>
+                            <strong>{emp?.name || 'Unknown'}</strong>
+                            <div className="sub">
+                              {emp?.department || 'Workspace'}{isAdmin && emp?.position ? ` · ${emp.position.split(',')[0]}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="shift-date-label">{fmtDate(new Date(c.start * 1000).toISOString())}</div>
+                        <span className={`shift-time-pill ${!c.end ? (c.break_start ? 'on-break' : 'active') : ''}`}>
+                          {fmtTime(c.start * 1000)} → {c.end ? fmtTime(c.end * 1000) : 'Active now'}
+                        </span>
+                      </td>
+                      <td className="timesheet-note-cell">
+                        <div className="shift-project-row">
+                          <span className="shift-project-badge">
+                            📁 {proj?.title || 'Assigned project'}
+                          </span>
+                          {taskObj && (
+                            <span className="shift-task-sub">
+                              ✓ {taskObj.title}
+                            </span>
+                          )}
+                        </div>
+                        {c.note && String(c.note).trim() ? (
+                          <div className={`timesheet-note-box ${!c.end ? 'is-live' : ''}`}>
+                            <div className="timesheet-note-meta">
+                              <span>{c.end ? '📝 Shift work summary note' : '⚡ Active session focus'}</span>
+                              <span>{(wSec / 3600).toFixed(1)}h logged</span>
+                            </div>
+                            <div className="timesheet-note-text">{c.note}</div>
+                          </div>
+                        ) : (
+                          <div className="timesheet-note-empty">
+                            {c.end ? 'No clock-out work note recorded' : 'Session running — work summary required at clock-out'}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <div className="shift-duration-main">{duration(wSec)}</div>
+                        <div className="shift-duration-sub">{(wSec / 3600).toFixed(2)}h focused</div>
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <div className="shift-duration-main" style={{ fontWeight: 600 }}>{duration(bSec)}</div>
+                        <div className="shift-duration-sub">{bSec > 0 ? `${bRatio}% of shift` : 'No break'}</div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-start' }}>
+                          <span className={`tag ${c.end ? 'green' : c.break_start ? 'yellow' : 'purple'}`}>
+                            {c.end ? 'Completed' : c.break_start ? 'On break' : 'Working'}
+                          </span>
+                          {isLongActive && (
+                            <span className="tag red" title="Session running over 10 hours">
+                              ⚠ 10h+
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {isAdmin && (
+                        <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: 6 }}>
+                            {!c.end && (
+                              <button className="small" onClick={() => manageEntry('stop', c)}>Clock out</button>
+                            )}
+                            <button className="small" onClick={() => setModal({ type: 'timeEntry', id: c.id, data: c })}>Edit</button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={isAdmin ? 7 : 6}>
+                      <div className="empty">No time entries match the current filters.</div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {allRows.length > rows.length && (
+            <div className="actions" style={{ justifyContent: 'center', marginTop: 15 }}>
+              <button className="small" onClick={() => setTimesheetLimit(n => n + 50)}>
+                Show more ({allRows.length - rows.length} older)
+              </button>
+            </div>
+          )}
+        </section>
+
+        {renderEmployeePerformanceSuite('clock')}
+      </>
+    );
+  };
+
+  // 6. Team View
+  const renderTeam = () => {
+    const list = state.users.filter(u => filter === 'All' || u.department === filter);
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Team</h1>
+            <p className="sub">The people behind the progress.</p>
+          </div>
+          <div className="actions">
+            {isAdmin && (
+              <>
+                <button type="button" onClick={() => promptCreateDepartment()}>
+                  <Icon name="plus" /> Create department
+                </button>
+                <button type="button" onClick={() => promptCreatePosition()}>
+                  <Icon name="plus" /> Create position
+                </button>
+                <button className="primary" onClick={() => setModal({ type: 'users', data: {} })}>
+                  <Icon name="plus" /> Add member
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {isAdmin && state.settings && (() => {
+          const limit = state.settings.memberLimit;
+          const requests = state.requests || [];
+          const used = state.users.length;
+          const full = used + requests.length >= limit;
+          const decide = async (action, r) => {
+            if (action === 'reject' && !confirm(`Reject ${r.name}'s request? Their pending account will be deleted.`)) return;
+            try {
+              await handleApi('/api/users', { action, id: r.id });
+              await refreshState();
+              showToast(action === 'approve' ? `${r.name} can now sign in` : 'Request rejected');
+            } catch (err) {
+              alert(err.message);
+            }
+          };
+          return (
+            <>
+              <div className="two-col" style={{ marginBottom: 18, alignItems: 'start' }}>
+                <section className="card">
+                  <div className="card-head">
+                    <h3>Access requests</h3>
+                    <span className={`tag ${requests.length ? 'yellow' : ''}`}>{requests.length} pending</span>
+                  </div>
+                  {requests.map(r => (
+                    <div key={r.id} className="list-row">
+                      <Avatar user={r} />
+                      <div className="grow">
+                        <strong>{r.name}</strong>
+                        <span className="sub">
+                          {r.email} · {r.position ? `${r.position} · ` : ''}{r.department} · {new Date(r.created).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="actions">
+                        <button className="small primary" onClick={() => decide('approve', r)}>Approve</button>
+                        <button className="small" onClick={() => decide('reject', r)}>Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                  {requests.length === 0 && (
+                    <div className="empty">No requests waiting. Employees can ask to join from the sign-in page with “Request access”.</div>
+                  )}
+                </section>
+                <section className="card">
+                  <h3>Team size limit</h3>
+                  <p className="sub" style={{ margin: '8px 0 14px' }}>
+                    {used} active{requests.length ? ` + ${requests.length} pending` : ''} of {limit} seats.{' '}
+                    {full ? 'Sign-up requests are closed.' : 'Sign-up requests are open.'}
+                  </p>
+                  <div className="progress" style={{ marginBottom: 16 }}>
+                    <i style={{ width: `${Math.min(100, limit ? ((used + requests.length) / limit) * 100 : 100)}%` }}></i>
+                  </div>
+                  <form
+                    style={{ display: 'flex', gap: 10, alignItems: 'end' }}
+                    onSubmit={async e => {
+                      e.preventDefault();
+                      try {
+                        await handleApi('/api/users', { action: 'limit', memberLimit: Number(new FormData(e.target).get('memberLimit')) });
+                        await refreshState();
+                        showToast('Team size limit saved');
+                      } catch (err) {
+                        alert(err.message);
+                      }
+                    }}
+                  >
+                    <div className="field" style={{ margin: 0, flex: 1 }}>
+                      <label>Maximum accounts (0 = no sign-ups)</label>
+                      <input key={limit} name="memberLimit" type="number" min="0" max="10000" required defaultValue={limit} />
+                    </div>
+                    <button className="primary">Save</button>
+                  </form>
+                </section>
+              </div>
+
+              <div className="two-col" style={{ marginBottom: 22, alignItems: 'start' }}>
+                <section className="card">
+                  <div className="card-head" style={{ flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <h3 style={{ margin: 0 }}>Workspace departments</h3>
+                      <p className="sub" style={{ marginTop: 4 }}>
+                        Create custom departments ({departments.length} active).
+                      </p>
+                    </div>
+                    <form
+                      style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+                      onSubmit={async e => {
+                        e.preventDefault();
+                        const fd = new FormData(e.target);
+                        const deptName = String(fd.get('newDepartment') || '').trim();
+                        if (!deptName) return;
+                        e.target.reset();
+                        await handleCreateDepartment(deptName);
+                      }}
+                    >
+                      <input
+                        name="newDepartment"
+                        type="text"
+                        maxLength={40}
+                        placeholder="e.g. Sales, QA, HR…"
+                        style={{ width: 175 }}
+                        required
+                      />
+                      <button className="primary small" type="submit">
+                        <Icon name="plus" /> Add
+                      </button>
+                    </form>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {departments.map(d => {
+                      const count = state.users.filter(u => u.department === d).length;
+                      return (
+                        <span
+                          key={d}
+                          className="tag"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 11px',
+                            fontSize: 12.5
+                          }}
+                        >
+                          <strong>{d}</strong>
+                          <span className="sub" style={{ fontSize: 11 }}>{count}</span>
+                          {departments.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDepartment(d)}
+                              title={`Remove ${d} department`}
+                              style={{
+                                border: 'none',
+                                background: 'transparent',
+                                color: 'var(--muted)',
+                                padding: '0 2px',
+                                height: 'auto',
+                                fontSize: 13,
+                                lineHeight: 1,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="card">
+                  <div className="card-head" style={{ flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <h3 style={{ margin: 0 }}>Workspace positions &amp; titles</h3>
+                      <p className="sub" style={{ marginTop: 4 }}>
+                        Add or manage positions like CEO, Marketing Head, Analyst ({positions.length} active).
+                      </p>
+                    </div>
+                    <form
+                      style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+                      onSubmit={async e => {
+                        e.preventDefault();
+                        const fd = new FormData(e.target);
+                        const posName = String(fd.get('newPosition') || '').trim();
+                        if (!posName) return;
+                        e.target.reset();
+                        await handleCreatePosition(posName);
+                      }}
+                    >
+                      <input
+                        name="newPosition"
+                        type="text"
+                        maxLength={50}
+                        placeholder="e.g. CEO, Marketing Head, Analyst…"
+                        style={{ width: 210 }}
+                        required
+                      />
+                      <button className="primary small" type="submit">
+                        <Icon name="plus" /> Add
+                      </button>
+                    </form>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {positions.map(p => {
+                      const count = state.users.filter(u =>
+                        getUserPositions(u).some(pos => pos.toLowerCase() === p.toLowerCase())
+                      ).length;
+                      return (
+                        <span
+                          key={p}
+                          className="tag purple"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 11px',
+                            fontSize: 12.5
+                          }}
+                        >
+                          <strong>{p}</strong>
+                          <span style={{ fontSize: 11, opacity: 0.75 }}>{count}</span>
+                          {positions.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePosition(p)}
+                              title={`Remove ${p} position`}
+                              style={{
+                                border: 'none',
+                                background: 'transparent',
+                                color: 'inherit',
+                                opacity: 0.75,
+                                padding: '0 2px',
+                                height: 'auto',
+                                fontSize: 13,
+                                lineHeight: 1,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </section>
+              </div>
+            </>
+          );
+        })()}
+
+        <div className="tabs">
+          {['All', ...departments].map(d => (
+            <button key={d} className={filter === d ? 'active' : ''} onClick={() => setFilter(d)}>
+              {d}
+            </button>
+          ))}
+        </div>
+
+        <div className="team-grid">
+          {list.map(u => {
+            const canSeeDetailedStats = isAdmin || u.id === user.id;
+            const todayStr = key(new Date());
+            const uTasks = canSeeDetailedStats
+              ? state.tasks.filter(t => isUserAssignedToTask(t, u.id))
+              : [];
+            const openTasks = uTasks.filter(t => t.status !== 'Done');
+            const blockedCount = openTasks.filter(t => t.blocked).length;
+            const overdueCount = openTasks.filter(t => t.due && t.due < todayStr).length;
+            const onTimeRate = uTasks.length
+              ? Math.max(0, Math.round(((uTasks.length - overdueCount) / uTasks.length) * 100))
+              : 100;
+            const liveClock = state.clocks.find(c => c.user_id === u.id && !c.end);
+            const liveProject =
+              canSeeDetailedStats && liveClock?.project
+                ? state.projects.find(p => p.id === liveClock.project)?.title
+                : null;
+            const totalHours = canSeeDetailedStats
+              ? state.clocks
+                  .filter(c => c.user_id === u.id)
+                  .reduce((n, c) => n + worked(c, currentTime) / 3600, 0)
+              : 0;
+            const uPositions = getUserPositions(u);
+
+            return (
+              <article key={u.id} className="card person">
+                <Avatar user={u} big />
+                <h3>{u.name}</h3>
+                {uPositions.length > 0 && (
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', marginTop: 2 }}>
+                    {uPositions.join(' · ')}
+                  </div>
+                )}
+                <p className="sub">{u.email}</p>
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+                  {uPositions.map(pos => (
+                    <span key={pos} className="tag purple">{pos}</span>
+                  ))}
+                  <span className="tag">{u.department}</span>
+                  {isAdmin && u.role === 'admin' && <span className="tag">Admin</span>}
+                  {canSeeDetailedStats && (
+                    <>
+                      <span className={`tag ${onTimeRate >= 85 ? 'green' : 'yellow'}`} title="On-time task rate">
+                        {onTimeRate}% on-time
+                      </span>
+                      {blockedCount > 0 && <span className="tag red">{blockedCount} blocked</span>}
+                    </>
+                  )}
+                </div>
+                {liveClock && (
+                  <div className="sub" style={{ marginTop: 8, fontSize: 12 }}>
+                    {liveClock.break_start ? '☕ On break' : liveProject ? `⚡ Working on ${liveProject}` : '⚡ Active session'}
+                  </div>
+                )}
+                {canSeeDetailedStats && (
+                  <>
+                    <div className="person-stats">
+                      <div>
+                        <b>{openTasks.length}</b>
+                        <span className="sub">Open tasks</span>
+                      </div>
+                      <div>
+                        <b>{uTasks.filter(t => t.status === 'Done').length}</b>
+                        <span className="sub">Completed</span>
+                      </div>
+                      <div>
+                        <b>{totalHours.toFixed(1)}</b>
+                        <span className="sub">Hours tracked</span>
+                      </div>
+                    </div>
+                    <div className="progress">
+                      <i style={{ width: `${uTasks.length ? Math.round((uTasks.filter(t => t.status === 'Done').length / uTasks.length) * 100) : 0}%` }}></i>
+                    </div>
+                  </>
+                )}
+                <div className="actions" style={{ marginTop: canSeeDetailedStats ? 0 : 14 }}>
+                  <span className={`tag ${liveClock?.break_start ? 'yellow' : ''}`}>
+                    {liveClock ? (liveClock.break_start ? 'On break' : 'Clocked in') : 'Offline'}
+                  </span>
+                  <button className="small" onClick={() => setModal({ type: 'person', id: u.id, data: u })}>
+                    {isAdmin ? 'Profile & positions ↗' : 'View profile ↗'}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+          {list.length === 0 && (
+            <div className="card empty" style={{ gridColumn: '1 / -1' }}>
+              <strong>No people in this department</strong>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
+
+  // 7. Leads View
+  const renderLeads = () => {
+    const todayStr = key(new Date());
+    const list = state.leads.filter(l => {
+      if (filter === 'All') return true;
+      if (filter === 'Follow-up due') {
+        return !['Won', 'Lost'].includes(l.stage) && l.followup && l.followup <= todayStr;
+      }
+      return l.stage === filter;
+    });
+    const openLeads = state.leads.filter(l => !['Won', 'Lost'].includes(l.stage));
+    const pipelineVal = openLeads.reduce((n, l) => n + Number(l.value || 0), 0);
+    const weightedPipelineVal = openLeads.reduce(
+      (n, l) => n + Number(l.value || 0) * (Math.min(100, Math.max(0, Number(l.probability ?? 50))) / 100),
+      0
+    );
+    const wonLeads = state.leads.filter(l => l.stage === 'Won');
+    const wonVal = wonLeads.reduce((n, l) => n + Number(l.value || 0), 0);
+
+    const updateLeadStage = async (lead, stage) => {
+      if (!lead || lead.stage === stage) return;
+      const prevStage = lead.stage;
+      const updatedLead = { ...lead, stage };
+      setState(prev => ({
+        ...prev,
+        leads: prev.leads.map(item => (item.id === lead.id ? updatedLead : item))
+      }));
+      showToast(`Lead moved to ${stage}`);
+      try {
+        await handleApi('/api/record', {
+          kind: 'leads',
+          id: lead.id,
+          body: updatedLead
+        });
+        refreshState();
+      } catch (err) {
+        setState(prev => ({
+          ...prev,
+          leads: prev.leads.map(item => (item.id === lead.id ? { ...item, stage: prevStage } : item))
+        }));
+        showToast(err.message);
+      }
+    };
+
+    const convertLeadToProject = lead => {
+      setModal({
+        type: 'projects',
+        data: {
+          title: lead.company ? `${lead.company} — ${lead.title}` : lead.title,
+          client: lead.company || lead.title,
+          status: 'Planning',
+          progress: 10,
+          budget: Number(lead.value || 0),
+          lead: lead.assignee || user.id,
+          description: `Converted from Won lead (${lead.title}${lead.email ? ` · ${lead.email}` : ''}).\n${lead.notes || ''}`.trim()
+        }
+      });
+    };
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Leads</h1>
+            <p className="sub">{isAdmin ? 'Good conversations. New possibilities.' : 'Your assigned & captured opportunities.'}</p>
+          </div>
+          <div className="actions">
+            {isAdmin && (
+              <>
+                <input
+                  ref={csvInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  style={{ display: 'none' }}
+                  onChange={importLeadsCSV}
+                />
+                <button onClick={() => csvInputRef.current?.click()}>
+                  <Icon name="upload" /> Import CSV
+                </button>
+              </>
+            )}
+            <button className="primary" onClick={() => setModal({ type: 'leads', data: {} })}>
+              <Icon name="plus" /> Add lead
+            </button>
+          </div>
+        </div>
+
+        <div className="stats">
+          <div className="stat green">
+            <span>{isAdmin ? 'Total leads' : 'My leads'}</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.leads.length}</span>
+            <span className="sub">{isAdmin ? 'Every connection counts' : 'Assigned or captured by you'}</span>
+          </div>
+          <div className="stat">
+            <span>{isAdmin ? 'Pipeline value' : 'My pipeline'}</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{formatMoney(pipelineVal)}</span>
+            <span className="sub">
+              {openLeads.length > 0
+                ? `Weighted: ${formatMoney(Math.round(weightedPipelineVal))} (${openLeads.length} open)`
+                : 'Open opportunities'}
+            </span>
+          </div>
+          <div className="stat">
+            <span>Won</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{wonLeads.length}</span>
+            <span className="sub">{wonVal > 0 ? `${formatMoney(wonVal)} closed revenue` : 'New partnerships'}</span>
+          </div>
+          <div className="stat">
+            <span>{state.integrations.sheets ? 'Sheets sync' : 'Lead storage'}</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{state.integrations.sheets ? 'Ready' : 'Active'}</span>
+            <span className="sub">{state.integrations.sheets ? 'Synced with Google Sheets' : 'Saved in MongoDB · CSV ready'}</span>
+          </div>
+        </div>
+
+        <div className="chat-layout">
+          <section>
+            <div className="actions" style={{ justifyContent: 'space-between', marginBottom: 15 }}>
+              <div className="tabs">
+                {['All', 'Follow-up due', 'New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost'].map(s => (
+                  <button key={s} className={filter === s ? 'active' : ''} onClick={() => setFilter(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <button className="small" onClick={() => exportCSV('leads')}>
+                <Icon name="download" /> Export CSV
+              </button>
+            </div>
+            <div className="card table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lead / company</th>
+                    <th>Contact</th>
+                    <th>Value</th>
+                    <th>Stage</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map(l => {
+                    const isFollowupOverdue = !['Won', 'Lost'].includes(l.stage) && l.followup && l.followup <= todayStr;
+                    const owner = l.assignee ? state.users.find(u => u.id === l.assignee) : null;
+                    return (
+                      <tr key={l.id}>
+                        <td>
+                          <strong>{l.title}</strong>
+                          {l.source && <span className="tag" style={{ marginLeft: 6 }}>{l.source}</span>}
+                          <br />
+                          <span className="sub">
+                            {l.company || 'Independent'}
+                            {owner ? ` · Owner: ${owner.name.split(' ')[0]}` : ''}
+                            {l.followup ? ` · Follow up ${fmtDate(l.followup)}` : ''}
+                          </span>
+                          {isFollowupOverdue && (
+                            <span className="tag red" style={{ marginLeft: 6 }}>Follow-up due</span>
+                          )}
+                        </td>
+                        <td>{l.email || l.phone || '—'}</td>
+                        <td>
+                          {formatMoney(l.value)}
+                          {Number(l.probability) > 0 && (
+                            <div className="sub">{l.probability}% prob.</div>
+                          )}
+                        </td>
+                        <td>
+                          {canEdit('leads', l) ? (
+                            <select
+                              aria-label={`Stage for ${l.title}`}
+                              value={l.stage}
+                              onChange={e => updateLeadStage(l, e.target.value)}
+                              style={{ padding: '5px 8px', fontSize: 11, width: 'auto', minWidth: 110 }}
+                            >
+                              {['New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost'].map(s => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="tag">{l.stage}</span>
+                          )}
+                        </td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          {isAdmin && l.stage === 'Won' && (
+                            <button
+                              className="small primary"
+                              style={{ marginRight: 6 }}
+                              onClick={() => convertLeadToProject(l)}
+                              title="Create a new project pre-filled from this Won lead"
+                            >
+                              → Project
+                            </button>
+                          )}
+                          <button className="small" onClick={() => setModal({ type: 'leads', id: l.id, data: l })}>
+                            {canEdit('leads', l) ? 'Open ↗' : 'View ↗'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {list.length === 0 && (
+                    <tr>
+                      <td colSpan={5}>
+                        <div className="empty">
+                          <strong>Your next opportunity starts here</strong>Add a lead or start a conversation in the capture panel.
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Lead Assistant Chat Capture */}
+          <section className="card chat">
+            <div className="card-head">
+              <div>
+                <h3>Lead assistant <span className="tag">Capture</span></h3>
+                <p className="sub" style={{ marginTop: 6 }}>From a quick note to a clear next step.</p>
+              </div>
+              <Icon name="leads" />
+            </div>
+            <div className="chat-log">
+              <div className="bubble">
+                Tell me about your new lead. I’ll organize the details into a card for you to review.<br /><br />
+                Try: <b>Name: Maya Shah; Company: Acme; Email: maya@example.com; Value: 5000; Notes: Website redesign</b><br />
+                <span className="sub">Structured capture · Instant preview</span>
+              </div>
+              {chatMessages.map((m, idx) => (
+                <div key={idx} className={`bubble ${m.user ? 'user' : ''}`}>
+                  {m.text}
+                </div>
+              ))}
+            </div>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                const text = new FormData(e.target).get('message');
+                if (!text) return;
+                setChatMessages(prev => [
+                  ...prev,
+                  { text, user: true },
+                  { text: 'Your lead draft is ready. Review the details, then save it to your pipeline.' }
+                ]);
+                e.target.reset();
+                const draft = parseLeadText(text);
+                setModal({ type: 'leads', data: draft });
+              }}
+            >
+              <textarea name="message" required placeholder="Add a name, company, contact details…" />
+              <button className="primary" style={{ width: '100%', marginTop: 10 }}>
+                Create lead draft ↗
+              </button>
+            </form>
+          </section>
+        </div>
+      </>
+    );
+  };
+
+  // 8. Meetings View
+  const renderMeetings = () => {
+    const isPast = filter === 'Past';
+    const activeTab = isPast ? 'Past' : 'Upcoming';
+    const list = state.meetings
+      .filter(m => (isPast ? new Date(m.end) < new Date() : new Date(m.end) >= new Date()))
+      .sort((a, b) => a.start.localeCompare(b.start));
+
+    const toGCalUrl = m => {
+      const fmt = iso => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: m.title || 'Syneolab Meeting',
+        dates: `${fmt(m.start)}/${fmt(m.end)}`,
+        details: [m.description || '', m.link ? `\nJoin meeting: ${m.link}` : ''].join('').trim(),
+        location: m.link || m.location || 'Google Meet'
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    };
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Meetings</h1>
+            <p className="sub">{isAdmin ? 'Bring the right people into the same conversation.' : 'Your invited meetings & team sessions.'}</p>
+          </div>
+          {isAdmin && (
+            <div className="actions">
+              <a
+                className="link-gen-btn"
+                href="https://meet.google.com/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ height: 36, padding: '0 14px' }}
+              >
+                <Icon name="meetings" /> New Google Meet ↗
+              </a>
+              <button
+                className="primary"
+                onClick={() =>
+                  setModal({
+                    type: 'meetings',
+                    data: {
+                      attendees: state.users.map(u => u.id),
+                      sendToEveryone: true,
+                      autoRoom: true,
+                      location: 'Google Meet'
+                    }
+                  })
+                }
+              >
+                <Icon name="plus" /> Schedule meeting
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="tabs">
+          {['Upcoming', 'Past'].map(t => (
+            <button key={t} className={activeTab === t ? 'active' : ''} onClick={() => setFilter(t)}>
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <div className="two-col">
+          <section>
+            {list.map(m => {
+              const invitedAll = state.users.length > 0 && (m.attendees || []).length >= state.users.length;
+              return (
+                <article key={m.id} className="card meeting" style={{ marginBottom: 15 }}>
+                  <div className="list-row">
+                    <div className="meeting-time">
+                      <span>{new Date(m.start).toLocaleDateString(undefined, { month: 'short' })}</span>
+                      <b>{new Date(m.start).getDate()}</b>
+                    </div>
+                    <div className="grow">
+                      <h3>{m.title}</h3>
+                      <p className="sub">
+                        {fmtDate(m.start)} · {fmtTime(m.start)} – {fmtTime(m.end)} · {m.location || 'Online'}
+                      </p>
+                    </div>
+                    {invitedAll && <span className="tag purple">Everyone</span>}
+                    <span className="tag">
+                      {new Date(m.start) > new Date() ? 'Upcoming' : new Date(m.end) > new Date() ? 'Happening now' : 'Past'}
+                    </span>
+                  </div>
+                  <p className="sub" style={{ marginTop: 20 }}>{m.description || 'A moment to connect and move forward.'}</p>
+                  <div className="actions" style={{ justifyContent: 'space-between', marginTop: 15, flexWrap: 'wrap', gap: 10 }}>
+                    <div className="avatar-stack">
+                      {(m.attendees || []).map(uid => (
+                        <Avatar key={uid} user={state.users.find(u => u.id === uid)} />
+                      ))}
+                    </div>
+                    <div className="actions">
+                      <a
+                        className="link-gen-btn"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={m.calendarEventUrl || toGCalUrl(m)}
+                      >
+                        <Icon name="calendar" /> {m.calendarEventUrl ? 'Open in Calendar ↗' : '+ Google Calendar'}
+                      </a>
+                      <button className="small" onClick={() => setModal({ type: 'meetings', id: m.id, data: m })}>
+                        Details
+                      </button>
+                      {m.link && (
+                        <a className="link" target="_blank" rel="noopener noreferrer" href={m.link}>
+                          Join meeting ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+            {list.length === 0 && (
+              <div className="empty">
+                <strong>Your schedule has breathing room</strong>Meetings appear here as soon as they are scheduled.
+              </div>
+            )}
+          </section>
+
+          <section className="card" style={{ alignSelf: 'start' }}>
+            <h3>Automatic calendar & Meet sync</h3>
+            <p className="sub" style={{ marginTop: 12 }}>
+              Every scheduled meeting sends an executive HTML card plus a native <b>Google Calendar (.ics REQUEST)</b> invite so it automatically appears on everyone’s calendar with RSVP controls.
+            </p>
+            <div className="note" style={{ margin: '15px 0' }}>
+              <div>Gmail + .ics Calendar Invite: <b>{state.integrations.gmail ? 'Active' : 'Setup needed'}</b></div>
+              <div style={{ marginTop: 4 }}>
+                Auto Google Meet API Webhook: <b>{state.integrations.calendar ? 'Connected' : 'Ready in Settings → Integrations'}</b>
+              </div>
+            </div>
+            <div className="actions" style={{ flexWrap: 'wrap' }}>
+              <button onClick={() => navigate('calendar')}>
+                <Icon name="calendar" /> Open calendar
+              </button>
+              {isAdmin && (
+                <button className="small" onClick={() => { setSettingsTab('Integrations'); navigate('settings'); }}>
+                  Calendar sync setup ↗
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+      </>
+    );
+  };
+
+  // 9. Announcements View
+  const renderAnnouncements = () => {
+    const totalMembers = state.users.length;
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Announcements</h1>
+            <p className="sub">
+              Company updates &amp; initiatives. Mark announcements as complete to confirm participation and notify administrators.
+            </p>
+          </div>
+          <div className="actions">
+            {isAdmin && (
+              <button className="primary" onClick={() => setModal({ type: 'announcements', data: {} })}>
+                <Icon name="plus" /> Post announcement
+              </button>
+            )}
+          </div>
+        </div>
+
+        {state.announcements.map(a => {
+          const ackRecords = state.acknowledgements.filter(x => x.record_id === a.id);
+          const isAcked = ackRecords.some(x => x.user_id === user.id);
+          const ackCount = ackRecords.length;
+          const pct = totalMembers > 0 ? Math.round((ackCount / totalMembers) * 100) : 0;
+          const author = state.users.find(u => u.id === a.owner);
+          const completedMembers = ackRecords
+            .map(ack => ({
+              ack,
+              member: state.users.find(u => u.id === ack.user_id)
+            }))
+            .filter(item => item.member);
+          const pendingMembers = state.users.filter(u => !ackRecords.some(x => x.user_id === u.id));
+
+          return (
+            <article key={a.id} className="card announcement" style={{ marginBottom: 16 }}>
+              <div className="card-head">
+                <div className="profile">
+                  <Avatar user={author} />
+                  <div>
+                    <h3>{a.title}</h3>
+                    <span className="sub">{author?.name} · {fmtDate(a.created)}</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span className={`tag ${isAcked ? 'green' : 'yellow'}`}>
+                    {isAcked ? '✓ Taking part / Completed' : 'Pending your completion'}
+                  </span>
+                  <span className={`tag ${a.priority === 'Important' ? 'yellow' : ''}`}>
+                    {a.priority || 'Update'}
+                  </span>
+                </div>
+              </div>
+              <p style={{ margin: '15px 0', whiteSpace: 'pre-wrap' }}>{a.description}</p>
+
+              {/* Team Participation & Completion Tracker (Admin Only) */}
+              {isAdmin && (
+                <div
+                  style={{
+                    margin: '14px 0',
+                    padding: '12px 14px',
+                    borderRadius: 12,
+                    background: 'var(--bg)',
+                    border: '1px solid var(--line)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                    <strong style={{ fontSize: 12.5 }}>
+                      Team Participation &amp; Completion Tracker
+                    </strong>
+                    <span className="sub" style={{ fontSize: 12, fontWeight: 600 }}>
+                      {ackCount} of {totalMembers} team members completed ({pct}%)
+                    </span>
+                  </div>
+                  <div className="progress" style={{ marginBottom: 10 }}>
+                    <i style={{ width: `${pct}%` }}></i>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span className="sub" style={{ fontSize: 11, minWidth: 125, fontWeight: 600 }}>
+                        Completed / Taking part ({completedMembers.length}):
+                      </span>
+                      {completedMembers.length > 0 ? (
+                        completedMembers.map(({ ack, member }) => (
+                          <span
+                            key={member.id}
+                            className="tag green"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px' }}
+                            title={ack.at ? `Marked complete at ${new Date(ack.at).toLocaleString()}` : 'Marked complete'}
+                          >
+                            ✓ {member.name}
+                            {ack.at && (
+                              <small style={{ opacity: 0.78 }}>
+                                ({new Date(ack.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                              </small>
+                            )}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="sub" style={{ fontSize: 11 }}>No team members have marked complete yet</span>
+                      )}
+                    </div>
+                    {pendingMembers.length > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="sub" style={{ fontSize: 11, minWidth: 125 }}>
+                          Pending ({pendingMembers.length}):
+                        </span>
+                        {pendingMembers.map(member => (
+                          <span key={member.id} className="tag" style={{ fontSize: 11, opacity: 0.85 }}>
+                            ⏳ {member.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="actions">
+                <button
+                  className={`small ${isAcked ? '' : 'primary'}`}
+                  disabled={isAcked}
+                  onClick={async () => {
+                    const optimisticAck = {
+                      record_id: a.id,
+                      user_id: user.id,
+                      at: new Date().toISOString()
+                    };
+                    setState(prev => ({
+                      ...prev,
+                      acknowledgements: [...prev.acknowledgements, optimisticAck]
+                    }));
+                    showToast('Marked as complete — Admin notified');
+                    try {
+                      await handleApi('/api/ack', { id: a.id });
+                      refreshState();
+                    } catch (err) {
+                      setState(prev => ({
+                        ...prev,
+                        acknowledgements: prev.acknowledgements.filter(
+                          x => !(x.record_id === a.id && x.user_id === user.id)
+                        )
+                      }));
+                      showToast(err.message);
+                    }
+                  }}
+                >
+                  <Icon name="check" /> {isAcked ? 'Completed ✓ (Taking part)' : 'Mark as complete'}
+                </button>
+                <span className="sub">
+                  {isAdmin
+                    ? `${ackCount}/${totalMembers} completed · Admin notified on completion`
+                    : isAcked
+                    ? 'You marked this announcement as complete ✓'
+                    : 'Admin is notified when you mark complete'}
+                </span>
+                {isAdmin && (
+                  <button className="small" onClick={() => setModal({ type: 'announcements', id: a.id, data: a })}>
+                    Edit
+                  </button>
+                )}
+              </div>
+            </article>
+          );
+        })}
+        {state.announcements.length === 0 && (
+          <div className="card empty">
+            <strong>Everyone on the same page</strong>Company updates will appear here.
+          </div>
+        )}
+      </>
+    );
+  };
+
+  // 10. Analytics View
+  const renderAnalytics = () => {
+    const scopedClocks = isAdmin ? state.clocks : state.clocks.filter(c => c.user_id === user.id);
+    const daysData = series(scopedClocks, analyticsDays, currentTime);
+    const prevData = series(scopedClocks, analyticsDays, currentTime, analyticsDays);
+
+    const sum = (xs, k) => xs.reduce((n, d) => n + d[k], 0);
+    const hours = sum(daysData, 'hours');
+    const oldHours = sum(prevData, 'hours');
+
+    const trend = (curr, prev) => {
+      if (!prev) return curr ? 'New activity this period' : 'No change from previous period';
+      const pct = Math.round(((curr - prev) / prev) * 100);
+      return `${pct >= 0 ? '↗' : '↘'} ${Math.abs(pct)}% vs previous ${analyticsDays} days`;
+    };
+
+    // Filter clocks for period
+    const periodClocks = scopedClocks.filter(
+      c => key(new Date(c.start * 1000)) >= daysData[0].date && key(new Date(c.start * 1000)) <= daysData.at(-1).date
+    );
+
+    const sparkPts = (vals) => {
+      const pts = points(vals, 240, 50, 3);
+      const line = pts.map(p => p.join(',')).join(' ');
+      return (
+        <svg className="sparkline" viewBox="0 0 240 50" preserveAspectRatio="none" aria-hidden="true">
+          <polygon points={`3,50 ${line} 237,50`} fill="var(--light)" />
+          <polyline points={line} fill="none" stroke="var(--mid)" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+        </svg>
+      );
+    };
+
+    // Donut data
+    const projectGroups = state.projects
+      .map(p => ({
+        title: p.title,
+        hours: periodClocks.filter(c => c.project === p.id).reduce((n, c) => n + worked(c, currentTime) / 3600, 0)
+      }))
+      .filter(p => p.hours > 0)
+      .sort((a, b) => b.hours - a.hours);
+
+    const knownProjectIds = new Set(state.projects.map(p => p.id));
+    const otherHours = periodClocks
+      .filter(c => !knownProjectIds.has(c.project || ''))
+      .reduce((n, c) => n + worked(c, currentTime) / 3600, 0);
+    if (otherHours > 0) projectGroups.push({ title: 'Other / unassigned', hours: otherHours });
+
+    const totalDonutHours = projectGroups.reduce((n, p) => n + p.hours, 0);
+    let donutOffset = 0;
+    const shades = ['green', 'mid', 'soft', 'deep', 'stripe'];
+
+    // 12-week Heatmap (84 days)
+    const heatData = series(scopedClocks, 84, currentTime);
+    const maxHeat = Math.max(1, ...heatData.map(d => d.hours));
+
+    // Contributors (Admin sees all team members; Employee sees only their own profile)
+    const contributors = (isAdmin ? state.users : state.users.filter(u => u.id === user.id))
+      .map(u => ({
+        ...u,
+        hours: periodClocks.filter(c => c.user_id === u.id).reduce((n, c) => n + worked(c, currentTime) / 3600, 0),
+        tasks: state.tasks.filter(t => isUserAssignedToTask(t, u.id) && t.status === 'Done').length
+      }))
+      .sort((a, b) => b.hours - a.hours);
+
+    const comp = completion(state.tasks);
+
+    // Focus chart
+    const maxFocus = Math.max(1, ...daysData.map(d => d.hours), ...prevData.map(d => d.hours));
+    const currPts = points(daysData.map(d => d.hours), 720, 240, 24, maxFocus);
+    const prevPts = points(prevData.map(d => d.hours), 720, 240, 24, maxFocus);
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Analytics</h1>
+            <p className="sub">
+              {isAdmin ? 'How the team is shaping up, and where the time goes.' : 'Your personal focused time, project breakdown, and task progress.'}
+            </p>
+          </div>
+          <div className="actions">
+            <div className="period-switch">
+              {[7, 30, 90].map(n => (
+                <button
+                  key={n}
+                  className={analyticsDays === n ? 'active' : ''}
+                  onClick={() => setAnalyticsDays(n)}
+                >
+                  {n}D
+                </button>
+              ))}
+            </div>
+            <button onClick={() => exportCSV('time')}>
+              <Icon name="download" /> {isAdmin ? 'Export CSV' : 'Export my CSV'}
+            </button>
+          </div>
+        </div>
+
+        <div className="stats analytics-stats">
+          <section className="stat metric-card">
+            <div className="metric-title">Hours tracked<span className="metric-dot"></span></div>
+            <span className="value">{hours.toFixed(1)}</span>
+            <span className="sub">{trend(hours, oldHours)}</span>
+            {sparkPts(daysData.map(d => d.hours))}
+          </section>
+          <section className="stat metric-card">
+            <div className="metric-title">Work sessions<span className="metric-dot"></span></div>
+            <span className="value">{sum(daysData, 'sessions')}</span>
+            <span className="sub">{trend(sum(daysData, 'sessions'), sum(prevData, 'sessions'))}</span>
+            {sparkPts(daysData.map(d => d.sessions))}
+          </section>
+          <section className="stat metric-card">
+            <div className="metric-title">{isAdmin ? 'Active contributors' : 'Active days'}<span className="metric-dot"></span></div>
+            <span className="value">
+              {isAdmin
+                ? new Set(periodClocks.map(c => c.user_id)).size
+                : daysData.filter(d => d.hours > 0).length}
+            </span>
+            <span className="sub">
+              {isAdmin ? `of ${state.users.length} team members this period` : `of ${analyticsDays} days this period`}
+            </span>
+            {sparkPts(daysData.map(d => d.people))}
+          </section>
+          <section className="stat metric-card">
+            <div className="metric-title">Average session<span className="metric-dot"></span></div>
+            <span className="value">
+              {periodClocks.length ? (hours / periodClocks.length).toFixed(1) : '0.0'}<small> h</small>
+            </span>
+            <span className="sub">Focused time, excluding breaks</span>
+            {sparkPts(daysData.map(d => (d.sessions ? d.hours / d.sessions : 0)))}
+          </section>
+        </div>
+
+        <div className="analytics-layout">
+          {/* Daily Focus Trend Chart */}
+          <section className="card throughput-card">
+            <div className="card-head">
+              <div>
+                <h3>Focus trend</h3>
+                <p className="sub">Daily focused hours · sessions grouped by clock-in date</p>
+              </div>
+              <div className="line-legend">
+                <span><i></i>This period</span>
+                <span><i></i>Previous</span>
+              </div>
+            </div>
+            <div className="focus-chart">
+              <svg viewBox="0 0 720 265" preserveAspectRatio="none" role="img" aria-label={`Daily focused hours over the last ${analyticsDays} days`}>
+                <defs>
+                  <linearGradient id="focus-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="var(--mid)" stopOpacity=".38" />
+                    <stop offset="1" stopColor="var(--mid)" stopOpacity=".015" />
+                  </linearGradient>
+                </defs>
+                {[0, 1, 2, 3].map(i => (
+                  <React.Fragment key={i}>
+                    <line x1="24" y1={24 + i * 64} x2="696" y2={24 + i * 64} stroke="var(--line)" strokeDasharray="3 5" />
+                    <text x="0" y={28 + i * 64} fill="var(--muted)" fontSize="9">
+                      {((maxFocus * (3 - i)) / 3).toFixed(0)}
+                    </text>
+                  </React.Fragment>
+                ))}
+                <polygon points={`24,216 ${currPts.map(p => p.join(',')).join(' ')} 696,216`} fill="url(#focus-fill)" />
+                <polyline points={prevPts.map(p => p.join(',')).join(' ')} fill="none" stroke="var(--stripe)" strokeWidth="1.8" strokeDasharray="5 5" />
+                <polyline points={currPts.map(p => p.join(',')).join(' ')} fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinejoin="round" />
+                {[0, Math.floor(daysData.length / 3), Math.floor((daysData.length * 2) / 3), daysData.length - 1].map(i => (
+                  <text
+                    key={i}
+                    x={currPts[i][0]}
+                    y="253"
+                    textAnchor={i === 0 ? 'start' : i === daysData.length - 1 ? 'end' : 'middle'}
+                    fontSize="10"
+                    fill="var(--muted)"
+                  >
+                    {fmtDate(daysData[i].date)}
+                  </text>
+                ))}
+              </svg>
+              <div className="chart-hotspots">
+                {daysData.map(d => (
+                  <button
+                    key={d.date}
+                    type="button"
+                    className="chart-hotspot"
+                    aria-label={`${fmtDate(d.date)}: ${d.hours.toFixed(1)} focused hours`}
+                  >
+                    <span>
+                      {fmtDate(d.date)}
+                      <b>{d.hours.toFixed(1)} h</b>
+                      <small>{d.sessions} sessions{isAdmin ? ` · ${d.people} people` : ''}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="trend-footer">
+              <span><b>{hours.toFixed(1)} h</b> of focused work</span>
+              <span className="tag">{trend(hours, oldHours)}</span>
+            </div>
+          </section>
+
+          {/* Time by Project Donut */}
+          <section className="card time-project-card">
+            <div className="card-head">
+              <h3>Time by project</h3>
+              <span className="mini-label">{analyticsDays} days</span>
+            </div>
+            <div className="donut-wrap">
+              <svg viewBox="0 0 220 220" role="img" aria-label={`${totalDonutHours.toFixed(1)} focused hours by project`}>
+                <circle cx="110" cy="110" r="82" fill="none" stroke="var(--light)" strokeWidth="27" />
+                {projectGroups.map((g, i) => {
+                  const startAngle = donutOffset;
+                  const share = (g.hours / (totalDonutHours || 1)) * 100;
+                  donutOffset += share;
+                  return (
+                    <circle
+                      key={g.title}
+                      cx="110"
+                      cy="110"
+                      r="82"
+                      pathLength="100"
+                      fill="none"
+                      stroke={`var(--${shades[i % 5]})`}
+                      strokeWidth="27"
+                      strokeDasharray={`${Math.max(0.15, share - 1.3)} ${100 - Math.max(0.15, share - 1.3)}`}
+                      strokeDashoffset={`-${startAngle}`}
+                      transform="rotate(-90 110 110)"
+                    >
+                      <title>{`${g.title}: ${g.hours.toFixed(1)} hours (${Math.round(share)}%)`}</title>
+                    </circle>
+                  );
+                })}
+              </svg>
+              <div className="donut-label">
+                <b>{totalDonutHours.toFixed(1)}<small>h</small></b>
+                <span>last {analyticsDays} days</span>
+              </div>
+            </div>
+            <div className="donut-legend">
+              {projectGroups.map((g, i) => (
+                <div key={g.title}>
+                  <span><i style={{ background: `var(--${shades[i % 5]})` }}></i>{g.title}</span>
+                  <b>{g.hours.toFixed(1)}h</b>
+                </div>
+              ))}
+              {projectGroups.length === 0 && (
+                <p className="sub">Clock some focused time to see the breakdown.</p>
+              )}
+            </div>
+          </section>
+
+          {/* Heatmap & Contribution */}
+          <section className="card heatmap-card">
+            <div className="card-head">
+              <div>
+                <h3>{isAdmin ? 'Team activity' : 'My activity rhythm'}</h3>
+                <p className="sub">A rhythm of small steps. Last 12 weeks.</p>
+              </div>
+              <div className="heat-legend">
+                Less {[0, 1, 2, 3, 4].map(i => <i key={i} className={`heat-cell level-${i}`}></i>)} More
+              </div>
+            </div>
+            <div className="heatmap">
+              {heatData.map((d, i) => {
+                const lvl = d.hours ? Math.min(4, Math.max(1, Math.ceil((d.hours / maxHeat) * 4))) : 0;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`heat-cell level-${lvl}`}
+                    aria-label={`${fmtDate(d.date)}: ${d.hours.toFixed(1)} hours`}
+                  >
+                    <span>{fmtDate(d.date)}<b>{d.hours.toFixed(1)} focused hours</b></span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="chart-foot">
+              <span>{fmtDate(heatData[0].date)}</span>
+              <span>{fmtDate(heatData.at(-1).date)}</span>
+            </div>
+            <div className="completion-strip" style={{ marginTop: 20 }}>
+              <div><b>{comp.done}</b><span>Tasks completed <small>all time</small></span></div>
+              <div><b>{comp.percent}%</b><span>Completion rate <small>all time</small></span></div>
+              <div><b>{comp.ongoing}</b><span>Tasks in motion <small>right now</small></span></div>
+            </div>
+          </section>
+
+          {/* Top Contributors (Admin sees Top 5; Employee sees their own focus summary) */}
+          <section className="card contributors-card">
+            <div className="card-head">
+              <h3>{isAdmin ? 'Top contributors' : 'My focus summary'}</h3>
+              <span className="mini-label">Focused hours</span>
+            </div>
+            {contributors.slice(0, 5).map((u, i) => (
+              <div key={u.id} className="contributor">
+                <span className="rank">{String(i + 1).padStart(2, '0')}</span>
+                <Avatar user={u} />
+                <div className="grow">
+                  <strong>{u.name}</strong>
+                  <div className="progress">
+                    <i style={{ width: `${contributors[0]?.hours ? (u.hours / contributors[0].hours) * 100 : 0}%` }}></i>
+                  </div>
+                </div>
+                <b>{u.hours.toFixed(1)}<small> h</small></b>
+              </div>
+            ))}
+          </section>
+        </div>
+
+        {renderEmployeePerformanceSuite('analytics')}
+      </>
+    );
+  };
+
+  // 11. Settings View
+  const renderSettings = () => {
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Settings</h1>
+            <p className="sub">A workspace that feels like yours.</p>
+          </div>
+        </div>
+
+        <div className="settings-grid">
+          <div className="settings-tabs">
+            {(isAdmin ? ['Profile', 'Appearance', 'Integrations'] : ['Profile', 'Appearance']).map(t => (
+              <button
+                key={t}
+                className={settingsTab === t ? 'primary' : ''}
+                onClick={() => setSettingsTab(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <section className="card">
+            {settingsTab === 'Profile' && (
+              <div>
+                <h3>Your profile</h3>
+                <div className="list-row" style={{ marginTop: 15 }}>
+                  <Avatar user={user} big />
+                  <div className="grow">
+                    <strong>{user.name}</strong>
+                    <span className="sub">
+                      {getUserPositions(user).join(' · ')} · {user.department || 'General'} · {user.email} · {isAdmin ? 'Admin (Full Workspace Access)' : 'Employee (Least-Privilege Access)'}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                      {getUserPositions(user).map(pos => (
+                        <span key={pos} className="tag purple">{pos}</span>
+                      ))}
+                      <span className="tag">{user.department || 'Management'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div style={{ marginTop: 18, padding: 14, borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                      <div>
+                        <strong>Set your positions / titles (Multiple allowed)</strong>
+                        <div className="sub">Click pills to toggle multiple positions (e.g. Founder, CEO) or add custom titles below.</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() =>
+                          promptCreatePosition(created => {
+                            const current = getUserPositions(user);
+                            if (!current.some(p => p.toLowerCase() === created.toLowerCase())) {
+                              handleSaveMemberPositions(user, [...current, created]);
+                            }
+                          })
+                        }
+                      >
+                        + Create new position
+                      </button>
+                    </div>
+                    <div className="member-pill-list" style={{ marginBottom: 12 }}>
+                      {positions.map(pos => {
+                        const current = getUserPositions(user);
+                        const selected = current.some(p => p.toLowerCase() === pos.toLowerCase());
+                        return (
+                          <button
+                            key={pos}
+                            type="button"
+                            className={`member-pill ${selected ? 'selected' : ''}`}
+                            onClick={() => {
+                              const next = selected
+                                ? current.filter(p => p.toLowerCase() !== pos.toLowerCase())
+                                : [...current, pos];
+                              handleSaveMemberPositions(user, next.length ? next : ['CEO']);
+                            }}
+                          >
+                            <span>{selected ? '✓ ' : '+ '}{pos}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <form
+                      style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}
+                      onSubmit={async e => {
+                        e.preventDefault();
+                        const fd = new FormData(e.target);
+                        const rawPositions = String(fd.get('positionsInput') || '').trim();
+                        const dept = String(fd.get('department') || user.department || 'Management');
+                        await handleSaveMemberPositions(user, rawPositions, { department: dept });
+                      }}
+                    >
+                      <div className="field" style={{ margin: 0, flex: '2 1 240px' }}>
+                        <label>Positions (comma-separated, e.g. Founder, CEO)</label>
+                        <input
+                          key={getUserPositions(user).join(', ')}
+                          name="positionsInput"
+                          type="text"
+                          defaultValue={getUserPositions(user).join(', ')}
+                          placeholder="Founder, CEO"
+                        />
+                      </div>
+                      <div className="field" style={{ margin: 0, flex: '1 1 160px' }}>
+                        <label>Department</label>
+                        <select
+                          key={`${departments.join('|')}__${user.department || ''}`}
+                          name="department"
+                          defaultValue={user.department || departments[0] || 'Management'}
+                        >
+                          {[...new Set([user.department, ...departments].filter(Boolean))].map(d => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button className="primary" type="submit">
+                        Save positions &amp; department
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                <div className="note" style={{ marginTop: 18 }}>
+                  <strong>Role &amp; Access Scope ({isAdmin ? 'Admin' : 'Employee'})</strong>
+                  <div className="sub" style={{ marginTop: 6, lineHeight: 1.6 }}>
+                    {isAdmin
+                      ? 'Full executive permissions: manage projects & client budgets, assign work across the team, schedule meetings & calendar syncs, post announcements, view all timesheets, and administer workspace members & integrations.'
+                      : 'Least-privilege employee scope: manage your own assigned tasks & personal tasks, capture & manage your own leads, clock in/out and view your own timesheet, post daily standups, and view active projects (budgets hidden), invited meetings, and team announcements.'}
+                  </div>
+                </div>
+                <h3 style={{ margin: '25px 0 18px' }}>Change password</h3>
+                <form
+                  style={{ maxWidth: 400 }}
+                  onSubmit={async e => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    try {
+                      await handleApi('/api/password', Object.fromEntries(fd));
+                      setUser(null);
+                      showToast('Password changed. Please sign in again.');
+                    } catch (err) {
+                      showToast(err.message);
+                    }
+                  }}
+                >
+                  <div className="field">
+                    <label>Current password</label>
+                    <input name="current" type="password" required />
+                  </div>
+                  <div className="field">
+                    <label>New password (12+ characters)</label>
+                    <input name="password" type="password" required minLength="12" />
+                  </div>
+                  <button className="primary" style={{ marginTop: 10 }}>Update password</button>
+                </form>
+              </div>
+            )}
+
+            {settingsTab === 'Appearance' && (
+              <div>
+                <div className="actions" style={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <div>
+                    <h3>Make yourself at home</h3>
+                    <p className="sub" style={{ margin: '8px 0 18px' }}>
+                      {isAdmin
+                        ? 'Your selection sets the enforced Workspace Default theme (on Sign-In & for new employees) as well as your Admin view.'
+                        : `Personal post-login preference — applies only to your account after signing in (Workspace Default: ${themes[workspaceDefaults.defaultAccent]?.name || 'Forest'}).`}
+                    </p>
+                  </div>
+                  {!isAdmin && (
+                    <button
+                      type="button"
+                      className="small"
+                      onClick={async () => {
+                        try {
+                          localStorage.removeItem(`accent_${user.id}`);
+                          localStorage.removeItem(`darkMode_${user.id}`);
+                          localStorage.removeItem(`weekStart_${user.id}`);
+                          localStorage.removeItem(`currency_${user.id}`);
+                          const res = await handleApi('/api/preferences', { resetToDefault: true });
+                          const updatedUser = { ...user, preferences: {} };
+                          setUser(updatedUser);
+                          if (res.workspaceDefaults) setWorkspaceDefaults(res.workspaceDefaults);
+                          syncActivePreferences(updatedUser, res.workspaceDefaults || workspaceDefaults);
+                          showToast('Reset to Admin Workspace Default theme');
+                        } catch (err) {
+                          showToast(err.message);
+                        }
+                      }}
+                    >
+                      Reset to Admin Default
+                    </button>
+                  )}
+                </div>
+
+                <div className="eyebrow" style={{ marginLeft: 0 }}>
+                  {isAdmin ? 'Workspace Default & Admin Accent Color' : 'Your Personal Accent Color (Post-Login)'}
+                </div>
+                <div className="swatches">
+                  {[
+                    ['Syneo Brand', '#4f46e5'],
+                    ['Forest', '#145c40'],
+                    ['Ocean', '#285a80'],
+                    ['Plum', '#644780'],
+                    ['Ember', '#9b512d'],
+                    ['Rose', '#b84b76'],
+                    ['Sakura', '#d4688e']
+                  ].map(([name, hex]) => (
+                    <button
+                      key={hex}
+                      className="swatch"
+                      aria-pressed={accent === hex}
+                      onClick={async () => {
+                        setAccent(hex);
+                        localStorage.setItem(`accent_${user.id}`, hex);
+                        const p = applyTheme(hex, darkMode);
+                        try {
+                          const res = await handleApi('/api/preferences', { accent: hex });
+                          setUser(prev => (prev ? { ...prev, preferences: res.preferences } : prev));
+                          if (res.workspaceDefaults) setWorkspaceDefaults(res.workspaceDefaults);
+                          showToast(
+                            isAdmin
+                              ? `${p.name} set as Workspace Default & Admin theme`
+                              : `${p.name} saved to your personal profile`
+                          );
+                        } catch {
+                          showToast(`${p.name} theme applied`);
+                        }
+                      }}
+                    >
+                      <i style={{ '--swatch': hex }}></i>
+                      {name}
+                      {workspaceDefaults.defaultAccent === hex && !isAdmin && (
+                        <small style={{ fontSize: 9, opacity: 0.75, marginLeft: 4 }}>(Default)</small>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="eyebrow" style={{ margin: '30px 0 12px' }}>
+                  {isAdmin ? 'Workspace Default & Admin Appearance Mode' : 'Appearance Mode (Light / Dark)'}
+                </div>
+                <div className="actions">
+                  <button
+                    type="button"
+                    className={!darkMode ? 'primary' : ''}
+                    onClick={() => { if (darkMode) toggleDarkMode(); }}
+                  >
+                    <Icon name="sun" /> Light Mode
+                  </button>
+                  <button
+                    type="button"
+                    className={darkMode ? 'primary' : ''}
+                    onClick={() => { if (!darkMode) toggleDarkMode(); }}
+                  >
+                    <Icon name="moon" /> Dark Mode
+                  </button>
+                </div>
+
+                <div className="eyebrow" style={{ margin: '30px 0 12px' }}>Week starts on</div>
+                <div className="actions">
+                  {['Sunday', 'Monday'].map(d => (
+                    <button
+                      key={d}
+                      className={weekStart === d ? 'primary' : ''}
+                      onClick={async () => {
+                        setWeekStart(d);
+                        localStorage.setItem(`weekStart_${user.id}`, d);
+                        try {
+                          const res = await handleApi('/api/preferences', { weekStart: d });
+                          setUser(prev => (prev ? { ...prev, preferences: res.preferences } : prev));
+                          if (res.workspaceDefaults) setWorkspaceDefaults(res.workspaceDefaults);
+                        } catch {}
+                      }}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="eyebrow" style={{ margin: '30px 0 12px' }}>Lead currency</div>
+                <select
+                  style={{ maxWidth: 220 }}
+                  value={currency}
+                  onChange={async e => {
+                    const val = e.target.value;
+                    setCurrency(val);
+                    localStorage.setItem(`currency_${user.id}`, val);
+                    try {
+                      const res = await handleApi('/api/preferences', { currency: val });
+                      setUser(prev => (prev ? { ...prev, preferences: res.preferences } : prev));
+                      if (res.workspaceDefaults) setWorkspaceDefaults(res.workspaceDefaults);
+                    } catch {}
+                    showToast('Currency updated');
+                  }}
+                >
+                  {['USD', 'NPR', 'INR', 'EUR', 'GBP'].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {settingsTab === 'Integrations' && (
+              <div>
+                <h3>Connected, thoughtfully</h3>
+                <div className="list-row">
+                  <div className="project-symbol">
+                    <Icon name="pulse" />
+                  </div>
+                  <div className="grow">
+                    <strong>24/7 MongoDB Atlas Keep-Alive Beacon (Zero Storage Growth)</strong>
+                    <span className="sub">
+                      Updates a single 110-byte heartbeat record in-place &amp; purges expired sessions so your 500MB DB stays 24/7 awake across weekends with 0B extra storage
+                      {state.beacon?.lastPing ? ` · Last pulse: ${new Date(state.beacon.lastPing).toLocaleTimeString()} (${state.beacon.totalPings || 1} total)` : ''}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="small"
+                    style={{ marginRight: 8 }}
+                    onClick={async () => {
+                      const res = await handleApi('/api/beacon?source=manual-admin', {});
+                      await refreshState();
+                      showToast(`MongoDB Beacon pulsed (${res.latencyMs || 0}ms · 0B storage added)`);
+                    }}
+                  >
+                    Pulse now
+                  </button>
+                  <span className="tag green">24/7 Awake · 0B Growth</span>
+                </div>
+                <div className="list-row">
+                  <div className="project-symbol">G</div>
+                  <div className="grow">
+                    <strong>Gmail SMTP & Native Calendar Invite (.ics)</strong>
+                    <span className="sub">Sends executive HTML invites + native Google Calendar RSVP sync</span>
+                  </div>
+                  <span className={`tag ${state.integrations.gmail ? 'green' : 'yellow'}`}>
+                    {state.integrations.gmail ? 'Configured' : 'Setup needed'}
+                  </span>
+                </div>
+                <div className="list-row">
+                  <div className="project-symbol">📅</div>
+                  <div className="grow">
+                    <strong>Google Calendar & Auto Google Meet Room</strong>
+                    <span className="sub">
+                      {state.integrations.calendar
+                        ? 'Auto-creates Google Calendar events & meet.google.com links'
+                        : ' Gmail .ics sync is active · Add GOOGLE_CALENDAR_URL for auto meet.google.com links'}
+                    </span>
+                  </div>
+                  <span className={`tag ${state.integrations.calendar ? 'green' : ''}`}>
+                    {state.integrations.calendar ? 'Webhook active' : '.ics Sync active'}
+                  </span>
+                </div>
+                <div className="list-row">
+                  <div className="project-symbol">▦</div>
+                  <div className="grow">
+                    <strong>Google Sheets</strong>
+                    <span className="sub">Automatically update your lead spreadsheet</span>
+                  </div>
+                  <span className={`tag ${state.integrations.sheets ? 'green' : 'yellow'}`}>
+                    {state.integrations.sheets ? 'Configured' : 'Setup needed'}
+                  </span>
+                </div>
+                <div className="note" style={{ margin: '20px 0' }}>
+                  <strong>Automatic Calendar & Google Meet Sync:</strong> Every meeting automatically attaches a native <code>METHOD:REQUEST</code> iCalendar (<code>.ics</code>) invite that syncs directly into Gmail and Google Calendar. To also auto-generate <code>https://meet.google.com/xxx-xxxx-xxx</code> links on the server, deploy <code>integrations/google-calendar-meet.gs</code> in Google Apps Script and set <code>GOOGLE_CALENDAR_URL</code> in <code>.env.local</code>.
+                </div>
+                {isAdmin && state.jobs.length > 0 && (
+                  <div style={{ marginBottom: 15 }}>
+                    <h3 style={{ marginBottom: 10 }}>Delivery activity</h3>
+                    {state.jobs.slice(0, 8).map(j => (
+                      <div key={j.id} className="list-row">
+                        <div className="grow">
+                          <strong>
+                            {j.kind === 'email'
+                              ? j.payload?.type === 'task_assigned'
+                                ? 'Task assignment email'
+                                : j.payload?.type === 'announcement'
+                                ? 'Announcement email'
+                                : 'Meeting email'
+                              : 'Sheets lead sync'}
+                          </strong>
+                          <span className="sub">{new Date(j.created).toLocaleString()}{j.error ? ` · ${j.error}` : ''}</span>
+                        </div>
+                        <span className={`tag ${j.status === 'sent' ? '' : 'yellow'}`}>{j.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {isAdmin && (
+                  <div className="actions">
+                    <button
+                      className="small"
+                      onClick={async () => {
+                        await handleApi('/api/jobs/retry', {});
+                        await refreshState();
+                        showToast('Queued for another delivery attempt');
+                      }}
+                    >
+                      Retry pending setup / failed
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      </>
+    );
+  };
+
+  // 11b. Pulse & Goals View (Daily Standups + Collaborative Daily/Weekly/Monthly/Quarterly Goals & Team Sync)
+  const renderPulse = () => {
+    const todayStr = key(new Date());
+    const standups = state.standups || [];
+    const goals = isAdmin
+      ? state.goals || []
+      : (state.goals || []).filter(g => isGoalAssignedToUser(g, user.id));
+    const todayStandups = standups.filter(s => (s.created || '').slice(0, 10) === todayStr);
+    const activeBlockersCount =
+      state.tasks.filter(t => t.blocked && t.status !== 'Done').length +
+      todayStandups.filter(s => s.blockers && s.blockers.trim()).length +
+      goals.filter(g => g.status === 'Blocked').length;
+
+    const getGoalPct = g => {
+      if (!g) return 0;
+      if (g.status === 'Completed') return 100;
+      const target = Math.max(1, Number(g.targetValue || 100));
+      const cur = Math.max(0, Number(g.currentValue || 0));
+      return Math.min(100, Math.round((cur / target) * 100));
+    };
+
+    const calcAvgPct = list =>
+      list.length ? Math.round(list.reduce((sum, g) => sum + getGoalPct(g), 0) / list.length) : 0;
+
+    const dailyGoals = goals.filter(g => (g.period || 'weekly') === 'daily');
+    const weeklyGoals = goals.filter(g => (g.period || 'weekly') === 'weekly');
+    const monthlyGoals = goals.filter(g => (g.period || 'weekly') === 'monthly');
+    const quarterlyGoals = goals.filter(g => (g.period || 'weekly') === 'quarterly');
+    const dailyWeeklyGoals = [...dailyGoals, ...weeklyGoals];
+    const monthlyQuarterlyGoals = [...monthlyGoals, ...quarterlyGoals];
+
+    const filteredGoals = goals.filter(g => {
+      const gPeriod = (g.period || 'weekly').toLowerCase();
+      if (goalPeriodFilter !== 'all' && gPeriod !== goalPeriodFilter) return false;
+      if (!isAdmin) return isGoalAssignedToUser(g, user.id);
+      if (goalMemberFilter === 'mine' && !isGoalAssignedToUser(g, user.id)) return false;
+      if (goalMemberFilter !== 'all' && goalMemberFilter !== 'mine' && !isGoalAssignedToUser(g, goalMemberFilter)) {
+        return false;
+      }
+      return true;
+    });
+
+    const filteredStandups = standups.filter(s => {
+      if (filter === 'Today') return (s.created || '').slice(0, 10) === todayStr;
+      if (filter === 'With blockers') return Boolean(s.blockers && s.blockers.trim());
+      if (filter === 'My check-ins') return s.owner === user.id;
+      return true;
+    });
+
+    const openNewGoalModal = (period = 'weekly', assigneeId = isAdmin ? 'all' : user.id) => {
+      const safeAssignee = isAdmin ? assigneeId : user.id;
+      const assignees = safeAssignee && safeAssignee !== 'all' ? [safeAssignee] : state.users.map(u => u.id);
+      setModal({
+        type: 'goals',
+        data: {
+          period,
+          status: 'On track',
+          category: user.department || 'Company',
+          assignee: safeAssignee,
+          assignees,
+          due: getDefaultGoalDue(period),
+          currentValue: 0,
+          targetValue: 100,
+          unit: '%',
+          subtasks: [],
+          comments: []
+        }
+      });
+    };
+
+    const syncMembers = isAdmin ? state.users : state.users.filter(u => u.id === user.id);
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Pulse, goals & team sync</h1>
+            <p className="sub">
+              {isAdmin
+                ? 'Collaborative daily, weekly & monthly goals, real-time employee check-ins, and total team alignment.'
+                : 'Your assigned daily, weekly & monthly goals, check-ins, and personal progress sync.'}
+            </p>
+          </div>
+          <div className="actions" style={{ flexWrap: 'wrap' }}>
+            <button onClick={() => openNewGoalModal('daily', isAdmin ? 'all' : user.id)}>
+              <Icon name="plus" /> Daily goal
+            </button>
+            <button onClick={() => openNewGoalModal('weekly', isAdmin ? 'all' : user.id)}>
+              <Icon name="plus" /> Weekly goal
+            </button>
+            <button onClick={() => openNewGoalModal('monthly', isAdmin ? 'all' : user.id)}>
+              <Icon name="plus" /> Monthly goal
+            </button>
+            <button className="primary" onClick={() => setModal({ type: 'standups', data: { mood: 'Focused' } })}>
+              <Icon name="plus" /> Post daily check-in
+            </button>
+          </div>
+        </div>
+
+        <div className="stats">
+          <div className="stat green">
+            <span>Check-ins today</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{todayStandups.length}/{state.users.length}</span>
+            <span className="sub">
+              {todayStandups.some(s => s.owner === user.id) ? 'You checked in today ✓' : 'Daily team sync rhythm'}
+            </span>
+          </div>
+          <div className="stat" style={{ cursor: 'pointer' }} onClick={() => setGoalPeriodFilter('daily')}>
+            <span>{isAdmin ? 'Daily & weekly goals' : 'My daily & weekly goals'}</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{dailyWeeklyGoals.length}</span>
+            <span className="sub">
+              {dailyGoals.length} daily · {weeklyGoals.length} weekly ({calcAvgPct(dailyWeeklyGoals)}% avg)
+            </span>
+          </div>
+          <div className="stat" style={{ cursor: 'pointer' }} onClick={() => setGoalPeriodFilter('monthly')}>
+            <span>{isAdmin ? 'Monthly & OKRs' : 'My monthly & OKRs'}</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{monthlyQuarterlyGoals.length}</span>
+            <span className="sub">
+              {monthlyGoals.length} monthly · {quarterlyGoals.length} quarterly ({calcAvgPct(monthlyQuarterlyGoals)}% avg)
+            </span>
+          </div>
+          <div className="stat">
+            <span>Active blockers</span>
+            <span className="arrow"><Icon name="arrow" /></span>
+            <span className="value">{activeBlockersCount}</span>
+            <span className="sub">{activeBlockersCount ? 'Needs attention' : 'Clear runway'}</span>
+          </div>
+        </div>
+
+        {/* Total Team Sync & Goal Alignment Matrix (Admin sees all members; Employee sees only their own card) */}
+        <section className="card" style={{ marginBottom: 18 }}>
+          <div className="card-head" style={{ flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <h3>{isAdmin ? 'Total team sync & goal alignment' : 'My daily sync & goal alignment'}</h3>
+              <p className="sub" style={{ margin: '2px 0 0' }}>
+                {isAdmin
+                  ? 'Live view of every member’s daily check-in, active clock status, and assigned daily/weekly/monthly goals.'
+                  : 'Your daily check-in status, active clock session, and assigned daily/weekly/monthly goal completion.'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              {isAdmin && goalMemberFilter !== 'all' && (
+                <button className="small" onClick={() => setGoalMemberFilter('all')}>
+                  Show all members ({goals.length})
+                </button>
+              )}
+              {isAdmin ? (
+                <button className="small primary" onClick={() => openNewGoalModal('weekly', 'all')}>
+                  + Assign goal to team
+                </button>
+              ) : (
+                <span className="tag" title="RBAC Least Privilege: You only view your own goal alignment.">
+                  🔒 Personal &amp; Assigned Scope
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="team-sync-grid">
+            {syncMembers.map(u => {
+              const checkedIn = todayStandups.find(s => s.owner === u.id);
+              const uClock = state.clocks.find(c => c.user_id === u.id && !c.end);
+              const memberGoals = goals.filter(g => isGoalAssignedToUser(g, u.id));
+              const memberDaily = memberGoals.filter(g => (g.period || 'weekly') === 'daily').length;
+              const memberWeekly = memberGoals.filter(g => (g.period || 'weekly') === 'weekly').length;
+              const memberMonthly = memberGoals.filter(g => ['monthly', 'quarterly'].includes(g.period)).length;
+              const memberDoneGoals = memberGoals.filter(g => getGoalPct(g) >= 100 || g.status === 'Completed').length;
+              const memberAvgPct = calcAvgPct(memberGoals);
+              const isSelectedMember = isAdmin && goalMemberFilter === u.id;
+
+              return (
+                <div
+                  key={u.id}
+                  className="team-sync-member-card"
+                  style={isSelectedMember ? { borderColor: 'var(--green)', boxShadow: '0 0 0 2px var(--light)' } : undefined}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Avatar user={u} />
+                    <div className="grow" style={{ minWidth: 0 }}>
+                      <strong style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {u.name}
+                      </strong>
+                      <span className="sub" style={{ fontSize: 11 }}>
+                        {u.position || u.department}
+                      </span>
+                    </div>
+                    <span
+                      className={`tag ${
+                        uClock
+                          ? uClock.break_start
+                            ? 'yellow'
+                            : 'green'
+                          : checkedIn
+                          ? 'green'
+                          : 'yellow'
+                      }`}
+                    >
+                      {uClock ? (uClock.break_start ? 'On break' : 'Working') : checkedIn ? 'Synced' : 'Pending'}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: 12, padding: '6px 9px', borderRadius: 8, background: 'var(--white)', border: '1px solid var(--line)' }}>
+                    <span className="sub" style={{ fontSize: 10.5, display: 'block', marginBottom: 2 }}>
+                      Today’s check-in focus:
+                    </span>
+                    <strong style={{ fontSize: 12, fontWeight: 600 }}>
+                      {checkedIn ? checkedIn.title : 'No check-in posted yet today'}
+                    </strong>
+                    {checkedIn?.blockers && (
+                      <div style={{ color: '#ef4444', fontSize: 11, marginTop: 3, fontWeight: 600 }}>
+                        ⚠ Blocker: {checkedIn.blockers}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
+                      <span className="sub">
+                        <b>{memberGoals.length}</b> goals ({memberDaily}D · {memberWeekly}W · {memberMonthly}M)
+                      </span>
+                      <span style={{ fontWeight: 700, color: 'var(--green)' }}>
+                        {memberDoneGoals}/{memberGoals.length} done ({memberAvgPct}%)
+                      </span>
+                    </div>
+                    <div className="progress" style={{ height: 6 }}>
+                      <i style={{ width: `${memberAvgPct}%` }}></i>
+                    </div>
+                  </div>
+
+                  {isAdmin && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6, marginTop: 2 }}>
+                      <button
+                        type="button"
+                        className="small"
+                        style={{ flex: 1 }}
+                        onClick={() => setGoalMemberFilter(isSelectedMember ? 'all' : u.id)}
+                      >
+                        {isSelectedMember ? 'Showing goals ✓' : `View goals (${memberGoals.length})`}
+                      </button>
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => openNewGoalModal('weekly', u.id)}
+                        title={`Assign a goal to ${u.name}`}
+                      >
+                        + Assign goal
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="two-col">
+          {/* Collaborative Daily / Weekly / Monthly Goals Board */}
+          <section className="card">
+            <div className="card-head" style={{ flexWrap: 'wrap', gap: 10 }}>
+              <div>
+                <h3>{isAdmin ? 'Collaborative goals & OKRs' : 'My assigned & personal goals'}</h3>
+                <p className="sub" style={{ margin: '2px 0 0' }}>
+                  {isAdmin
+                    ? 'Track daily targets, weekly sprints, monthly deliverables, and company OKRs together.'
+                    : 'Goals assigned to you by Admin or created by you under least-privilege RBAC.'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {isAdmin ? (
+                  <select
+                    value={goalMemberFilter}
+                    onChange={e => setGoalMemberFilter(e.target.value)}
+                    style={{ width: 'auto', padding: '6px 10px', fontSize: 12 }}
+                  >
+                    <option value="all">All team members ({goals.length})</option>
+                    <option value="mine">My assigned goals ({goals.filter(g => isGoalAssignedToUser(g, user.id)).length})</option>
+                    {state.users.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({goals.filter(g => isGoalAssignedToUser(g, u.id)).length})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="tag">🔒 Assigned &amp; Personal Goals</span>
+                )}
+                <button
+                  className="small primary"
+                  onClick={() =>
+                    openNewGoalModal(
+                      goalPeriodFilter === 'all' ? 'weekly' : goalPeriodFilter,
+                      isAdmin && goalMemberFilter !== 'all' && goalMemberFilter !== 'mine'
+                        ? goalMemberFilter
+                        : isAdmin
+                        ? 'all'
+                        : user.id
+                    )
+                  }
+                >
+                  + New goal
+                </button>
+              </div>
+            </div>
+
+            <div className="tabs" style={{ marginBottom: 14, flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: `All (${goals.length})` },
+                { id: 'daily', label: `Daily (${dailyGoals.length})` },
+                { id: 'weekly', label: `Weekly (${weeklyGoals.length})` },
+                { id: 'monthly', label: `Monthly (${monthlyGoals.length})` },
+                { id: 'quarterly', label: `Quarterly OKRs (${quarterlyGoals.length})` }
+              ].map(t => (
+                <button
+                  key={t.id}
+                  className={goalPeriodFilter === t.id ? 'active' : ''}
+                  onClick={() => setGoalPeriodFilter(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {filteredGoals.map(g => {
+              const target = Math.max(1, Number(g.targetValue || 100));
+              const current = Math.max(0, Number(g.currentValue || 0));
+              const pct = getGoalPct(g);
+              const period = (g.period || 'weekly').toLowerCase();
+              const periodLabel = period.charAt(0).toUpperCase() + period.slice(1);
+              const goalAssignees = Array.isArray(g.assignees) && g.assignees.length
+                ? g.assignees
+                : g.assignee && g.assignee !== 'all'
+                ? [g.assignee]
+                : [];
+              const assignedUsers = state.users.filter(u => goalAssignees.includes(u.id));
+              const creator = state.users.find(u => u.id === g.owner);
+              const linkedProject = g.project ? state.projects.find(p => p.id === g.project) : null;
+              const subtasks = Array.isArray(g.subtasks) ? g.subtasks : [];
+              const doneSubtasks = subtasks.filter(st => st.done).length;
+              const comments = Array.isArray(g.comments) ? g.comments : [];
+              const editableGoal = canEdit('goals', g);
+              const goalStatus = g.status || (pct >= 100 ? 'Completed' : 'On track');
+
+              return (
+                <div key={g.id} className="goal-card" style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span className={`goal-period-badge ${period}`}>{periodLabel}</span>
+                      {g.category && <span className="tag">{g.category}</span>}
+                      {linkedProject && <span className="tag purple">{linkedProject.title}</span>}
+                      <span
+                        className={`tag ${
+                          goalStatus === 'Completed' || pct >= 100
+                            ? 'green'
+                            : goalStatus === 'Blocked'
+                            ? 'red'
+                            : goalStatus === 'At risk'
+                            ? 'yellow'
+                            : ''
+                        }`}
+                      >
+                        {pct >= 100 ? 'Completed ✓' : goalStatus}
+                      </span>
+                    </div>
+                    <span className={`tag ${pct >= 80 ? 'green' : pct >= 40 ? '' : 'yellow'}`} style={{ fontWeight: 700 }}>
+                      {current} / {target} {g.unit || '%'} ({pct}%)
+                    </span>
+                  </div>
+
+                  <div
+                    style={{ marginTop: 8, cursor: 'pointer' }}
+                    onClick={() => setModal({ type: 'goals', id: g.id, data: g })}
+                  >
+                    <strong style={{ fontSize: 15, display: 'block' }}>{g.title}</strong>
+                    {g.description && <p className="sub" style={{ margin: '4px 0 0' }}>{g.description}</p>}
+                  </div>
+
+                  <div className="progress" style={{ margin: '10px 0 8px', height: 8 }}>
+                    <i style={{ width: `${pct}%` }}></i>
+                  </div>
+
+                  {/* Interactive Key Results / Subtasks Checklist right on the Goal Card */}
+                  {subtasks.length > 0 && (
+                    <div
+                      style={{
+                        margin: '8px 0',
+                        padding: '8px 10px',
+                        borderRadius: 10,
+                        background: 'var(--bg)',
+                        border: '1px solid var(--line)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 6 }}>
+                        <strong style={{ fontSize: 11 }}>Key results & action steps</strong>
+                        <span className="sub">{doneSubtasks}/{subtasks.length} completed</span>
+                      </div>
+                      {subtasks.map((st, idx) => (
+                        <label
+                          key={st.id || idx}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            fontSize: 12,
+                            padding: '3px 0',
+                            cursor: editableGoal ? 'pointer' : 'default',
+                            margin: 0
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(st.done)}
+                            disabled={!editableGoal}
+                            onChange={() => {
+                              const nextSubtasks = subtasks.map((item, i) =>
+                                i === idx ? { ...item, done: !item.done } : item
+                              );
+                              const nextDoneCount = nextSubtasks.filter(item => item.done).length;
+                              const patch = { subtasks: nextSubtasks };
+                              if ((g.unit || '%') === '%' && Number(g.targetValue || 100) === 100) {
+                                patch.currentValue = Math.round((nextDoneCount / nextSubtasks.length) * 100);
+                              }
+                              quickUpdateGoal(g, patch, 'Key result updated & synced with team');
+                            }}
+                          />
+                          <span style={{ textDecoration: st.done ? 'line-through' : 'none', opacity: st.done ? 0.65 : 1 }}>
+                            {st.title}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      marginTop: 8,
+                      paddingTop: 8,
+                      borderTop: '1px solid var(--line)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {assignedUsers.length > 0 ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div className="avatar-stack">
+                            {assignedUsers.slice(0, 4).map(u => (
+                              <Avatar key={u.id} user={u} />
+                            ))}
+                          </div>
+                          <span className="sub" style={{ fontSize: 11.5 }}>
+                            {assignedUsers.map(u => u.name.split(' ')[0]).join(', ')}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="tag green" style={{ fontSize: 10.5 }}>Entire team</span>
+                      )}
+                      {creator && (
+                        <span className="sub" style={{ fontSize: 11 }}>
+                          · Set by {creator.name.split(' ')[0]}
+                        </span>
+                      )}
+                      <span className="sub" style={{ fontSize: 11 }}>
+                        · {g.due ? `Due ${fmtDate(g.due)}` : 'Ongoing'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      {editableGoal && pct < 100 && (
+                        <>
+                          <button
+                            type="button"
+                            className="small"
+                            onClick={() => {
+                              const step = target <= 10 ? 1 : Math.max(1, Math.round(target * 0.1));
+                              const nextVal = Math.min(target, Number((current + step).toFixed(2)));
+                              quickUpdateGoal(
+                                g,
+                                { currentValue: nextVal },
+                                `Progress updated to ${nextVal}/${target} ${g.unit || '%'}`
+                              );
+                            }}
+                            title="Quickly bump progress by 10%"
+                          >
+                            +{target <= 10 ? `1` : `10%`}
+                          </button>
+                          <button
+                            type="button"
+                            className="small"
+                            onClick={() =>
+                              quickUpdateGoal(
+                                g,
+                                { currentValue: target, status: 'Completed' },
+                                `🎯 Goal "${g.title}" marked complete!`
+                              )
+                            }
+                          >
+                            ✓ Complete
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => setModal({ type: 'goals', id: g.id, data: g })}
+                      >
+                        {comments.length > 0 ? `💬 ${comments.length} · ` : ''}
+                        {editableGoal ? 'Update / Discuss' : 'View'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {filteredGoals.length === 0 && (
+              <div className="empty">
+                <strong>No goals in this view yet</strong>
+                Set daily focus targets, weekly team sprints, or monthly goals so everyone stays aligned and moving together.
+              </div>
+            )}
+          </section>
+
+          {/* Right Column: Daily Standup Check-Ins */}
+          <div>
+            <section className="card">
+              <div className="card-head" style={{ flexWrap: 'wrap', gap: 10 }}>
+                <h3>Daily check-ins</h3>
+                <div className="tabs" style={{ margin: 0 }}>
+                  {['All', 'Today', 'With blockers', 'My check-ins'].map(tab => (
+                    <button
+                      key={tab}
+                      className={filter === tab ? 'active' : ''}
+                      onClick={() => setFilter(tab)}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {filteredStandups.map(s => {
+                const author = state.users.find(u => u.id === s.owner);
+                const proj = s.project ? state.projects.find(p => p.id === s.project) : null;
+                return (
+                  <article key={s.id} className="standup-card">
+                    <div className="list-row" style={{ borderTop: 0, paddingTop: 0 }}>
+                      <Avatar user={author} />
+                      <div className="grow">
+                        <strong>{author?.name || 'Team member'}</strong>
+                        <span className="sub">
+                          {author?.position || author?.department || 'Workspace'} · {new Date(s.created).toLocaleString()}
+                        </span>
+                      </div>
+                      {s.mood && <span className="tag">{s.mood}</span>}
+                      {proj && <span className="tag purple">{proj.title}</span>}
+                      <button className="small" onClick={() => setModal({ type: 'standups', id: s.id, data: s })}>
+                        {canEdit('standups', s) ? 'Edit' : 'View'}
+                      </button>
+                    </div>
+                    <div className="standup-body">
+                      <div>
+                        <span className="eyebrow" style={{ margin: 0 }}>Today’s focus</span>
+                        <p style={{ margin: '4px 0 8px', fontWeight: 600 }}>{s.title}</p>
+                      </div>
+                      {s.yesterday && (
+                        <div>
+                          <span className="eyebrow" style={{ margin: 0 }}>Completed recently</span>
+                          <p className="sub" style={{ margin: '4px 0 8px' }}>{s.yesterday}</p>
+                        </div>
+                      )}
+                      {s.blockers && (
+                        <div className="task-blocker-note">
+                          <strong>⚠ Blocker:</strong> {s.blockers}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+              {filteredStandups.length === 0 && (
+                <div className="empty">
+                  <strong>No check-ins here yet</strong>Share what you are focusing on today so the team stays aligned.
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  // 12. Search Overlay View
+  const renderSearchView = () => {
+    const q = search.toLowerCase();
+    const kinds = ['projects', 'tasks', 'leads', 'meetings', 'announcements', 'standups', 'goals'];
+    const results = kinds.flatMap(k =>
+      (state[k] || []).filter(r => JSON.stringify(r).toLowerCase().includes(q)).map(r => ({ k, r }))
+    );
+
+    return (
+      <>
+        <div className="page-head">
+          <div>
+            <h1>Search</h1>
+            <p className="sub">Results for “{search}”</p>
+          </div>
+        </div>
+        <section className="card">
+          {results.map(({ k, r }) => (
+            <div key={r.id} className="list-row">
+              <div className="project-symbol"><Icon name={k === 'standups' || k === 'goals' ? 'pulse' : k} /></div>
+              <div className="grow">
+                <strong>{r.title}</strong>
+                <span className="sub">{k}</span>
+              </div>
+              <button className="small" onClick={() => setModal({ type: k, id: r.id, data: r })}>
+                Open ↗
+              </button>
+            </div>
+          ))}
+          {state.users.filter(u => u.name.toLowerCase().includes(q)).map(u => (
+            <div key={u.id} className="list-row">
+              <Avatar user={u} />
+              <strong>{u.name}</strong>
+              <button className="small" onClick={() => setModal({ type: 'person', id: u.id, data: u })}>
+                Profile
+              </button>
+            </div>
+          ))}
+          {results.length === 0 && (
+            <div className="empty"><strong>No matches yet</strong>Try a project, task, or person’s name.</div>
+          )}
+        </section>
+      </>
+    );
+  };
+
+  // Main View Router
+  const renderCurrentView = () => {
+    if (search) return renderSearchView();
+    switch (page) {
+      case 'dashboard': return renderDashboard();
+      case 'projects': return renderProjects();
+      case 'tasks': return renderTasks();
+      case 'calendar': return renderCalendar();
+      case 'clock': return renderClock();
+      case 'team': return renderTeam();
+      case 'leads': return renderLeads();
+      case 'meetings': return renderMeetings();
+      case 'announcements': return renderAnnouncements();
+      case 'pulse': return renderPulse();
+      case 'analytics': return renderAnalytics();
+      case 'settings': return renderSettings();
+      default: return renderDashboard();
+    }
+  };
+
+  // --- MODAL DIALOGS ---
+  const renderModalContent = () => {
+    if (!modal) return null;
+    const { type, id, data = {} } = modal;
+
+    // View Profile
+    if (type === 'person') {
+      const liveUser = state.users.find(item => item.id === data.id) || data;
+      const u = { ...liveUser, ...data };
+      const uPositions = getUserPositions(u);
+      const canSeeDetailedStats = isAdmin || u.id === user.id;
+      const uTasks = canSeeDetailedStats
+        ? state.tasks.filter(t => isUserAssignedToTask(t, u.id))
+        : [];
+      const uOpen = uTasks.filter(t => t.status !== 'Done');
+      const uOverdue = uOpen.filter(t => t.due && t.due < key(new Date())).length;
+      const uOnTime = uTasks.length ? Math.max(0, Math.round(((uTasks.length - uOverdue) / uTasks.length) * 100)) : 100;
+      const uClocks = canSeeDetailedStats ? state.clocks.filter(c => c.user_id === u.id) : [];
+      const liveClock = state.clocks.find(c => c.user_id === u.id && !c.end);
+      const totalWorkSec = uClocks.reduce((n, c) => n + worked(c, currentTime), 0);
+      const totalBreakSec = uClocks.reduce((n, c) => n + breakDuration(c, currentTime), 0);
+
+      return (
+        <div className="modal" role="dialog">
+          <div className="card-head">
+            <h2>{u.name}</h2>
+            <button className="small" onClick={() => setModal(null)}>✕</button>
+          </div>
+          <div style={{ textAlign: 'center', margin: '18px 0' }}>
+            <Avatar user={u} big />
+            <h3 style={{ marginTop: 10 }}>
+              {uPositions.join(' · ')}{u.department ? ` · ${u.department}` : ''}
+            </h3>
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', margin: '8px 0' }}>
+              {uPositions.map(pos => (
+                <span key={pos} className="tag purple">{pos}</span>
+              ))}
+              {u.department && <span className="tag">{u.department}</span>}
+              {isAdmin && u.role === 'admin' && <span className="tag">Admin</span>}
+              <span className={`tag ${liveClock ? (liveClock.break_start ? 'yellow' : 'green') : ''}`}>
+                {liveClock ? (liveClock.break_start ? 'On break' : 'Clocked in') : 'Offline'}
+              </span>
+            </div>
+            <a className="link" href={`mailto:${u.email}`}>{u.email}</a>
+          </div>
+
+          {isAdmin && (
+            <div style={{ marginBottom: 18, padding: 14, borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <div>
+                  <strong>Member Positions / Titles ({uPositions.length} assigned)</strong>
+                  <div className="sub">Click to toggle multiple positions (e.g. Founder, CEO, Marketing Head, Analyst)</div>
+                </div>
+                <button
+                  type="button"
+                  className="small"
+                  style={{ height: 24, padding: '0 9px', fontSize: 11 }}
+                  onClick={() =>
+                    promptCreatePosition(created => {
+                      const next = uPositions.some(p => p.toLowerCase() === created.toLowerCase())
+                        ? uPositions
+                        : [...uPositions, created];
+                      handleSaveMemberPositions(u, next);
+                    })
+                  }
+                >
+                  + Create new position
+                </button>
+              </div>
+              <div className="member-pill-list">
+                {[...new Set([...positions, ...uPositions])].map(pos => {
+                  const selected = uPositions.some(p => p.toLowerCase() === pos.toLowerCase());
+                  return (
+                    <button
+                      key={pos}
+                      type="button"
+                      className={`member-pill ${selected ? 'selected' : ''}`}
+                      onClick={() => {
+                        const next = selected
+                          ? uPositions.filter(p => p.toLowerCase() !== pos.toLowerCase())
+                          : [...uPositions, pos];
+                        if (next.length === 0) {
+                          showToast('At least one position is required');
+                          return;
+                        }
+                        handleSaveMemberPositions(u, next);
+                      }}
+                    >
+                      <span>{selected ? '✓ ' : '+ '}{pos}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {canSeeDetailedStats && (
+            <>
+              <div className="person-stats" style={{ marginBottom: 18 }}>
+                <div>
+                  <b>{uOpen.length}</b>
+                  <span className="sub">Open tasks</span>
+                </div>
+                <div>
+                  <b>{uOnTime}%</b>
+                  <span className="sub">On-time rate</span>
+                </div>
+                <div>
+                  <b>{(totalWorkSec / 3600).toFixed(1)}h</b>
+                  <span className="sub">Total work</span>
+                </div>
+                <div>
+                  <b>{duration(totalBreakSec)}</b>
+                  <span className="sub">Total break</span>
+                </div>
+              </div>
+              <h3>Assigned tasks</h3>
+              {uTasks.map(t => (
+                <div key={t.id} className="list-row">
+                  <div className="grow">
+                    <strong>{t.title}</strong>
+                    <span className="sub">{fmtDate(t.due)}</span>
+                  </div>
+                  {t.blocked && <span className="tag red">Blocked</span>}
+                  <span className="tag">{t.status}</span>
+                </div>
+              ))}
+              {uTasks.length === 0 && <div className="empty">No tasks assigned</div>}
+            </>
+          )}
+          {isAdmin && (
+            <>
+              <h3 style={{ marginTop: 25 }}>Manage access &amp; positions</h3>
+              <form
+                onSubmit={async e => {
+                  e.preventDefault();
+                  const changes = Object.fromEntries(new FormData(e.target));
+                  if (!changes.password) delete changes.password;
+                  const parsedPositions = String(changes.position || '')
+                    .split(/[,·]+/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
+                  const finalPositions = parsedPositions.length ? parsedPositions : uPositions;
+                  changes.positions = finalPositions;
+                  changes.position = finalPositions.join(', ');
+                  try {
+                    await handleApi('/api/users', { action: 'update', id: u.id, ...changes });
+                    if (u.id === user.id) {
+                      setUser(prev =>
+                        prev
+                          ? {
+                              ...prev,
+                              name: changes.name || prev.name,
+                              email: changes.email || prev.email,
+                              department: changes.department || prev.department,
+                              position: changes.position || prev.position,
+                              positions: finalPositions
+                            }
+                          : prev
+                      );
+                    }
+                    setModal(null);
+                    await refreshState();
+                    showToast(changes.password ? 'Saved. Their existing sessions were signed out.' : 'Member profile & positions updated');
+                  } catch (err) {
+                    alert(err.message);
+                  }
+                }}
+              >
+                <div className="form-row">
+                  <div className="field">
+                    <label>Full name</label>
+                    <input name="name" type="text" required defaultValue={u.name} />
+                  </div>
+                  <div className="field">
+                    <label>Work email (used to sign in)</label>
+                    <input name="email" type="email" required defaultValue={u.email} />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="field">
+                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Department</span>
+                      <button
+                        type="button"
+                        className="small"
+                        style={{ height: 22, padding: '0 8px', fontSize: 11 }}
+                        onClick={() =>
+                          promptCreateDepartment(created =>
+                            setModal(prev => (prev ? { ...prev, data: { ...(prev.data || {}), department: created } } : prev))
+                          )
+                        }
+                      >
+                        + New
+                      </button>
+                    </label>
+                    <select
+                      key={`${departments.join('|')}__${u.department || ''}`}
+                      name="department"
+                      defaultValue={u.department || departments[0] || 'Engineering'}
+                    >
+                      {[...new Set([u.department, ...departments].filter(Boolean))].map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Positions (comma-separated)</span>
+                      <button
+                        type="button"
+                        className="small"
+                        style={{ height: 22, padding: '0 8px', fontSize: 11 }}
+                        onClick={() =>
+                          promptCreatePosition(created => {
+                            const next = uPositions.some(p => p.toLowerCase() === created.toLowerCase())
+                              ? uPositions
+                              : [...uPositions, created];
+                            handleSaveMemberPositions(u, next);
+                          })
+                        }
+                      >
+                        + New
+                      </button>
+                    </label>
+                    <input
+                      key={uPositions.join(', ')}
+                      name="position"
+                      type="text"
+                      defaultValue={uPositions.join(', ')}
+                      placeholder="e.g. Founder, CEO, Marketing Head"
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Role</label>
+                  <select name="role" defaultValue={u.role}>
+                    <option value="member">Member</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Reset password (leave blank to keep)</label>
+                  <input name="password" type="password" minLength="12" autoComplete="new-password" />
+                </div>
+                <div className="actions" style={{ marginTop: 15 }}>
+                  <button className="primary">Save changes</button>
+                  {u.id !== user.id && (
+                    <button
+                      type="button"
+                      className="small"
+                      onClick={async () => {
+                        if (!confirm(`Remove ${u.name}? They will be signed out and can no longer log in. Their time history is kept.`)) return;
+                        try {
+                          await handleApi('/api/users', { action: 'remove', id: u.id });
+                          setModal(null);
+                          await refreshState();
+                          showToast(`${u.name} was removed`);
+                        } catch (err) {
+                          alert(err.message);
+                        }
+                      }}
+                    >
+                      Remove member
+                    </button>
+                  )}
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // Clock In Dialog
+    if (type === 'clock') {
+      return (
+        <div className="modal" role="dialog">
+          <div className="card-head">
+            <h2>A little focus starts here</h2>
+            <button className="small" onClick={() => setModal(null)}>✕</button>
+          </div>
+          <form
+            onSubmit={async e => {
+              e.preventDefault();
+              const fd = new FormData(e.target);
+              try {
+                await handleApi('/api/clock', { action: 'start', ...Object.fromEntries(fd) });
+                setModal(null);
+                await refreshState();
+                showToast('Clocked in. Have a good session.');
+              } catch (err) {
+                alert(err.message);
+              }
+            }}
+          >
+            <div className="field">
+              <label>Project {!isAdmin && <span className="sub">(Assigned projects only)</span>}</label>
+              <select name="project" defaultValue={assignedProjects[0]?.id || ''} required={assignedProjects.length > 0}>
+                {assignedProjects.length === 0 && (
+                  <option value="">No assigned projects yet</option>
+                )}
+                {assignedProjects.map(p => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Task</label>
+              <select name="task">
+                <option value="">No specific task</option>
+                {state.tasks.filter(t => t.status !== 'Done').map(t => (
+                  <option key={t.id} value={t.id}>{t.title}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Session focus / goal (optional at clock-in)</label>
+              <textarea name="note" placeholder="What are you planning to focus on?" />
+            </div>
+            <button className="primary" style={{ marginTop: 15 }}>
+              <Icon name="play" /> Clock in
+            </button>
+          </form>
+        </div>
+      );
+    }
+
+    // Mandatory Clock Out Work Summary Dialog
+    if (type === 'clockOut') {
+      const linkedTask = (data.task || activeClock?.task)
+        ? state.tasks.find(t => t.id === (data.task || activeClock?.task))
+        : null;
+      return (
+        <div className="modal" role="dialog">
+          <div className="card-head">
+            <div>
+              <span className="eyebrow" style={{ margin: 0 }}>Shift Wrap-Up Required</span>
+              <h2 style={{ marginTop: 4 }}>Log your work summary to clock out</h2>
+            </div>
+            <button className="small" onClick={() => setModal(null)}>✕</button>
+          </div>
+          <div className="note" style={{ marginBottom: 16 }}>
+            <strong>Mandatory work note:</strong> Please summarize what you accomplished during this shift so the workspace administrator can track project progress and daily deliverables accurately.
+          </div>
+          {activeClock && (
+            <div className="timer-metrics" style={{ marginBottom: 16 }}>
+              <div className="timer-metric active">
+                <span>Focused work time</span>
+                <b>{duration(activeClockSeconds)}</b>
+              </div>
+              <div className="timer-metric break">
+                <span>Break time</span>
+                <b>{duration(activeBreakSeconds)}</b>
+              </div>
+            </div>
+          )}
+          <form
+            onSubmit={async e => {
+              e.preventDefault();
+              const fd = Object.fromEntries(new FormData(e.target));
+              const noteText = String(fd.note || '').trim();
+              if (noteText.length < 3) {
+                showToast('Please enter a work summary note (at least 3 characters) before clocking out.');
+                return;
+              }
+              try {
+                if (linkedTask && fd.taskStatus && fd.taskStatus !== linkedTask.status) {
+                  await handleApi('/api/record', {
+                    kind: 'tasks',
+                    id: linkedTask.id,
+                    body: { ...linkedTask, status: fd.taskStatus }
+                  });
+                }
+                await handleClock('stop', {
+                  project: fd.project ?? activeClock?.project ?? '',
+                  task: fd.task ?? activeClock?.task ?? '',
+                  note: noteText
+                });
+              } catch (err) {
+                showToast(err.message);
+              }
+            }}
+          >
+            <div className="form-row">
+              <div className="field">
+                <label>Project worked on</label>
+                <select name="project" defaultValue={data.project ?? activeClock?.project ?? assignedProjects[0]?.id ?? ''}>
+                  {assignedProjects.length === 0 && (
+                    <option value="">No assigned projects</option>
+                  )}
+                  {assignedProjects.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label>Task worked on</label>
+                <select
+                  name="task"
+                  defaultValue={data.task ?? activeClock?.task ?? ''}
+                  onChange={e => setModal(prev => (prev ? { ...prev, data: { ...prev.data, task: e.target.value } } : prev))}
+                >
+                  <option value="">No specific task</option>
+                  {state.tasks.map(t => (
+                    <option key={t.id} value={t.id}>{t.title} ({t.status})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {linkedTask && (
+              <div className="field">
+                <label>Update linked task status ({linkedTask.title})</label>
+                <select name="taskStatus" defaultValue={linkedTask.status || 'In progress'}>
+                  {['To do', 'In progress', 'In review', 'Done'].map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="field">
+              <label>Work summary / accomplishments (Required before clock-out) *</label>
+              <textarea
+                name="note"
+                required
+                minLength={3}
+                rows={4}
+                autoFocus
+                defaultValue={data.note ?? activeClock?.note ?? ''}
+                placeholder="Summarize what you completed, key deliverables, PRs/designs updated, or next steps…"
+              />
+            </div>
+            <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setModal(null)}>Continue working</button>
+              <button className="primary">
+                <Icon name="stop" /> Submit summary &amp; clock out
+              </button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    // Real-Time Employee Notifications & Activity Center Modal
+    if (type === 'notifications') {
+      const feed = (state.activities || []).filter(a => {
+        if (!isNotificationVisibleToUser(a, user)) return false;
+        if (isAdmin && activityEmployee !== 'all' && a.actorId !== activityEmployee) return false;
+        if (activityFilter === 'tasks') return String(a.type || '').startsWith('task_') || a.category === 'tasks';
+        if (activityFilter === 'goals') return String(a.type || '').startsWith('goal_') || a.category === 'goals';
+        if (activityFilter === 'clock') return String(a.type || '').startsWith('clock_') || a.category === 'clocks';
+        if (activityFilter === 'announcements') return String(a.type || '').startsWith('announcement_') || a.category === 'announcements';
+        if (activityFilter === 'standups') return a.type === 'standup_posted' || a.category === 'standups';
+        if (activityFilter === 'leads') return a.type === 'lead_updated' || a.category === 'leads';
+        return true;
+      });
+      return (
+        <div className="modal" role="dialog" style={{ maxWidth: 680 }}>
+          <div className="card-head">
+            <div>
+              <span className="eyebrow" style={{ margin: 0 }}>
+                {isAdmin ? 'Live Admin Notification & Audit Center' : 'My Notifications (Assigned by Admin & Personal)'}
+              </span>
+              <h2 style={{ marginTop: 4 }}>
+                {isAdmin ? 'Employee Task, Goal, Clock-Out & Announcement Activity' : 'Your Assigned & Personal Notifications'}
+              </h2>
+            </div>
+            <button className="small" onClick={() => setModal(null)}>✕</button>
+          </div>
+          <div className="actions" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+            <div className="period-switch">
+              {[
+                ['all', 'All'],
+                ['tasks', 'Task Changes'],
+                ['goals', 'Goals & Sync'],
+                ['clock', 'Clock-Outs & Shifts'],
+                ['announcements', 'Announcements'],
+                ['standups', 'Standups'],
+                ['leads', 'Leads']
+              ].map(([k, lbl]) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={activityFilter === k ? 'active' : ''}
+                  onClick={() => setActivityFilter(k)}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+            {isAdmin && (
+              <select
+                aria-label="Filter notifications by employee"
+                value={activityEmployee}
+                onChange={e => setActivityEmployee(e.target.value)}
+                style={{ width: 'auto', minWidth: 165 }}
+              >
+                <option value="all">All employees</option>
+                {state.users.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div style={{ maxHeight: '55vh', overflowY: 'auto', paddingRight: 4 }}>
+            {feed.slice(0, 50).map(act => {
+              const actor = state.users.find(u => u.id === act.actorId) || { name: act.actorName || 'Team member' };
+              const isClockOut = act.type === 'clock_out';
+              const isBlocker = act.type === 'task_blocker';
+              const isAnnDone = act.type === 'announcement_completed';
+              return (
+                <div key={act.id} className="list-row" style={{ alignItems: 'flex-start' }}>
+                  <Avatar user={actor} />
+                  <div className="grow">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                      <strong>{act.summary}</strong>
+                      <span className="sub" style={{ fontSize: 11 }}>
+                        {act.createdAt ? new Date(act.createdAt).toLocaleString() : 'Just now'}
+                      </span>
+                    </div>
+                    {act.detail && (
+                      <div
+                        style={{
+                          marginTop: 5,
+                          padding: isClockOut || isAnnDone ? '7px 10px' : 0,
+                          borderRadius: 8,
+                          background: isClockOut || isAnnDone ? 'var(--bg)' : 'transparent',
+                          border: isClockOut || isAnnDone ? '1px solid var(--line)' : 'none',
+                          fontSize: 12.5,
+                          color: 'var(--ink)'
+                        }}
+                      >
+                        {act.detail}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      <span className={`tag ${isBlocker ? 'red' : isClockOut || isAnnDone || act.type === 'task_status' ? 'green' : ''}`}>
+                        {String(act.type || 'update').replace(/_/g, ' ')}
+                      </span>
+                      <span className="sub" style={{ fontSize: 11 }}>by {actor.name}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {feed.length === 0 && (
+              <div className="empty">
+                <strong>All caught up</strong>No matching activity events in this filter.
+              </div>
+            )}
+          </div>
+          <div className="actions" style={{ marginTop: 16, justifyContent: 'space-between' }}>
+            <button
+              type="button"
+              className="small"
+              onClick={() => {
+                setModal(null);
+                navigate('announcements');
+              }}
+            >
+              View company announcements
+            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  setModal(null);
+                  navigate('analytics');
+                }}
+              >
+                Open full performance &amp; audit analytics
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Admin: correct a time entry
+    if (type === 'timeEntry') {
+      const owner = state.users.find(u => u.id === data.user_id);
+      return (
+        <div className="modal" role="dialog">
+          <div className="card-head">
+            <h2>Edit time entry</h2>
+            <button className="small" onClick={() => setModal(null)}>✕</button>
+          </div>
+          <p className="sub" style={{ marginBottom: 15 }}>
+            {owner?.name || 'Former member'}{!data.end ? ' · still running — saving will clock them out' : ''}
+          </p>
+          <form
+            onSubmit={async e => {
+              e.preventDefault();
+              const fd = Object.fromEntries(new FormData(e.target));
+              try {
+                await handleApi('/api/timesheet', {
+                  action: 'update',
+                  id,
+                  start: new Date(fd.start).getTime() / 1000,
+                  end: new Date(fd.end).getTime() / 1000,
+                  break_seconds: Number(fd.breakMinutes || 0) * 60,
+                  project: fd.project,
+                  task: fd.task || '',
+                  note: fd.note
+                });
+                setModal(null);
+                await refreshState();
+                showToast('Time entry updated');
+              } catch (err) {
+                alert(err.message);
+              }
+            }}
+          >
+            <div className="form-row">
+              <div className="field">
+                <label>Clock in (local time)</label>
+                <input name="start" type="datetime-local" required defaultValue={toLocalInput(data.start)} />
+              </div>
+              <div className="field">
+                <label>Clock out (local time)</label>
+                <input name="end" type="datetime-local" required defaultValue={toLocalInput(data.end || Date.now() / 1000)} />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="field">
+                <label>Break (minutes)</label>
+                <input name="breakMinutes" type="number" min="0" defaultValue={Math.round(breakDuration(data, currentTime) / 60)} />
+              </div>
+              <div className="field">
+                <label>Project</label>
+                <select name="project" defaultValue={data.project || state.projects[0]?.id || ''}>
+                  {state.projects.length === 0 && <option value="">No projects</option>}
+                  {state.projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="field">
+              <label>Linked task (optional)</label>
+              <select name="task" defaultValue={data.task || ''}>
+                <option value="">No specific task</option>
+                {state.tasks.map(t => (
+                  <option key={t.id} value={t.id}>{t.title} ({t.status})</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Work summary note</label>
+              <textarea name="note" rows={3} defaultValue={data.note || ''} />
+            </div>
+            <div className="actions" style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                className="danger"
+                onClick={async () => {
+                  if (!confirm('Delete this time entry? This cannot be undone.')) return;
+                  try {
+                    await handleApi('/api/timesheet', { action: 'delete', id });
+                    setModal(null);
+                    await refreshState();
+                    showToast('Time entry deleted');
+                  } catch (err) {
+                    alert(err.message);
+                  }
+                }}
+              >
+                Delete
+              </button>
+              <button className="primary">Save entry</button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    // Add Member Dialog
+    if (type === 'users') {
+      const selectedNewPositions = Array.isArray(data.positions) && data.positions.length
+        ? data.positions
+        : [positions.find(p => p !== 'CEO' && p !== 'Founder') || positions[0] || 'Software Engineer'];
+      return (
+        <div className="modal" role="dialog">
+          <div className="card-head">
+            <h2>Add team member</h2>
+            <button className="small" onClick={() => setModal(null)}>✕</button>
+          </div>
+          <form
+            onSubmit={async e => {
+              e.preventDefault();
+              const fd = Object.fromEntries(new FormData(e.target));
+              const parsedPositions = String(fd.position || '')
+                .split(/[,·]+/)
+                .map(s => s.trim())
+                .filter(Boolean);
+              const finalPositions = parsedPositions.length ? parsedPositions : selectedNewPositions;
+              try {
+                await handleApi('/api/users', {
+                  ...fd,
+                  positions: finalPositions,
+                  position: finalPositions.join(', ')
+                });
+                setModal(null);
+                await refreshState();
+                showToast('Team member added successfully');
+              } catch (err) {
+                alert(err.message);
+              }
+            }}
+          >
+            <div className="field">
+              <label>Full name</label>
+              <input name="name" type="text" required />
+            </div>
+            <div className="field">
+              <label>Work email</label>
+              <input name="email" type="email" required />
+            </div>
+            <div className="field">
+              <label>Initial password (12+ characters)</label>
+              <input name="password" type="password" required minLength="12" />
+            </div>
+            <div className="form-row">
+              <div className="field">
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Department</span>
+                  <button
+                    type="button"
+                    className="small"
+                    style={{ height: 22, padding: '0 8px', fontSize: 11 }}
+                    onClick={() =>
+                      promptCreateDepartment(created =>
+                        setModal(prev => (prev ? { ...prev, data: { ...(prev.data || {}), department: created } } : prev))
+                      )
+                    }
+                  >
+                    + New
+                  </button>
+                </label>
+                <select
+                  key={`${departments.join('|')}__${data.department || ''}`}
+                  name="department"
+                  defaultValue={data.department || departments[0] || 'Engineering'}
+                >
+                  {departments.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label>Role</label>
+                <select name="role">
+                  <option value="member">member</option>
+                  <option value="admin">admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="field">
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Positions / Titles ({selectedNewPositions.length} selected — multiple allowed)</span>
+                <button
+                  type="button"
+                  className="small"
+                  style={{ height: 22, padding: '0 8px', fontSize: 11 }}
+                  onClick={() =>
+                    promptCreatePosition(created =>
+                      setModal(prev =>
+                        prev
+                          ? {
+                              ...prev,
+                              data: {
+                                ...(prev.data || {}),
+                                positions: [...new Set([...selectedNewPositions, created])]
+                              }
+                            }
+                          : prev
+                      )
+                    )
+                  }
+                >
+                  + New position
+                </button>
+              </label>
+              <div className="member-pill-list" style={{ marginBottom: 8 }}>
+                {positions.map(pos => {
+                  const isSel = selectedNewPositions.some(p => p.toLowerCase() === pos.toLowerCase());
+                  return (
+                    <button
+                      key={pos}
+                      type="button"
+                      className={`member-pill ${isSel ? 'selected' : ''}`}
+                      onClick={() => {
+                        const next = isSel
+                          ? selectedNewPositions.filter(p => p.toLowerCase() !== pos.toLowerCase())
+                          : [...selectedNewPositions, pos];
+                        setModal(prev =>
+                          prev
+                            ? {
+                                ...prev,
+                                data: {
+                                  ...(prev.data || {}),
+                                  positions: next.length ? next : [pos]
+                                }
+                              }
+                            : prev
+                        );
+                      }}
+                    >
+                      <span>{isSel ? '✓ ' : '+ '}{pos}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <input
+                key={selectedNewPositions.join(', ')}
+                name="position"
+                type="text"
+                defaultValue={selectedNewPositions.join(', ')}
+                placeholder="e.g. Founder, CEO or Marketing Head, Analyst"
+              />
+            </div>
+            <button className="primary" style={{ marginTop: 15 }}>Create account</button>
+          </form>
+        </div>
+      );
+    }
+
+    // Generic CRUD for projects, tasks, leads, meetings, announcements, standups, goals
+    const editable = canEdit(type, { ...data, id });
+    const isAdminTaskForEmployee =
+      type === 'tasks' && !isAdmin && Boolean(id && data.owner && data.owner !== user.id);
+    const isAdminGoalForEmployee =
+      type === 'goals' && !isAdmin && Boolean(id && data.owner && data.owner !== user.id);
+    const singularLabel =
+      type === 'standups'
+        ? 'check-in'
+        : type === 'goals'
+        ? 'goal'
+        : type.slice(0, -1);
+
+    const updateModalData = patch =>
+      setModal(prev => (prev ? { ...prev, data: { ...prev.data, ...patch } } : prev));
+
+    return (
+      <div className="modal" role="dialog">
+        <div className="card-head">
+          <h2>{id ? (editable ? 'Edit' : 'View') : 'New'} {singularLabel}</h2>
+          <button className="small" onClick={() => setModal(null)}>✕</button>
+        </div>
+        <form
+          onSubmit={async e => {
+            e.preventDefault();
+            if (!editable) return;
+            const fd = new FormData(e.target);
+            const body = Object.fromEntries(fd);
+            if (type === 'meetings') {
+              body.attendees = fd.getAll('attendees');
+              body.sendToEveryone = fd.get('sendToEveryone') === 'on';
+              body.autoRoom = fd.get('autoRoom') === 'on';
+              body.start = new Date(body.start).toISOString();
+              body.end = new Date(body.end).toISOString();
+            }
+            if (type === 'tasks') {
+              body.blocked = fd.get('blocked') === 'on';
+              body.notifyEmail = fd.get('notifyEmail') === 'on';
+              body.notifyEveryone = fd.get('notifyEveryone') === 'on';
+              body.estimateHours = Number(body.estimateHours ?? data.estimateHours ?? 0);
+              body.subtasks = data.subtasks || [];
+              body.comments = data.comments || [];
+              body.assignees = Array.isArray(data.assignees)
+                ? data.assignees
+                : body.assignee
+                ? [body.assignee]
+                : [user.id];
+            }
+            if (type === 'projects') {
+              body.targetHours = Number(body.targetHours || 0);
+              body.budget = Number(body.budget || 0);
+              body.milestones = data.milestones || [];
+              body.members = Array.isArray(data.members)
+                ? data.members
+                : body.lead
+                ? [body.lead]
+                : [];
+            }
+            if (type === 'leads') {
+              body.value = Number(body.value || 0);
+              body.probability = Number(body.probability || 0);
+            }
+            if (type === 'announcements') {
+              body.notifyEmail = fd.get('notifyEmail') === 'on';
+              body.notifyEveryone = fd.get('notifyEveryone') === 'on';
+            }
+            if (type === 'goals') {
+              body.currentValue = Number(body.currentValue ?? data.currentValue ?? 0);
+              body.targetValue = Number(body.targetValue ?? data.targetValue ?? 100);
+              body.period = body.period || data.period || 'weekly';
+              body.status = body.status || data.status || 'On track';
+              body.subtasks = data.subtasks || [];
+              body.comments = data.comments || [];
+              if (!isAdmin && !isAdminGoalForEmployee) {
+                body.assignee = user.id;
+                body.assignees = [user.id];
+              } else {
+                body.assignees = Array.isArray(data.assignees)
+                  ? data.assignees
+                  : body.assignee && body.assignee !== 'all'
+                  ? [body.assignee]
+                  : [];
+              }
+            }
+            const mergedRecord = {
+              ...data,
+              ...body,
+              id: id || `temp_${Date.now()}`,
+              owner: data.owner || user.id,
+              created: data.created || new Date().toISOString()
+            };
+            const prevCollection = Array.isArray(state[type]) ? state[type] : [];
+            // 0ms optimistic UI update & modal close
+            if (Array.isArray(state[type])) {
+              setState(prev => ({
+                ...prev,
+                [type]: id
+                  ? prev[type].map(item => (item.id === id ? mergedRecord : item))
+                  : [mergedRecord, ...prev[type]]
+              }));
+            }
+            setModal(null);
+            showToast('Saved. Workspace is up to date.');
+            try {
+              const saved = await handleApi('/api/record', { kind: type, id, body: { ...data, ...body } });
+              if (!id && saved?.id && Array.isArray(state[type])) {
+                setState(prev => ({
+                  ...prev,
+                  [type]: prev[type].map(item => (item.id === mergedRecord.id ? { ...mergedRecord, id: saved.id } : item))
+                }));
+              }
+              refreshState();
+            } catch (err) {
+              if (Array.isArray(state[type])) {
+                setState(prev => ({ ...prev, [type]: prevCollection }));
+              }
+              showToast(err.message);
+            }
+          }}
+        >
+          {!editable && (
+            <div className="note" style={{ marginBottom: 15 }}>
+              {['projects', 'meetings', 'announcements'].includes(type)
+                ? 'Only administrators can change this.'
+                : `Only ${state.users.find(u => u.id === data.owner)?.name || 'its creator'}, an assigned collaborator, or an administrator can change this.`}
+            </div>
+          )}
+          {isAdminTaskForEmployee && (
+            <div className="note" style={{ marginBottom: 15 }}>
+              🔒 <b>RBAC Least-Privilege Scope:</b> This task was assigned by an administrator. Scope fields (Title, Project, Priority, Due date, Estimated hours) are locked to Admin control, while you can update <b>Status</b>, <b>Deliverable URL</b>, <b>Blocker flag</b>, <b>Subtasks</b>, and <b>Comments</b>.
+            </div>
+          )}
+          {isAdminGoalForEmployee && (
+            <div className="note" style={{ marginBottom: 15 }}>
+              🎯 <b>Collaborative Goal Sync:</b> This goal was assigned by an administrator. Scope fields (Title, Cadence, Target Value, Due date) are locked to Admin control, while you can update <b>Current Progress</b>, <b>Status</b>, <b>Key Results Checklist</b>, and <b>Team Discussion Comments</b>.
+            </div>
+          )}
+          <fieldset disabled={!editable} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+          <div className="field">
+            <label>
+              {type === 'leads'
+                ? 'Contact name'
+                : type === 'standups'
+                ? 'Today’s main focus'
+                : type === 'goals'
+                ? 'Objective / goal title'
+                : 'Title'}
+            </label>
+            <input name="title" type="text" required defaultValue={data.title || ''} disabled={isAdminTaskForEmployee || isAdminGoalForEmployee} />
+          </div>
+
+          {type === 'projects' && (
+            <>
+              <div className="field">
+                <label>Description</label>
+                <textarea name="description" defaultValue={data.description || ''} />
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Client / stakeholder</label>
+                  <input name="client" type="text" placeholder="Internal or client name" defaultValue={data.client || ''} />
+                </div>
+                <div className="field">
+                  <label>Project lead</label>
+                  <select name="lead" defaultValue={data.lead || user.id}>
+                    <option value="">Unassigned</option>
+                    {state.users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="field">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>
+                    Assigned project team members ({(data.members || (data.lead ? [data.lead] : [])).length} selected)
+                  </label>
+                  {editable && (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => updateModalData({ members: state.users.map(u => u.id) })}
+                      >
+                        Assign all
+                      </button>
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => updateModalData({ members: data.lead ? [data.lead] : [] })}
+                      >
+                        Lead only
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="member-pill-list">
+                  {state.users.map(u => {
+                    const currentMembers = Array.isArray(data.members)
+                      ? data.members
+                      : data.lead
+                      ? [data.lead]
+                      : [];
+                    const selected = currentMembers.includes(u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        type="button"
+                        className={`member-pill ${selected ? 'selected' : ''}`}
+                        onClick={() => {
+                          if (!editable) return;
+                          const next = selected
+                            ? currentMembers.filter(idVal => idVal !== u.id)
+                            : [...new Set([...currentMembers, u.id])];
+                          updateModalData({ members: next });
+                        }}
+                      >
+                        <Avatar user={u} />
+                        <span>{u.name}</span>
+                        <small style={{ opacity: 0.7 }}>({u.department})</small>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Status</label>
+                  <select name="status" defaultValue={data.status || 'Active'}>
+                    {['Planning', 'Active', 'Completed'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Due date</label>
+                  <input name="due" type="date" defaultValue={data.due || ''} />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Target hours (capacity)</label>
+                  <input name="targetHours" type="number" min="0" step="1" defaultValue={data.targetHours || 0} />
+                </div>
+                {isAdmin && (
+                  <div className="field">
+                    <label>Budget ({currency})</label>
+                    <input name="budget" type="number" min="0" step="100" defaultValue={data.budget || 0} />
+                  </div>
+                )}
+              </div>
+              <div className="field">
+                <label>Milestones ({(data.milestones || []).filter(m => m.done).length}/{(data.milestones || []).length} completed)</label>
+                <div className="checklist-editor">
+                  {(data.milestones || []).map((m, idx) => (
+                    <div key={m.id || idx} className="checklist-row">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(m.done)}
+                          onChange={() => {
+                            const next = (data.milestones || []).map((item, i) =>
+                              i === idx ? { ...item, done: !item.done } : item
+                            );
+                            updateModalData({ milestones: next });
+                          }}
+                        />
+                        <span style={{ textDecoration: m.done ? 'line-through' : 'none' }}>{m.title}</span>
+                      </label>
+                      {editable && (
+                        <button
+                          type="button"
+                          className="small"
+                          onClick={() => {
+                            const next = (data.milestones || []).filter((_, i) => i !== idx);
+                            updateModalData({ milestones: next });
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {editable && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Add a project milestone…"
+                        value={data._newMilestone || ''}
+                        onChange={e => updateModalData({ _newMilestone: e.target.value })}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const text = (data._newMilestone || '').trim();
+                            if (!text) return;
+                            updateModalData({
+                              milestones: [...(data.milestones || []), { id: String(Date.now()), title: text, done: false }],
+                              _newMilestone: ''
+                            });
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => {
+                          const text = (data._newMilestone || '').trim();
+                          if (!text) return;
+                          updateModalData({
+                            milestones: [...(data.milestones || []), { id: String(Date.now()), title: text, done: false }],
+                            _newMilestone: ''
+                          });
+                        }}
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {type === 'tasks' && (
+            <>
+              <div className="field">
+                <label>Description</label>
+                <textarea name="description" defaultValue={data.description || ''} disabled={isAdminTaskForEmployee} />
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Project {!isAdmin && <span className="sub">(Assigned projects only)</span>}</label>
+                  <select
+                    name="project"
+                    defaultValue={data.project || assignedProjects[0]?.id || ''}
+                    disabled={isAdminTaskForEmployee}
+                    required={assignedProjects.length > 0}
+                  >
+                    {assignedProjects.length === 0 && (
+                      <option value="">No assigned projects available</option>
+                    )}
+                    {assignedProjects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Primary assignee {!isAdmin && <span className="sub">(Personal scope)</span>}</label>
+                  <select name="assignee" defaultValue={data.assignee || user.id} disabled={!isAdmin}>
+                    {state.users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              {isAdmin && (
+                <div className="field">
+                  <label>Assign additional team collaborators ({(data.assignees || (data.assignee ? [data.assignee] : [user.id])).length} assigned)</label>
+                  <div className="member-pill-list">
+                    {state.users.map(u => {
+                      const currentAssignees = Array.isArray(data.assignees)
+                        ? data.assignees
+                        : data.assignee
+                        ? [data.assignee]
+                        : [user.id];
+                      const selected = currentAssignees.includes(u.id);
+                      return (
+                        <button
+                          key={u.id}
+                          type="button"
+                          className={`member-pill ${selected ? 'selected' : ''}`}
+                          onClick={() => {
+                            const next = selected
+                              ? currentAssignees.filter(idVal => idVal !== u.id)
+                              : [...new Set([...currentAssignees, u.id])];
+                            updateModalData({ assignees: next.length ? next : [user.id] });
+                          }}
+                        >
+                          <Avatar user={u} />
+                          <span>{u.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              <div className="form-row">
+                <div className="field">
+                  <label>Status</label>
+                  <select name="status" defaultValue={data.status || 'To do'}>
+                    {['To do', 'In progress', 'In review', 'Done'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Priority</label>
+                  <select name="priority" defaultValue={data.priority || 'Medium'} disabled={isAdminTaskForEmployee}>
+                    {['Low', 'Medium', 'High'].map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Due date</label>
+                  <input name="due" type="date" defaultValue={data.due || ''} disabled={isAdminTaskForEmployee} />
+                </div>
+                <div className="field">
+                  <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Department</span>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        className="small"
+                        style={{ height: 22, padding: '0 8px', fontSize: 11 }}
+                        onClick={() => promptCreateDepartment(created => updateModalData({ department: created }))}
+                      >
+                        + New
+                      </button>
+                    )}
+                  </label>
+                  <select
+                    key={`${departments.join('|')}__${data.department || ''}`}
+                    name="department"
+                    defaultValue={data.department || departments[0] || 'Engineering'}
+                    disabled={isAdminTaskForEmployee}
+                  >
+                    {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Estimated hours</label>
+                  <input name="estimateHours" type="number" min="0" step="0.5" defaultValue={data.estimateHours || 0} disabled={isAdminTaskForEmployee} />
+                </div>
+                <div className="field">
+                  <label>Deliverable / PR / Figma URL</label>
+                  <input name="deliverableUrl" type="url" placeholder="https://…" defaultValue={data.deliverableUrl || ''} />
+                </div>
+              </div>
+
+              {/* Blocker Flag */}
+              <div className="field blocker-field-box">
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    name="blocked"
+                    defaultChecked={Boolean(data.blocked)}
+                  />
+                  <strong>Flag this task as blocked</strong>
+                </label>
+                <input
+                  name="blockerNote"
+                  type="text"
+                  placeholder="If blocked, what is needed to unblock it?"
+                  defaultValue={data.blockerNote || ''}
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+
+              {/* Subtasks Checklist */}
+              <div className="field">
+                <label>Subtasks / checklist ({(data.subtasks || []).filter(s => s.done).length}/{(data.subtasks || []).length})</label>
+                <div className="checklist-editor">
+                  {(data.subtasks || []).map((st, idx) => (
+                    <div key={st.id || idx} className="checklist-row">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(st.done)}
+                          onChange={() => {
+                            const next = (data.subtasks || []).map((item, i) =>
+                              i === idx ? { ...item, done: !item.done } : item
+                            );
+                            updateModalData({ subtasks: next });
+                          }}
+                        />
+                        <span style={{ textDecoration: st.done ? 'line-through' : 'none' }}>{st.title}</span>
+                      </label>
+                      {editable && (
+                        <button
+                          type="button"
+                          className="small"
+                          onClick={() => {
+                            const next = (data.subtasks || []).filter((_, i) => i !== idx);
+                            updateModalData({ subtasks: next });
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {editable && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Add a checklist step…"
+                        value={data._newSubtask || ''}
+                        onChange={e => updateModalData({ _newSubtask: e.target.value })}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const text = (data._newSubtask || '').trim();
+                            if (!text) return;
+                            updateModalData({
+                              subtasks: [...(data.subtasks || []), { id: String(Date.now()), title: text, done: false }],
+                              _newSubtask: ''
+                            });
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => {
+                          const text = (data._newSubtask || '').trim();
+                          if (!text) return;
+                          updateModalData({
+                            subtasks: [...(data.subtasks || []), { id: String(Date.now()), title: text, done: false }],
+                            _newSubtask: ''
+                          });
+                        }}
+                      >
+                        + Step
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Comments / Activity Thread */}
+              <div className="field">
+                <label>Activity & comments ({(data.comments || []).length})</label>
+                <div className="comment-thread">
+                  {(data.comments || []).map((cm, idx) => (
+                    <div key={cm.id || idx} className="comment-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                        <strong>{cm.authorName || 'Team member'}</strong>
+                        <span className="sub">{cm.created ? new Date(cm.created).toLocaleString() : ''}</span>
+                      </div>
+                      <p style={{ margin: '4px 0 0', fontSize: 13 }}>{cm.text}</p>
+                    </div>
+                  ))}
+                  {editable && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Write an update or note…"
+                        value={data._newComment || ''}
+                        onChange={e => updateModalData({ _newComment: e.target.value })}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const text = (data._newComment || '').trim();
+                            if (!text) return;
+                            updateModalData({
+                              comments: [
+                                ...(data.comments || []),
+                                { id: String(Date.now()), authorName: user.name, text, created: new Date().toISOString() }
+                              ],
+                              _newComment: ''
+                            });
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => {
+                          const text = (data._newComment || '').trim();
+                          if (!text) return;
+                          updateModalData({
+                            comments: [
+                              ...(data.comments || []),
+                              { id: String(Date.now()), authorName: user.name, text, created: new Date().toISOString() }
+                            ],
+                            _newComment: ''
+                          });
+                        }}
+                      >
+                        Post
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {isAdmin && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 8 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <input type="checkbox" name="notifyEmail" />
+                    Email assignee via Gmail
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <input type="checkbox" name="notifyEveryone" />
+                    <strong>Email Everyone on the team</strong>
+                  </label>
+                </div>
+              )}
+            </>
+          )}
+
+          {type === 'leads' && (
+            <>
+              <div className="form-row">
+                <div className="field">
+                  <label>Company</label>
+                  <input name="company" type="text" defaultValue={data.company || ''} />
+                </div>
+                <div className="field">
+                  <label>Lead owner {!isAdmin && <span className="sub">(Personal scope)</span>}</label>
+                  <select name="assignee" defaultValue={data.assignee || user.id} disabled={!isAdmin}>
+                    {state.users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Email</label>
+                  <input name="email" type="email" defaultValue={data.email || ''} />
+                </div>
+                <div className="field">
+                  <label>Phone</label>
+                  <input name="phone" type="text" defaultValue={data.phone || ''} />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Estimated value</label>
+                  <input name="value" type="number" defaultValue={data.value || 0} />
+                </div>
+                <div className="field">
+                  <label>Stage</label>
+                  <select name="stage" defaultValue={data.stage || 'New'}>
+                    {['New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Follow-up date</label>
+                  <input name="followup" type="date" defaultValue={data.followup || ''} />
+                </div>
+                <div className="field">
+                  <label>Lead source & win %</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8 }}>
+                    <select name="source" defaultValue={data.source || 'Inbound'}>
+                      {['Inbound', 'Referral', 'Outbound', 'Website', 'LinkedIn', 'Partner', 'CSV Import'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <input name="probability" type="number" min="0" max="100" placeholder="%" defaultValue={data.probability ?? 50} />
+                  </div>
+                </div>
+              </div>
+              <div className="field">
+                <label>Notes</label>
+                <textarea name="description" defaultValue={data.description || ''} />
+              </div>
+            </>
+          )}
+
+          {type === 'meetings' && (
+            <>
+              <div className="form-row">
+                <div className="field">
+                  <label>Starts (local time)</label>
+                  <input
+                    name="start"
+                    type="datetime-local"
+                    required
+                    defaultValue={toLocalInput(data.start) || `${key(selectedDay)}T10:00`}
+                  />
+                </div>
+                <div className="field">
+                  <label>Ends (local time)</label>
+                  <input
+                    name="end"
+                    type="datetime-local"
+                    required
+                    defaultValue={toLocalInput(data.end) || `${key(selectedDay)}T10:30`}
+                  />
+                </div>
+              </div>
+              <div className="field">
+                <div className="link-generator-head">
+                  <label style={{ margin: 0 }}>Meeting link (Google Meet / video URL)</label>
+                  <div className="link-generator-bar">
+                    <button
+                      type="button"
+                      className="link-gen-btn primary-tone"
+                      disabled={Boolean(data._generatingMeet)}
+                      onClick={async e => {
+                        const form = e.currentTarget.form;
+                        const liveTitle = form?.elements?.title?.value?.trim() || data.title || 'Syneolab Meeting';
+                        const liveStart = form?.elements?.start?.value
+                          ? new Date(form.elements.start.value).toISOString()
+                          : data.start;
+                        const liveEnd = form?.elements?.end?.value
+                          ? new Date(form.elements.end.value).toISOString()
+                          : data.end;
+                        const liveDesc = form?.elements?.description?.value || data.description || '';
+                        if (!state.integrations?.calendar) {
+                          window.open('https://meet.google.com/new', '_blank', 'noopener,noreferrer');
+                          return;
+                        }
+                        try {
+                          updateModalData({ _generatingMeet: true });
+                          const res = await handleApi('/api/record', {
+                            action: 'generateMeetLink',
+                            body: { title: liveTitle, start: liveStart, end: liveEnd, description: liveDesc }
+                          });
+                          updateModalData({
+                            _generatingMeet: false,
+                            link: res.meetLink,
+                            calendarEventUrl: res.eventUrl || '',
+                            location: 'Google Meet'
+                          });
+                          showToast('Google Meet link generated & synced to Calendar');
+                        } catch (err) {
+                          updateModalData({ _generatingMeet: false });
+                          showToast(err.message);
+                        }
+                      }}
+                    >
+                      <Icon name="meetings" />
+                      <span>{data._generatingMeet ? 'Generating Meet…' : 'Generate Google Meet'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="link-gen-btn"
+                      onClick={e => {
+                        const form = e.currentTarget.form;
+                        const rawTitle = form?.elements?.title?.value?.trim() || data.title || 'team-sync';
+                        const slug = rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20) || 'sync';
+                        const roomUrl = `https://meet.jit.si/Syneolab-${slug}-${Math.random().toString(36).slice(2, 7)}`;
+                        updateModalData({ link: roomUrl, location: 'Jitsi Meet', calendarEventUrl: '' });
+                      }}
+                    >
+                      <Icon name="link" />
+                      <span>Instant Jitsi Room</span>
+                    </button>
+                    <a
+                      href="https://meet.google.com/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="link-gen-btn"
+                      title="Open a blank Google Meet tab"
+                    >
+                      <span>meet.new</span>
+                      <Icon name="arrow" />
+                    </a>
+                  </div>
+                </div>
+                <input
+                  key={data.link || 'empty-link'}
+                  name="link"
+                  type="url"
+                  placeholder="https://meet.google.com/xxx-xxxx-xxx (or leave blank to auto-create on save)"
+                  defaultValue={data.link || ''}
+                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginTop: 6, color: 'var(--muted)' }}>
+                  <input type="checkbox" name="autoRoom" defaultChecked={data.autoRoom ?? !id} />
+                  Auto-create a Google Meet room on save if left blank
+                </label>
+              </div>
+              <div className="field">
+                <label>Location</label>
+                <input key={data.location || 'default-loc'} name="location" type="text" defaultValue={data.location || 'Google Meet'} />
+              </div>
+              <div className="field">
+                <label>Agenda / details</label>
+                <textarea name="description" defaultValue={data.description || ''} />
+              </div>
+
+              <div className="field" style={{ background: 'var(--bg)', padding: 12, borderRadius: 12, border: '1px solid var(--line)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      name="sendToEveryone"
+                      checked={Boolean(data.sendToEveryone ?? (!id && (!data.attendees || data.attendees.length === state.users.length)))}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        updateModalData({
+                          sendToEveryone: checked,
+                          attendees: checked ? state.users.map(u => u.id) : [user.id]
+                        });
+                      }}
+                    />
+                    <strong>Invite & email Everyone ({state.users.length} team members)</strong>
+                  </label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="small"
+                      onClick={() => updateModalData({ sendToEveryone: true, attendees: state.users.map(u => u.id) })}
+                    >
+                      Select everyone
+                    </button>
+                    <button
+                      type="button"
+                      className="small"
+                      onClick={() => updateModalData({ sendToEveryone: false, attendees: [user.id] })}
+                    >
+                      Only me
+                    </button>
+                  </div>
+                </div>
+
+                <div className="check-list" style={{ marginTop: 10 }}>
+                  {state.users.map(u => {
+                    const currentAttendees = data.attendees || state.users.map(x => x.id);
+                    const isChecked = Boolean(data.sendToEveryone) || currentAttendees.includes(u.id);
+                    return (
+                      <label key={u.id} style={{ display: 'block', margin: '4px 0' }}>
+                        <input
+                          type="checkbox"
+                          name="attendees"
+                          value={u.id}
+                          checked={isChecked}
+                          onChange={e => {
+                            const next = e.target.checked
+                              ? [...new Set([...currentAttendees, u.id])]
+                              : currentAttendees.filter(x => x !== u.id);
+                            updateModalData({
+                              attendees: next,
+                              sendToEveryone: next.length === state.users.length
+                            });
+                          }}
+                        />{' '}
+                        {u.name} <span className="sub">({u.email})</span>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div className="field" style={{ marginTop: 10, marginBottom: 0 }}>
+                  <label style={{ fontSize: 11 }}>Additional guest emails (optional, comma-separated)</label>
+                  <input
+                    name="extraEmails"
+                    type="text"
+                    placeholder="client@example.com, partner@company.com"
+                    defaultValue={data.extraEmails || ''}
+                  />
+                </div>
+              </div>
+              <p className="sub" style={{ marginTop: 8 }}>
+                Saving sends the executive invitation card + native Google Calendar (<code>.ics</code>) invite to all selected recipients.
+              </p>
+            </>
+          )}
+
+          {type === 'announcements' && (
+            <>
+              <div className="field">
+                <label>Type</label>
+                <select name="priority" defaultValue={data.priority || 'Update'}>
+                  {['Update', 'Important', 'Celebration'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Announcement</label>
+                <textarea name="description" defaultValue={data.description || ''} />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginTop: 8 }}>
+                <input type="checkbox" name="notifyEveryone" defaultChecked={!id} />
+                <strong>Send email to Everyone (All active team members via Gmail)</strong>
+              </label>
+            </>
+          )}
+
+          {type === 'standups' && (
+            <>
+              <div className="form-row">
+                <div className="field">
+                  <label>Primary project {!isAdmin && <span className="sub">(Assigned projects only)</span>}</label>
+                  <select name="project" defaultValue={data.project || assignedProjects[0]?.id || ''}>
+                    {assignedProjects.length === 0 && (
+                      <option value="">No assigned projects</option>
+                    )}
+                    {assignedProjects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Current energy / mode</label>
+                  <select name="mood" defaultValue={data.mood || 'Focused'}>
+                    {['Focused', 'Energized', 'Heads-down', 'Need a hand'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="field">
+                <label>Completed recently</label>
+                <textarea name="yesterday" placeholder="Key wins or progress since your last check-in…" defaultValue={data.yesterday || ''} />
+              </div>
+              <div className="field">
+                <label>Blockers or help needed (optional)</label>
+                <textarea name="blockers" placeholder="Anything slowing you down or waiting on review?" defaultValue={data.blockers || ''} />
+              </div>
+            </>
+          )}
+
+          {type === 'goals' && (
+            <>
+              <div className="form-row">
+                <div className="field">
+                  <label>Goal cadence / horizon</label>
+                  <select
+                    name="period"
+                    value={data.period || 'weekly'}
+                    disabled={isAdminGoalForEmployee}
+                    onChange={e => {
+                      const nextPeriod = e.target.value;
+                      updateModalData({
+                        period: nextPeriod,
+                        due: !id ? getDefaultGoalDue(nextPeriod) : data.due
+                      });
+                    }}
+                  >
+                    <option value="daily">Daily goal (Today)</option>
+                    <option value="weekly">Weekly goal (This week)</option>
+                    <option value="monthly">Monthly goal (This month)</option>
+                    <option value="quarterly">Quarterly OKR</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Status</label>
+                  <select
+                    name="status"
+                    value={data.status || 'On track'}
+                    onChange={e => updateModalData({ status: e.target.value })}
+                  >
+                    {['On track', 'At risk', 'Blocked', 'Completed'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="field">
+                  <label>Category / department</label>
+                  <select
+                    name="category"
+                    defaultValue={data.category || user.department || 'Company'}
+                    disabled={isAdminGoalForEmployee}
+                  >
+                    {[...new Set(['Company', ...departments, 'Revenue & Growth', 'Client Delivery', 'Team Sync'])].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Target date</label>
+                  <input
+                    key={data.due || 'goal-due'}
+                    name="due"
+                    type="date"
+                    defaultValue={data.due || getDefaultGoalDue(data.period || 'weekly')}
+                    disabled={isAdminGoalForEmployee}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="field">
+                  <label>
+                    Primary owner / assignee {!isAdmin && <span className="sub">(Personal scope)</span>}
+                  </label>
+                  <select
+                    name="assignee"
+                    value={isAdmin ? (data.assignee || 'all') : user.id}
+                    disabled={!isAdmin}
+                    onChange={e => {
+                      const nextAssignee = e.target.value;
+                      const currentTeam = Array.isArray(data.assignees) ? data.assignees : [];
+                      updateModalData({
+                        assignee: nextAssignee,
+                        assignees:
+                          nextAssignee === 'all'
+                            ? state.users.map(u => u.id)
+                            : [...new Set([nextAssignee, ...currentTeam].filter(Boolean))]
+                      });
+                    }}
+                  >
+                    {isAdmin && <option value="all">Entire team (All members)</option>}
+                    {(isAdmin ? state.users : state.users.filter(u => u.id === user.id)).map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.position || u.department})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Linked project {!isAdmin && <span className="sub">(Assigned projects only)</span>}</label>
+                  <select
+                    name="project"
+                    defaultValue={data.project || ''}
+                    disabled={isAdminGoalForEmployee}
+                  >
+                    <option value="">Workspace / No specific project</option>
+                    {assignedProjects.map(p => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {isAdmin && (
+                <div className="field">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <label style={{ margin: 0 }}>
+                      Assigned team collaborators ({(data.assignees || []).length || state.users.length} synced)
+                    </label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => updateModalData({ assignee: 'all', assignees: state.users.map(u => u.id) })}
+                      >
+                        Entire team
+                      </button>
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() =>
+                          updateModalData({
+                            assignee: data.assignee && data.assignee !== 'all' ? data.assignee : user.id,
+                            assignees: [data.assignee && data.assignee !== 'all' ? data.assignee : user.id]
+                          })
+                        }
+                      >
+                        Single owner
+                      </button>
+                    </div>
+                  </div>
+                  <div className="member-pill-list">
+                    {state.users.map(u => {
+                      const currentAssignees = Array.isArray(data.assignees)
+                        ? data.assignees
+                        : data.assignee && data.assignee !== 'all'
+                        ? [data.assignee]
+                        : state.users.map(usr => usr.id);
+                      const selected = currentAssignees.includes(u.id);
+                      return (
+                        <button
+                          key={u.id}
+                          type="button"
+                          className={`member-pill ${selected ? 'selected' : ''}`}
+                          onClick={() => {
+                            const next = selected
+                              ? currentAssignees.filter(idVal => idVal !== u.id)
+                              : [...new Set([...currentAssignees, u.id])];
+                            updateModalData({
+                              assignees: next.length ? next : [user.id],
+                              assignee: next.length === 1 ? next[0] : data.assignee
+                            });
+                          }}
+                        >
+                          <Avatar user={u} />
+                          <span>{u.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="form-row">
+                <div className="field">
+                  <label>Current progress value</label>
+                  <input
+                    key={`cur-${data.currentValue ?? 0}`}
+                    name="currentValue"
+                    type="number"
+                    step="any"
+                    required
+                    defaultValue={data.currentValue ?? 0}
+                    onChange={e => updateModalData({ currentValue: Number(e.target.value || 0) })}
+                  />
+                </div>
+                <div className="field">
+                  <label>Target value & unit</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8 }}>
+                    <input
+                      name="targetValue"
+                      type="number"
+                      step="any"
+                      required
+                      defaultValue={data.targetValue ?? 100}
+                      disabled={isAdminGoalForEmployee}
+                    />
+                    <input
+                      name="unit"
+                      type="text"
+                      placeholder="%, tasks, USD"
+                      defaultValue={data.unit || '%'}
+                      disabled={isAdminGoalForEmployee}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Context & success criteria</label>
+                <textarea
+                  name="description"
+                  placeholder="Describe what success looks like and how the team can collaborate on this goal…"
+                  defaultValue={data.description || ''}
+                />
+              </div>
+
+              {/* Key Results / Action Steps Checklist */}
+              <div className="field">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>
+                    Key results / action checklist ({(data.subtasks || []).filter(s => s.done).length}/{(data.subtasks || []).length} completed)
+                  </label>
+                  {(data.subtasks || []).length > 0 && (
+                    <button
+                      type="button"
+                      className="small"
+                      onClick={() => {
+                        const total = (data.subtasks || []).length;
+                        const done = (data.subtasks || []).filter(s => s.done).length;
+                        const target = Math.max(1, Number(data.targetValue || 100));
+                        const syncedVal = Math.round((done / total) * target);
+                        updateModalData({
+                          currentValue: syncedVal,
+                          status: done === total ? 'Completed' : 'On track'
+                        });
+                      }}
+                    >
+                      Sync progress from checklist
+                    </button>
+                  )}
+                </div>
+                <div className="checklist-editor">
+                  {(data.subtasks || []).map((st, idx) => (
+                    <div key={st.id || idx} className="checklist-row">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(st.done)}
+                          onChange={() => {
+                            const next = (data.subtasks || []).map((item, i) =>
+                              i === idx ? { ...item, done: !item.done } : item
+                            );
+                            const doneCount = next.filter(item => item.done).length;
+                            const patch = { subtasks: next };
+                            if ((data.unit || '%') === '%' && Number(data.targetValue || 100) === 100) {
+                              patch.currentValue = Math.round((doneCount / next.length) * 100);
+                            }
+                            updateModalData(patch);
+                          }}
+                        />
+                        <span style={{ textDecoration: st.done ? 'line-through' : 'none' }}>{st.title}</span>
+                      </label>
+                      {editable && (
+                        <button
+                          type="button"
+                          className="small"
+                          onClick={() => {
+                            const next = (data.subtasks || []).filter((_, i) => i !== idx);
+                            updateModalData({ subtasks: next });
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {editable && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Add a measurable key result or action step…"
+                        value={data._newGoalStep || ''}
+                        onChange={e => updateModalData({ _newGoalStep: e.target.value })}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const text = (data._newGoalStep || '').trim();
+                            if (!text) return;
+                            updateModalData({
+                              subtasks: [...(data.subtasks || []), { id: String(Date.now()), title: text, done: false }],
+                              _newGoalStep: ''
+                            });
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => {
+                          const text = (data._newGoalStep || '').trim();
+                          if (!text) return;
+                          updateModalData({
+                            subtasks: [...(data.subtasks || []), { id: String(Date.now()), title: text, done: false }],
+                            _newGoalStep: ''
+                          });
+                        }}
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Team Sync Discussion & Progress Updates */}
+              <div className="field">
+                <label>Team sync discussion & updates ({(data.comments || []).length})</label>
+                <div className="comments-box">
+                  {(data.comments || []).map((c, idx) => (
+                    <div key={c.id || idx} className="comment-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                        <strong>{c.authorName || 'Team member'}</strong>
+                        <span className="sub">{c.at ? new Date(c.at).toLocaleString() : ''}</span>
+                      </div>
+                      <p style={{ margin: '4px 0 0', fontSize: 13 }}>{c.text}</p>
+                    </div>
+                  ))}
+                  {editable && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Share a progress update, blocker, or note with the team…"
+                        value={data._newGoalComment || ''}
+                        onChange={e => updateModalData({ _newGoalComment: e.target.value })}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const text = (data._newGoalComment || '').trim();
+                            if (!text) return;
+                            updateModalData({
+                              comments: [
+                                ...(data.comments || []),
+                                { id: String(Date.now()), authorId: user.id, authorName: user.name, text, at: new Date().toISOString() }
+                              ],
+                              _newGoalComment: ''
+                            });
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => {
+                          const text = (data._newGoalComment || '').trim();
+                          if (!text) return;
+                          updateModalData({
+                            comments: [
+                              ...(data.comments || []),
+                              { id: String(Date.now()), authorId: user.id, authorName: user.name, text, at: new Date().toISOString() }
+                            ],
+                            _newGoalComment: ''
+                          });
+                        }}
+                      >
+                        Post
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          </fieldset>
+
+          <div className="actions" style={{ marginTop: 20 }}>
+            {id && canDelete(type, data) && (
+              <button
+                type="button"
+                className="danger"
+                onClick={async () => {
+                  if (confirm('Delete this record? This cannot be undone.')) {
+                    const prevCollection = Array.isArray(state[type]) ? state[type] : [];
+                    if (Array.isArray(state[type])) {
+                      setState(prev => ({
+                        ...prev,
+                        [type]: prev[type].filter(item => item.id !== id)
+                      }));
+                    }
+                    setModal(null);
+                    showToast('Record deleted');
+                    try {
+                      await handleApi('/api/delete', { id });
+                      refreshState();
+                    } catch (err) {
+                      if (Array.isArray(state[type])) {
+                        setState(prev => ({ ...prev, [type]: prevCollection }));
+                      }
+                      showToast(err.message);
+                    }
+                  }
+                }}
+              >
+                Delete
+              </button>
+            )}
+            {editable ? (
+              <button className="primary">Save {singularLabel}</button>
+            ) : (
+              <button type="button" onClick={() => setModal(null)}>Close</button>
+            )}
+          </div>
+        </form>
+      </div>
+    );
+  };
+
+  // Navigation Items
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'tasks', label: 'Tasks', count: state.tasks.filter(t => t.status !== 'Done').length },
+    { id: 'pulse', label: 'Pulse & goals', count: state.tasks.filter(t => t.blocked && t.status !== 'Done').length },
+    { id: 'calendar', label: 'Calendar' },
+    { id: 'clock', label: 'Time tracking' },
+    { id: 'team', label: 'Team', count: isAdmin ? (state.requests || []).length : 0 },
+    { id: 'leads', label: 'Leads' },
+    { id: 'meetings', label: 'Meetings' },
+    { id: 'announcements', label: 'Announcements' }
+  ];
+
+  return (
+    <div className="shell">
+      {/* Sidebar */}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <SyneoLogo size={34} idPrefix="sidebar" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <SyneoWordmark height={15} color="var(--ink)" />
+            <span style={{ fontSize: 7.2, letterSpacing: '0.14em', color: 'var(--soft)', fontWeight: 600 }}>
+              CREATIVITY MEETS INNOVATIONS
+            </span>
+          </div>
+        </div>
+        <div className="sidebar-nav">
+          <div className="eyebrow">Workspace</div>
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              className={`nav ${page === item.id ? 'active' : ''}`}
+              onClick={() => navigate(item.id)}
+            >
+              <Icon name={item.id} />
+              {item.label}
+              {item.count !== undefined && item.count > 0 && <span className="count">{item.count}</span>}
+            </button>
+          ))}
+
+          <div className="eyebrow">Insights & preferences</div>
+          <button
+            className={`nav ${page === 'analytics' ? 'active' : ''}`}
+            onClick={() => navigate('analytics')}
+          >
+            <Icon name="analytics" /> Analytics
+          </button>
+          <button
+            className={`nav ${page === 'settings' ? 'active' : ''}`}
+            onClick={() => navigate('settings')}
+          >
+            <Icon name="settings" /> Settings
+          </button>
+        </div>
+
+        <div className="side-bottom">
+          <div className="workspace-card">
+            <strong>Good things<br />take teamwork.</strong>
+            <p>Your people. Your progress.<br />All in one place.</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 10, color: 'var(--soft)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4cd97b', display: 'inline-block', flexShrink: 0 }} />
+              <span>DB Beacon · 24/7 Awake (0B)</span>
+            </div>
+          </div>
+          <button
+            className="nav logout-btn"
+            onClick={async () => {
+              await handleApi('/api/logout', {});
+              setUser(null);
+              showToast('Signed out');
+            }}
+          >
+            <Icon name="logout" /> Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Container */}
+      <main className="main">
+        <header className="topbar">
+          <button
+            className="mobile-menu"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Open navigation"
+          >
+            <Icon name="menu" />
+          </button>
+          <div className="search">
+            <Icon name="search" />
+            <input
+              id="search-input"
+              placeholder="Search projects, tasks & people"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              aria-label="Search workspace"
+            />
+            <span className="shortcut">⌘ K</span>
+          </div>
+          <div className="profile">
+            {activeClock && (
+              <div className={`top-clock-pill ${activeClock.break_start ? 'on-break' : ''}`}>
+                <button
+                  type="button"
+                  className="top-clock-readout"
+                  onClick={() => navigate('clock')}
+                  title="Open Time tracking"
+                >
+                  <i className="top-clock-dot" />
+                  <span>
+                    <b>Work {duration(activeClockSeconds)}</b>
+                    <small> · Break {duration(activeBreakSeconds)}</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="top-clock-action"
+                  onClick={() => handleClock(activeClock.break_start ? 'resume' : 'break')}
+                  title={activeClock.break_start ? 'Resume work' : 'Start break'}
+                >
+                  {activeClock.break_start ? 'Resume' : 'Break'}
+                </button>
+                <button
+                  type="button"
+                  className="top-clock-action stop"
+                  onClick={() => handleClock('stop')}
+                  title="Clock out"
+                >
+                  Clock out
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              className="small"
+              onClick={toggleDarkMode}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              <Icon name={darkMode ? 'sun' : 'moon'} />
+            </button>
+            <button
+              type="button"
+              className="small notif-bell-btn"
+              onClick={() => {
+                markActivitiesSeen();
+                setModal({ type: 'notifications', data: {} });
+              }}
+              aria-label="Employee activity & notifications"
+              title={
+                isAdmin
+                  ? `Employee activity & notifications (${unreadActivities.length} unread)`
+                  : 'My activity feed'
+              }
+            >
+              <Icon name="bell" />
+              {unreadActivities.length > 0 && (
+                <span className="notif-badge">
+                  {unreadActivities.length > 99 ? '99+' : unreadActivities.length}
+                </span>
+              )}
+            </button>
+            <Avatar user={user} />
+            <div>
+              <strong>{user?.name || ''}</strong>
+              <small>{isAdmin ? 'Workspace admin' : 'Team member'}</small>
+            </div>
+            <button
+              className="top-logout-btn"
+              onClick={async () => {
+                await handleApi('/api/logout', {});
+                setUser(null);
+                showToast('Signed out');
+              }}
+              aria-label="Sign out"
+              title="Sign out of workspace"
+            >
+              <Icon name="logout" />
+              <span>Sign out</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="content">
+          {renderCurrentView()}
+          <div className="footer-note" style={{ marginTop: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <SyneoLogo size={18} idPrefix="footer" />
+              <b>SYNEO LAB WORKSPACE</b>
+            </span>
+            <span>“WHERE CREATIVITY MEETS INNOVATIONS”</span>
+          </div>
+        </div>
+      </main>
+
+      {/* Modal Dialog Backdrop */}
+      {modal && (
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}>
+          {renderModalContent()}
+        </div>
+      )}
+
+      {/* Real-Time Admin Live Employee Activity Alert Popup */}
+      {liveAlert && (
+        <div className="admin-live-alert" role="alert">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <span className="eyebrow" style={{ margin: 0, color: 'var(--green)' }}>
+              ● Live Employee Update {liveAlert.extraCount > 0 ? `(+${liveAlert.extraCount} more)` : ''}
+            </span>
+            <button
+              type="button"
+              className="small"
+              style={{ padding: '2px 7px', fontSize: 11 }}
+              onClick={() => setLiveAlert(null)}
+            >
+              ✕
+            </button>
+          </div>
+          <strong style={{ fontSize: 13.5 }}>{liveAlert.summary}</strong>
+          {liveAlert.detail && (
+            <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.45 }}>
+              {liveAlert.detail}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button
+              type="button"
+              className="small primary"
+              onClick={() => {
+                setLiveAlert(null);
+                markActivitiesSeen();
+                setModal({ type: 'notifications', data: {} });
+              }}
+            >
+              Inspect activity
+            </button>
+            <button
+              type="button"
+              className="small"
+              onClick={() => {
+                setLiveAlert(null);
+                navigate('analytics');
+              }}
+            >
+              Open analytics
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div id="toast" role="status" style={{ display: 'block' }}>
+          {toastMsg}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,23 @@
+node_modules/
+.next/
+out/
+.vercel/
+.git/
+.claude/
+
+# Secrets & local environment files (configure via Vercel Project Settings -> Environment Variables)
+.env
+.env.*
+atlas-credentials.env
+preview-logins.txt
+
+# Non-production local & legacy folders
+.localdb/
+docker-version/
+_obsolete/
+ui-screenshots/
+integrations/
+tests/
+manuals/
+start-local.ps1
+README.md

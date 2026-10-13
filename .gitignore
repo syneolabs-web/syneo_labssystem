@@ -1,0 +1,25 @@
+node_modules/
+.next/
+out/
+.vercel/
+.claude/
+
+# Secrets (never commit any .env files except .env.example)
+.env
+.env.local
+.env.*.local
+.env.vercel
+.env.production
+atlas-credentials.env
+docker-version/.env
+docker-version/.env.nextjs
+
+# Local databases, legacy folders, and local helper scripts
+.localdb/
+preview-logins.txt
+ui-screenshots/
+docker-version/
+_obsolete/
+start-local.ps1
+__pycache__/
+*.pyc

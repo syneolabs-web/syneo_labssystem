@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/beacon",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}
