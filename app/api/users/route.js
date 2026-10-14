@@ -4,7 +4,7 @@ import { approveRequest, createUser, HttpError, manageDepartment, managePosition
 // body.action: 'create' (default) | 'update' | 'remove' | 'approve' | 'reject' | 'limit' | 'addDepartment' | 'removeDepartment' | 'addPosition' | 'removePosition'
 export const POST = api(async ({ body, user }) => {
   const action = body.action || 'create';
-  if (action === 'create') return { ok: true, user: await createUser(body, body.role || 'member') };
+  if (action === 'create') return { ok: true, user: await createUser(body, body.role || 'member', user) };
   if (action === 'addDepartment' || action === 'removeDepartment') {
     const departments = await manageDepartment(action, body.department || body.name, user);
     return { ok: true, departments };

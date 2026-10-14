@@ -30,12 +30,33 @@ const paths = {
   check: 'M5 12l4 4L19 6',
   link: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
   sun: 'M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8 M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M4.93 19.07l1.41-1.41 M17.66 6.34l1.41-1.41',
-  moon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'
+  moon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
+  x: 'M18 6L6 18 M6 6l12 12',
+  lock: 'M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z M7 11V7a5 5 0 0 1 10 0v4',
+  zap: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
+  target: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+  flag: 'M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z M4 22v-7',
+  alert: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z M12 9v4 M12 17h.01',
+  coffee: 'M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M10 1v3 M14 1v3',
+  chat: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+  folder: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z',
+  note: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  dot: 'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  circle: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  externalLink: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6 M15 3h6v6 M10 14L21 3'
 };
 
-const Icon = ({ name, className = 'icon' }) => (
-  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-    <path d={paths[name] || paths.projects} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+const Icon = ({ name, className = 'icon', size, style, strokeWidth = 2 }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    style={{ display: 'inline-block', verticalAlign: '-0.15em', flexShrink: 0, ...style }}
+    aria-hidden="true"
+  >
+    <path d={paths[name] || paths.projects} fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -126,7 +147,11 @@ const toLocalInput = v => {
   const d = new Date(typeof v === 'number' ? v * 1000 : v);
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 };
-const fmtTime = v => new Date(v).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+const fmtTime = v => (v ? new Date(v).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '');
+const isSuperAdminEmail = email => {
+  const e = (email || '').toLowerCase().trim();
+  return e === 'syneolabs@gmail.com';
+};
 
 export default function SyneolabApp() {
   const [mounted, setMounted] = useState(false);
@@ -355,7 +380,7 @@ export default function SyneolabApp() {
             const prevIdx = incomingActs.findIndex(a => a.id === lastSeenActivityIdRef.current);
             const freshList = prevIdx === -1 ? incomingActs.slice(0, 5) : incomingActs.slice(0, prevIdx);
             lastSeenActivityIdRef.current = newestId;
-            if (activeU?.role === 'admin') {
+            if (activeU?.role === 'admin' || activeU?.role === 'super_admin' || isSuperAdminEmail(activeU?.email)) {
               const empEvents = freshList.filter(a => a.actorId !== activeU.id);
               if (empEvents.length > 0) {
                 setLiveAlert({ ...empEvents[0], extraCount: empEvents.length - 1 });
@@ -365,7 +390,7 @@ export default function SyneolabApp() {
               }
             } else if (activeU) {
               const notifyEmp = freshList.find(a => {
-                if (a.actorId === activeU.id || a.actorRole !== 'admin') return false;
+                if (a.actorId === activeU.id || (a.actorRole !== 'admin' && a.actorRole !== 'super_admin')) return false;
                 const tIds = Array.isArray(a.targetUserIds) ? a.targetUserIds : [];
                 return (
                   a.targetUserId === activeU.id ||
@@ -450,12 +475,27 @@ export default function SyneolabApp() {
   const activeClock = state.clocks?.find(c => c.user_id === user?.id && !c.end);
   const activeClockSeconds = activeClock ? worked(activeClock, currentTime) : 0;
   const activeBreakSeconds = activeClock ? breakDuration(activeClock, currentTime) : 0;
-  const isAdmin = user?.role === 'admin';
+  const isSuperAdmin = Boolean(
+    isSuperAdminEmail(user?.email) ||
+    user?.role === 'super_admin' ||
+    user?.isSuperAdmin
+  );
+  const isAdmin = Boolean(user?.role === 'admin' || isSuperAdmin);
+  const isTargetSuperAdmin = u => Boolean(
+    isSuperAdminEmail(u?.email) ||
+    u?.role === 'super_admin' ||
+    u?.isSuperAdmin
+  );
+  const isTargetAdmin = u => Boolean(
+    u?.role === 'admin' ||
+    u?.role === 'super_admin' ||
+    isTargetSuperAdmin(u)
+  );
   const isNotificationVisibleToUser = (a, activeU = user) => {
     if (!a || !activeU) return false;
-    if (activeU.role === 'admin') return true;
+    if (activeU.role === 'admin' || activeU.role === 'super_admin' || isSuperAdminEmail(activeU.email)) return true;
     if (a.actorId === activeU.id) return true;
-    if (a.actorRole !== 'admin') return false;
+    if (a.actorRole !== 'admin' && a.actorRole !== 'super_admin') return false;
     const tIds = Array.isArray(a.targetUserIds) ? a.targetUserIds : [];
     return (
       a.targetUserId === activeU.id ||
@@ -607,7 +647,7 @@ export default function SyneolabApp() {
       ];
       if (cleaned.length > 0) return cleaned;
     }
-    return (isAdmin || u.id === user?.id) && u.role === 'admin' ? ['Founder', 'CEO'] : ['Team Member'];
+    return (isAdmin || u.id === user?.id) && (u.role === 'admin' || u.role === 'super_admin' || isSuperAdminEmail(u.email)) ? ['Founder', 'CEO'] : ['Team Member'];
   };
 
   const positions = (() => {
@@ -667,7 +707,7 @@ export default function SyneolabApp() {
     }
     const finalPositions = cleanList.length
       ? cleanList
-      : targetUser.role === 'admin'
+      : (targetUser.role === 'admin' || targetUser.role === 'super_admin' || isSuperAdminEmail(targetUser.email))
       ? ['Founder', 'CEO']
       : ['Team Member'];
     const joinedPosition = finalPositions.join(', ');
@@ -828,6 +868,42 @@ export default function SyneolabApp() {
   const canDelete = (kind, record = {}) =>
     isAdmin || (['tasks', 'leads', 'standups', 'goals'].includes(kind) && record.owner === user?.id);
 
+  // Administrative scope control: only admin or the task's creator can change title, project, assignees, deadlines, and estimate
+  const canManageTaskScope = (task = {}) => {
+    if (isAdmin) return true;
+    if (!task || !task.id) return true; // Brand new tasks can be configured by their creator
+    return task.owner === user?.id;
+  };
+
+  // Timeline and deadline health helper for projects
+  const getProjectTimeline = (p = {}) => {
+    let timelinePct = 0;
+    if (p.startDate && p.due) {
+      const sTime = new Date(p.startDate).getTime();
+      const eTime = new Date(p.due + 'T23:59:59').getTime();
+      const nowTime = Date.now();
+      if (eTime > sTime) {
+        timelinePct = Math.min(100, Math.max(0, Math.round(((nowTime - sTime) / (eTime - sTime)) * 100)));
+      } else {
+        timelinePct = 100;
+      }
+    }
+    let deadlineBadge = null;
+    if (p.due) {
+      const diffDays = Math.ceil((new Date(p.due + 'T23:59:59').getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      if (p.status === 'Completed') {
+        deadlineBadge = { label: 'Delivered', cls: 'green' };
+      } else if (diffDays < 0) {
+        deadlineBadge = { label: `Overdue by ${Math.abs(diffDays)}d`, cls: 'red' };
+      } else if (diffDays === 0) {
+        deadlineBadge = { label: 'Due today', cls: 'yellow' };
+      } else {
+        deadlineBadge = { label: `${diffDays}d remaining`, cls: '' };
+      }
+    }
+    return { timelinePct, deadlineBadge };
+  };
+
   const formatMoney = v =>
     new Intl.NumberFormat(undefined, {
       style: 'currency',
@@ -896,7 +972,8 @@ export default function SyneolabApp() {
       data: {
         project: activeClock.project || '',
         task: activeClock.task || '',
-        note: activeClock.note || '',
+        note: '',
+        initialGoal: activeClock.note || '',
         markTaskStatus: ''
       }
     });
@@ -909,6 +986,9 @@ export default function SyneolabApp() {
     }
     try {
       await handleApi('/api/clock', { action, ...extra });
+      if (action === 'stop') {
+        setModal(null);
+      }
       await refreshState();
       showToast(
         action === 'stop'
@@ -1438,11 +1518,18 @@ export default function SyneolabApp() {
               return (
                 <div key={p.id} className="list-row" onClick={() => setModal({ type: 'projects', id: p.id, data: p })} style={{ cursor: 'pointer' }}>
                   <div className={`project-symbol project-symbol-${i % 4}`}>
-                    {['◈', '✳', '▥', '◒'][i % 4]}
+                    <Icon name={['folder', 'projects', 'tasks', 'pulse'][i % 4]} size={14} />
                   </div>
                   <div className="grow">
                     <strong>{p.title}</strong>
-                    <span className="sub">{p.due ? `Due ${fmtDate(p.due)}` : 'No deadline set'}</span>
+                    <span className="sub" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="play" size={10} />{fmtDate(p.startDate || p.created)}</span>
+                      <span>·</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <Icon name="calendar" size={10} />
+                        {p.due ? `Due ${fmtDate(p.due)}` : 'No deadline'}
+                      </span>
+                    </span>
                   </div>
                   <span className="project-percent">{progressPct}%</span>
                 </div>
@@ -1484,7 +1571,7 @@ export default function SyneolabApp() {
                       {activeTask
                         ? activeTask.title
                         : activeGoal
-                        ? `🎯 ${activeGoal.title}`
+                        ? `Goal: ${activeGoal.title}`
                         : uPositions.length
                         ? `${uPositions.join(' · ')} · ${u.department}`
                         : u.department}
@@ -1641,8 +1728,17 @@ export default function SyneolabApp() {
 
     const moveTaskStatus = async (task, targetStatus) => {
       if (!task || task.status === targetStatus) return;
+      if (!canEdit('tasks', task)) {
+        showToast('Least-privilege RBAC: You cannot move tasks you do not own or are not assigned to.');
+        return;
+      }
       const prevStatus = task.status;
-      const updatedTask = { ...task, status: targetStatus };
+      const prevCompleted = task.completed_at;
+      const updatedTask = {
+        ...task,
+        status: targetStatus,
+        completed_at: targetStatus === 'Done' ? (task.completed_at || new Date().toISOString()) : null
+      };
       // Instant 0ms optimistic UI update
       setState(prev => ({
         ...prev,
@@ -1660,7 +1756,7 @@ export default function SyneolabApp() {
         // Roll back on error
         setState(prev => ({
           ...prev,
-          tasks: prev.tasks.map(item => (item.id === task.id ? { ...item, status: prevStatus } : item))
+          tasks: prev.tasks.map(item => (item.id === task.id ? { ...item, status: prevStatus, completed_at: prevCompleted } : item))
         }));
         showToast(err.message);
       }
@@ -1670,7 +1766,12 @@ export default function SyneolabApp() {
       e.preventDefault();
       const taskId = e.dataTransfer.getData('text/plain');
       const task = state.tasks.find(t => t.id === taskId);
-      if (task && task.status !== targetStatus) {
+      if (!task) return;
+      if (!canEdit('tasks', task)) {
+        showToast('Least-privilege RBAC: You cannot move tasks you do not own or are not assigned to.');
+        return;
+      }
+      if (task.status !== targetStatus) {
         moveTaskStatus(task, targetStatus);
       }
     };
@@ -1691,7 +1792,11 @@ export default function SyneolabApp() {
                   data: {
                     project: taskProjectFilter !== 'all' ? taskProjectFilter : (assignedProjects[0]?.id || ''),
                     assignee: taskMemberFilter !== 'all' ? taskMemberFilter : user.id,
-                    assignees: [taskMemberFilter !== 'all' ? taskMemberFilter : user.id]
+                    assignees: [taskMemberFilter !== 'all' ? taskMemberFilter : user.id],
+                    startDate: todayStr,
+                    due: todayStr,
+                    status: 'To do',
+                    priority: 'Medium'
                   }
                 })
               }
@@ -1735,7 +1840,7 @@ export default function SyneolabApp() {
               </select>
             ) : (
               <span className="tag" title="RBAC Least Privilege: You only view tasks assigned to you or created by you.">
-                🔒 Assigned &amp; Personal Scope · Least Privilege
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="lock" size={12} />Assigned &amp; Personal Scope · Least Privilege</span>
               </span>
             )}
           </div>
@@ -1766,9 +1871,13 @@ export default function SyneolabApp() {
                     .filter(c => c.task === t.id)
                     .reduce((n, c) => n + worked(c, currentTime) / 3600, 0);
                   const isOverdue = t.due && t.due < todayStr && t.status !== 'Done';
+                  const isDueToday = t.due && t.due === todayStr && t.status !== 'Done';
                   const proj = state.projects.find(p => p.id === t.project);
                   const assignedIds = [...new Set([t.assignee, ...(Array.isArray(t.assignees) ? t.assignees : [])].filter(Boolean))];
                   const editableTask = canEdit('tasks', t);
+                  const canScopeTask = canManageTaskScope(t);
+                  const isAssignedAdminTask = editableTask && !canScopeTask;
+                  const taskStart = t.startDate || t.assigned_at || t.created;
                   const prevCol = idx > 0 ? columns[idx - 1] : null;
                   const nextCol = idx < columns.length - 1 ? columns[idx + 1] : null;
 
@@ -1778,15 +1887,27 @@ export default function SyneolabApp() {
                       className={`task ${t.blocked && t.status !== 'Done' ? 'is-blocked' : ''}`}
                       draggable={editableTask}
                       onDragStart={e => e.dataTransfer.setData('text/plain', t.id)}
-                      style={editableTask ? undefined : { cursor: 'pointer' }}
+                      style={editableTask ? undefined : { cursor: 'pointer', opacity: 0.92 }}
                       onClick={() => setModal({ type: 'tasks', id: t.id, data: t })}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span className={`tag ${t.department === 'Design' ? 'purple' : ''}`}>
-                          {t.department || 'General'}
-                        </span>
+                        <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span className={`tag ${t.department === 'Design' ? 'purple' : ''}`}>
+                            {t.department || 'General'}
+                          </span>
+                          {!editableTask && (
+                            <span className="tag" style={{ fontSize: 10, padding: '2px 6px', opacity: 0.85 }} title="Assigned to another team member">
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="lock" size={10} />View only</span>
+                            </span>
+                          )}
+                          {isAssignedAdminTask && (
+                            <span className="tag purple" style={{ fontSize: 10, padding: '2px 6px' }} title="Assigned by administrator: execution scope">
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="lock" size={10} />Admin task</span>
+                            </span>
+                          )}
+                        </div>
                         <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                          {t.blocked && t.status !== 'Done' && <span className="tag red">⚑ Blocked</span>}
+                          {t.blocked && t.status !== 'Done' && <span className="tag red" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="flag" size={11} />Blocked</span>}
                           <span className="sub">
                             {t.priority === 'High' ? '↗ ' : ''}
                             {t.priority || 'Medium'}
@@ -1796,7 +1917,7 @@ export default function SyneolabApp() {
                       <h4>{t.title}</h4>
                       {proj && <div className="sub" style={{ marginTop: -8, marginBottom: 8 }}>◈ {proj.title}</div>}
                       {t.blocked && t.blockerNote && t.status !== 'Done' && (
-                        <div className="task-blocker-note">⚠ {t.blockerNote}</div>
+                        <div className="task-blocker-note" style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon name="alert" size={12} />{t.blockerNote}</div>
                       )}
                       {subtasks.length > 0 && (
                         <div style={{ marginBottom: 10 }}>
@@ -1815,18 +1936,38 @@ export default function SyneolabApp() {
                       {(taskHours > 0 || Number(t.estimateHours) > 0 || comments.length > 0 || t.deliverableUrl) && (
                         <div className="task-badges">
                           {(taskHours > 0 || Number(t.estimateHours) > 0) && (
-                            <span className="sub">
-                              ⏱ {taskHours.toFixed(1)}h{Number(t.estimateHours) > 0 ? ` / ${t.estimateHours}h` : ''}
+                            <span className="sub" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                              <Icon name="clock" size={11} />{taskHours.toFixed(1)}h{Number(t.estimateHours) > 0 ? ` / ${t.estimateHours}h` : ''}
                             </span>
                           )}
-                          {comments.length > 0 && <span className="sub">💬 {comments.length}</span>}
-                          {t.deliverableUrl && <span className="sub">🔗 Link</span>}
+                          {comments.length > 0 && <span className="sub" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="chat" size={11} />{comments.length}</span>}
+                          {t.deliverableUrl && <span className="sub" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="link" size={11} />Link</span>}
                         </div>
                       )}
-                      <div className="task-meta">
-                        <span style={isOverdue ? { color: '#b53833', fontWeight: 600 } : undefined}>
-                          <Icon name="calendar" /> {fmtDate(t.due)}{isOverdue ? ' · Overdue' : ''}
-                        </span>
+                      <div className="task-meta" style={{ flexWrap: 'wrap', gap: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span className="sub" title="Kickoff / Start date" style={{ fontSize: 11 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="play" size={10} />Start: {fmtDate(taskStart)}</span>
+                          </span>
+                          {(col === 'Done' || t.status === 'Done') ? (
+                            <span className="tag green" title="Completion date" style={{ fontSize: 10, padding: '2px 7px' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="check" size={11} />Done {fmtDate(t.completed_at || t.created)}</span>
+                            </span>
+                          ) : t.due ? (
+                            <span
+                              className={`tag ${isOverdue ? 'red' : isDueToday ? 'yellow' : ''}`}
+                              style={{ fontSize: 10, padding: '2px 7px' }}
+                              title="Task deadline"
+                            >
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                <Icon name={isOverdue ? 'alert' : 'calendar'} size={10} />
+                                {isOverdue ? `Overdue: ${fmtDate(t.due)}` : isDueToday ? 'Due today' : `Due: ${fmtDate(t.due)}`}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="sub muted" style={{ fontSize: 10 }}>No deadline</span>
+                          )}
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           {editableTask && (
                             <div
@@ -1852,7 +1993,7 @@ export default function SyneolabApp() {
                                   title={`Move forward to ${nextCol}`}
                                   onClick={() => moveTaskStatus(t, nextCol)}
                                 >
-                                  {nextCol === 'Done' ? '✓ Done' : '→'}
+                                  {nextCol === 'Done' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="check" size={11} />Done</span> : '→'}
                                 </button>
                               )}
                             </div>
@@ -1907,7 +2048,7 @@ export default function SyneolabApp() {
               </button>
             ) : (
               <span className="tag" title="RBAC Least Privilege: Only projects assigned to you are visible.">
-                🔒 Assigned Projects · Least Privilege
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="lock" size={12} />Assigned Projects · Least Privilege</span>
               </span>
             )}
           </div>
@@ -1935,6 +2076,7 @@ export default function SyneolabApp() {
             const leadUser = state.users.find(u => u.id === (p.lead || p.owner));
             const teamMemberIds = [...new Set([p.lead || p.owner, ...(Array.isArray(p.members) ? p.members : [])].filter(Boolean))];
             const teamUsers = teamMemberIds.map(uid => state.users.find(u => u.id === uid)).filter(Boolean);
+            const { timelinePct, deadlineBadge } = getProjectTimeline(p);
 
             const health =
               p.status === 'Completed'
@@ -1950,9 +2092,10 @@ export default function SyneolabApp() {
             return (
               <article key={p.id} className="card">
                 <div className="card-head">
-                  <div className="project-symbol">✳</div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div className="project-symbol"><Icon name="folder" size={15} /></div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                     <span className={`tag ${health.cls}`}>{health.label}</span>
+                    {deadlineBadge && <span className={`tag ${deadlineBadge.cls}`}><Icon name="clock" size={11} />{deadlineBadge.label}</span>}
                     <span className="tag">{p.status}</span>
                   </div>
                 </div>
@@ -1983,6 +2126,8 @@ export default function SyneolabApp() {
                         type: 'tasks',
                         data: {
                           project: p.id,
+                          startDate: todayStr,
+                          due: p.due || todayStr,
                           assignee: isAdmin ? p.lead || user.id : user.id,
                           assignees: isAdmin ? (teamMemberIds.length ? teamMemberIds : [user.id]) : [user.id]
                         }
@@ -2010,13 +2155,37 @@ export default function SyneolabApp() {
                     </div>
                   )}
                 </div>
-                <div className="progress" style={{ marginTop: 10 }}>
-                  <i style={{ width: `${pct}%` }}></i>
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)', marginBottom: 4 }}>
+                    <span>Task progress</span>
+                    <b>{pct}%</b>
+                  </div>
+                  <div className="progress">
+                    <i style={{ width: `${pct}%` }}></i>
+                  </div>
+                  {p.startDate && p.due && (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--muted)', marginBottom: 3 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <Icon name="calendar" size={10} />Timeline elapsed
+                        </span>
+                        <span><b>{timelinePct}%</b> ({fmtDate(p.startDate)} → {fmtDate(p.due)})</span>
+                      </div>
+                      <div className="progress" style={{ height: 4, background: 'var(--line)' }}>
+                        <i style={{ width: `${timelinePct}%`, background: timelinePct > pct && p.status !== 'Completed' ? '#cf4945' : 'var(--muted)' }}></i>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="list-row" style={{ marginTop: 15 }}>
-                  <div className="grow" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div>
-                      <span className="sub">Due {fmtDate(p.due)}</span>
+                  <div className="grow" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
+                      <span className="sub" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Icon name="play" size={11} /><b>Start:</b> {fmtDate(p.startDate || p.created)}
+                      </span>
+                      <span className="sub" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Icon name="calendar" size={11} /><b>Deadline:</b> {p.due ? fmtDate(p.due) : 'No deadline'}
+                      </span>
                       {isAdmin && Number(p.budget) > 0 && <span className="sub"> · {formatMoney(p.budget)}</span>}
                     </div>
                   </div>
@@ -2686,11 +2855,11 @@ export default function SyneolabApp() {
                           <td>
                             <div className="shift-project-stack">
                               <span className="shift-project-badge">
-                                📁 {proj?.title || 'Assigned project'}
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="folder" size={12} />{proj?.title || 'Assigned project'}</span>
                               </span>
                               {tsk ? (
                                 <span className="shift-task-sub" title={tsk.title}>
-                                  ✓ {tsk.title}
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={12} />{tsk.title}</span>
                                 </span>
                               ) : (
                                 <span className="sub" style={{ fontSize: 11.5 }}>General project focus</span>
@@ -2707,7 +2876,7 @@ export default function SyneolabApp() {
                             {c.note && String(c.note).trim() ? (
                               <div className={`timesheet-note-box ${!c.end ? 'is-live' : ''}`}>
                                 <div className="timesheet-note-meta">
-                                  <span>{c.end ? '📝 Clock-out work summary' : '⚡ Active session focus'}</span>
+                                  <span>{c.end ? <><Icon name="note" size={12} style={{ marginRight: 4 }} />Clock-out work summary</> : <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Active session focus</>}</span>
                                   <span>{(wSec / 3600).toFixed(1)}h</span>
                                 </div>
                                 <div className="timesheet-note-text">{c.note}</div>
@@ -3332,18 +3501,18 @@ export default function SyneolabApp() {
                       <td className="timesheet-note-cell">
                         <div className="shift-project-row">
                           <span className="shift-project-badge">
-                            📁 {proj?.title || 'Assigned project'}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="folder" size={12} />{proj?.title || 'Assigned project'}</span>
                           </span>
                           {taskObj && (
                             <span className="shift-task-sub">
-                              ✓ {taskObj.title}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={12} />{taskObj.title}</span>
                             </span>
                           )}
                         </div>
                         {c.note && String(c.note).trim() ? (
                           <div className={`timesheet-note-box ${!c.end ? 'is-live' : ''}`}>
                             <div className="timesheet-note-meta">
-                              <span>{c.end ? '📝 Shift work summary note' : '⚡ Active session focus'}</span>
+                              <span>{c.end ? <><Icon name="note" size={12} style={{ marginRight: 4 }} />Shift work summary note</> : <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Active session focus</>}</span>
                               <span>{(wSec / 3600).toFixed(1)}h logged</span>
                             </div>
                             <div className="timesheet-note-text">{c.note}</div>
@@ -3369,7 +3538,7 @@ export default function SyneolabApp() {
                           </span>
                           {isLongActive && (
                             <span className="tag red" title="Session running over 10 hours">
-                              ⚠ 10h+
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="alert" size={11} />10h+</span>
                             </span>
                           )}
                         </div>
@@ -3577,7 +3746,7 @@ export default function SyneolabApp() {
                                 cursor: 'pointer'
                               }}
                             >
-                              ✕
+                              <Icon name="x" size={11} />
                             </button>
                           )}
                         </span>
@@ -3654,7 +3823,7 @@ export default function SyneolabApp() {
                                 cursor: 'pointer'
                               }}
                             >
-                              ✕
+                              <Icon name="x" size={11} />
                             </button>
                           )}
                         </span>
@@ -3715,7 +3884,15 @@ export default function SyneolabApp() {
                     <span key={pos} className="tag purple">{pos}</span>
                   ))}
                   <span className="tag">{u.department}</span>
-                  {isAdmin && u.role === 'admin' && <span className="tag">Admin</span>}
+                  {isAdmin && (
+                    isTargetSuperAdmin(u) ? (
+                      <span className="tag super-admin-tag"><Icon name="zap" size={11} style={{ marginRight: 3 }} />Super Admin</span>
+                    ) : isTargetAdmin(u) ? (
+                      <span className="tag">Admin</span>
+                    ) : (
+                      <span className="tag">Employee</span>
+                    )
+                  )}
                   {canSeeDetailedStats && (
                     <>
                       <span className={`tag ${onTimeRate >= 85 ? 'green' : 'yellow'}`} title="On-time task rate">
@@ -3727,7 +3904,7 @@ export default function SyneolabApp() {
                 </div>
                 {liveClock && (
                   <div className="sub" style={{ marginTop: 8, fontSize: 12 }}>
-                    {liveClock.break_start ? '☕ On break' : liveProject ? `⚡ Working on ${liveProject}` : '⚡ Active session'}
+                    {liveClock.break_start ? <><Icon name="coffee" size={12} style={{ marginRight: 4 }} />On break</> : liveProject ? <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Working on {liveProject}</> : <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Active session</>}
                   </div>
                 )}
                 {canSeeDetailedStats && (
@@ -3755,6 +3932,9 @@ export default function SyneolabApp() {
                   <span className={`tag ${liveClock?.break_start ? 'yellow' : ''}`}>
                     {liveClock ? (liveClock.break_start ? 'On break' : 'Clocked in') : 'Offline'}
                   </span>
+                  <button className="small primary" onClick={() => setModal({ type: 'memberAnalytics', id: u.id, data: u })}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="analytics" size={12} />Analytics</span>
+                  </button>
                   <button className="small" onClick={() => setModal({ type: 'person', id: u.id, data: u })}>
                     {isAdmin ? 'Profile & positions ↗' : 'View profile ↗'}
                   </button>
@@ -4234,7 +4414,7 @@ export default function SyneolabApp() {
                 </div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span className={`tag ${isAcked ? 'green' : 'yellow'}`}>
-                    {isAcked ? '✓ Taking part / Completed' : 'Pending your completion'}
+                    {isAcked ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={11} />Taking part / Completed</span> : 'Pending your completion'}
                   </span>
                   <span className={`tag ${a.priority === 'Important' ? 'yellow' : ''}`}>
                     {a.priority || 'Update'}
@@ -4278,7 +4458,7 @@ export default function SyneolabApp() {
                             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px' }}
                             title={ack.at ? `Marked complete at ${new Date(ack.at).toLocaleString()}` : 'Marked complete'}
                           >
-                            ✓ {member.name}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={11} />{member.name}</span>
                             {ack.at && (
                               <small style={{ opacity: 0.78 }}>
                                 ({new Date(ack.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
@@ -4297,7 +4477,7 @@ export default function SyneolabApp() {
                         </span>
                         {pendingMembers.map(member => (
                           <span key={member.id} className="tag" style={{ fontSize: 11, opacity: 0.85 }}>
-                            ⏳ {member.name}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="clock" size={11} />{member.name}</span>
                           </span>
                         ))}
                       </div>
@@ -4335,13 +4515,13 @@ export default function SyneolabApp() {
                     }
                   }}
                 >
-                  <Icon name="check" /> {isAcked ? 'Completed ✓ (Taking part)' : 'Mark as complete'}
+                  <><Icon name="check" size={13} style={{ marginRight: 4 }} />{isAcked ? 'Completed (Taking part)' : 'Mark as complete'}</>
                 </button>
                 <span className="sub">
                   {isAdmin
                     ? `${ackCount}/${totalMembers} completed · Admin notified on completion`
                     : isAcked
-                    ? 'You marked this announcement as complete ✓'
+                    ? 'You marked this announcement as complete'
                     : 'Admin is notified when you mark complete'}
                 </span>
                 {isAdmin && (
@@ -4759,7 +4939,7 @@ export default function SyneolabApp() {
                               handleSaveMemberPositions(user, next.length ? next : ['CEO']);
                             }}
                           >
-                            <span>{selected ? '✓ ' : '+ '}{pos}</span>
+                            <span>{selected ? <Icon name="check" size={11} style={{ marginRight: 3 }} /> : <Icon name="plus" size={11} style={{ marginRight: 3 }} />}{pos}</span>
                           </button>
                         );
                       })}
@@ -5023,7 +5203,7 @@ export default function SyneolabApp() {
                   </span>
                 </div>
                 <div className="list-row">
-                  <div className="project-symbol">📅</div>
+                  <div className="project-symbol"><Icon name="calendar" size={15} /></div>
                   <div className="grow">
                     <strong>Google Calendar & Auto Google Meet Room</strong>
                     <span className="sub">
@@ -5198,7 +5378,7 @@ export default function SyneolabApp() {
             <span className="arrow"><Icon name="arrow" /></span>
             <span className="value">{todayStandups.length}/{state.users.length}</span>
             <span className="sub">
-              {todayStandups.some(s => s.owner === user.id) ? 'You checked in today ✓' : 'Daily team sync rhythm'}
+              {todayStandups.some(s => s.owner === user.id) ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={12} />You checked in today</span> : 'Daily team sync rhythm'}
             </span>
           </div>
           <div className="stat" style={{ cursor: 'pointer' }} onClick={() => setGoalPeriodFilter('daily')}>
@@ -5248,7 +5428,7 @@ export default function SyneolabApp() {
                 </button>
               ) : (
                 <span className="tag" title="RBAC Least Privilege: You only view your own goal alignment.">
-                  🔒 Personal &amp; Assigned Scope
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="lock" size={12} />Personal &amp; Assigned Scope</span>
                 </span>
               )}
             </div>
@@ -5306,7 +5486,7 @@ export default function SyneolabApp() {
                     </strong>
                     {checkedIn?.blockers && (
                       <div style={{ color: '#ef4444', fontSize: 11, marginTop: 3, fontWeight: 600 }}>
-                        ⚠ Blocker: {checkedIn.blockers}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="alert" size={12} />Blocker: {checkedIn.blockers}</span>
                       </div>
                     )}
                   </div>
@@ -5333,7 +5513,7 @@ export default function SyneolabApp() {
                         style={{ flex: 1 }}
                         onClick={() => setGoalMemberFilter(isSelectedMember ? 'all' : u.id)}
                       >
-                        {isSelectedMember ? 'Showing goals ✓' : `View goals (${memberGoals.length})`}
+                        {isSelectedMember ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={11} />Showing goals</span> : `View goals (${memberGoals.length})`}
                       </button>
                       <button
                         type="button"
@@ -5379,7 +5559,7 @@ export default function SyneolabApp() {
                     ))}
                   </select>
                 ) : (
-                  <span className="tag">🔒 Assigned &amp; Personal Goals</span>
+                  <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="lock" size={12} />Assigned &amp; Personal Goals</span>
                 )}
                 <button
                   className="small primary"
@@ -5455,7 +5635,7 @@ export default function SyneolabApp() {
                             : ''
                         }`}
                       >
-                        {pct >= 100 ? 'Completed ✓' : goalStatus}
+                        {pct >= 100 ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={11} />Completed</span> : goalStatus}
                       </span>
                     </div>
                     <span className={`tag ${pct >= 80 ? 'green' : pct >= 40 ? '' : 'yellow'}`} style={{ fontWeight: 700 }}>
@@ -5590,11 +5770,11 @@ export default function SyneolabApp() {
                               quickUpdateGoal(
                                 g,
                                 { currentValue: target, status: 'Completed' },
-                                `🎯 Goal "${g.title}" marked complete!`
+                                `Goal "${g.title}" marked complete!`
                               )
                             }
                           >
-                            ✓ Complete
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="check" size={11} />Complete</span>
                           </button>
                         </>
                       )}
@@ -5603,7 +5783,7 @@ export default function SyneolabApp() {
                         className="small"
                         onClick={() => setModal({ type: 'goals', id: g.id, data: g })}
                       >
-                        {comments.length > 0 ? `💬 ${comments.length} · ` : ''}
+                        {comments.length > 0 ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginRight: 6 }}><Icon name="chat" size={11} />{comments.length} ·</span> : ''}
                         {editableGoal ? 'Update / Discuss' : 'View'}
                       </button>
                     </div>
@@ -5669,7 +5849,7 @@ export default function SyneolabApp() {
                       )}
                       {s.blockers && (
                         <div className="task-blocker-note">
-                          <strong>⚠ Blocker:</strong> {s.blockers}
+                          <strong><Icon name="alert" size={12} style={{ marginRight: 4, verticalAlign: '-0.15em' }} />Blocker:</strong> {s.blockers}
                         </div>
                       )}
                     </div>
@@ -5759,6 +5939,301 @@ export default function SyneolabApp() {
     if (!modal) return null;
     const { type, id, data = {} } = modal;
 
+    // Individual Member Analytics Dialog
+    if (type === 'memberAnalytics') {
+      const targetUser = state.users.find(item => item.id === (data.id || id)) || data;
+      const u = { ...targetUser, ...data };
+      const uPositions = getUserPositions(u);
+      const isSuper = isTargetSuperAdmin(u);
+      const isTargetAdm = isTargetAdmin(u);
+
+      // Tasks assigned to this individual
+      const uTasks = state.tasks.filter(t => isUserAssignedToTask(t, u.id));
+      const uDone = uTasks.filter(t => t.status === 'Done');
+      const uOpen = uTasks.filter(t => t.status !== 'Done');
+      const uBlocked = uTasks.filter(t => Boolean(t.blocked) && t.status !== 'Done');
+      const todayStr = key(new Date());
+      const uOverdue = uOpen.filter(t => t.due && t.due < todayStr);
+      const onTimeRate = uTasks.length
+        ? Math.max(0, Math.round(((uTasks.length - uOverdue.length) / uTasks.length) * 100))
+        : 100;
+
+      // Clocks & Hours for this individual
+      const uClocks = state.clocks.filter(c => c.user_id === u.id);
+      const totalWorkSec = uClocks.reduce((n, c) => n + worked(c, currentTime), 0);
+      const totalBreakSec = uClocks.reduce((n, c) => n + breakDuration(c, currentTime), 0);
+      const totalWorkHours = totalWorkSec / 3600;
+      const totalBreakHours = totalBreakSec / 3600;
+      const completedShifts = uClocks.filter(c => Boolean(c.end));
+      const activeShift = uClocks.find(c => !c.end);
+      const avgShiftHours = completedShifts.length > 0 ? totalWorkHours / completedShifts.length : totalWorkHours;
+      const utilization = totalWorkSec + totalBreakSec > 0
+        ? Math.round((totalWorkSec / (totalWorkSec + totalBreakSec)) * 100)
+        : 100;
+
+      // Composite Performance Score (0 - 100)
+      const completionRatio = uTasks.length ? uDone.length / uTasks.length : 1;
+      const performanceScore = Math.min(
+        100,
+        Math.max(
+          10,
+          Math.round(
+            completionRatio * 35 +
+            (onTimeRate / 100) * 35 +
+            (utilization / 100) * 20 +
+            Math.max(0, 1 - uBlocked.length * 0.15) * 10
+          )
+        )
+      );
+
+      // 7-Day Individual Hours Rhythm
+      const daySeries = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dKey = key(d);
+        const dayLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' });
+        const dayClocks = uClocks.filter(c => key(new Date(c.start * 1000)) === dKey);
+        const dayHours = dayClocks.reduce((acc, c) => acc + worked(c, currentTime) / 3600, 0);
+        daySeries.push({ date: dKey, label: dayLabel, hours: dayHours, count: dayClocks.length });
+      }
+      const maxDayHours = Math.max(8, ...daySeries.map(s => s.hours));
+
+      // Recent Shift Work Notes
+      const recentShiftsWithNotes = uClocks
+        .filter(c => (c.note && c.note.trim()) || c.end)
+        .slice(0, 8);
+
+      // Member activity trail
+      const memberActivities = (state.activities || [])
+        .filter(a => a.actorId === u.id || a.targetUserId === u.id || (Array.isArray(a.targetUserIds) && a.targetUserIds.includes(u.id)))
+        .slice(0, 8);
+
+      return (
+        <div className="modal modal-wide member-analytics-modal" role="dialog" style={{ maxWidth: 960 }}>
+          <div className="card-head">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Avatar user={u} big />
+              <div>
+                <span className="eyebrow" style={{ margin: 0 }}>Individual Performance &amp; Analytics</span>
+                <h2 style={{ margin: '3px 0 0' }}>{u.name}</h2>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
+                  {uPositions.map(pos => <span key={pos} className="tag purple">{pos}</span>)}
+                  <span className="tag">{u.department}</span>
+                  {isSuper ? (
+                    <span className="tag super-admin-tag"><Icon name="zap" size={11} style={{ marginRight: 3 }} />Super Admin</span>
+                  ) : isTargetAdm ? (
+                    <span className="tag">Admin</span>
+                  ) : (
+                    <span className="tag">Member</span>
+                  )}
+                  <span className={`tag ${activeShift ? (activeShift.break_start ? 'yellow' : 'green') : ''}`}>
+                    {activeShift ? (activeShift.break_start ? <><Icon name="coffee" size={12} style={{ marginRight: 4 }} />On break</> : <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Clocked in</>) : <><Icon name="dot" size={10} style={{ marginRight: 4, opacity: 0.5 }} />Offline</>}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button className="small" onClick={() => setModal({ type: 'person', id: u.id, data: u })}>
+                View Profile ↗
+              </button>
+              <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
+            </div>
+          </div>
+
+          {/* 4-Stat KPI Grid */}
+          <div className="analytics-kpi-grid">
+            <div className="analytics-kpi-card">
+              <span className="kpi-label">Focused Work Time</span>
+              <strong className="kpi-value">{totalWorkHours.toFixed(1)}h</strong>
+              <span className="kpi-sub">
+                {completedShifts.length} shifts · ~{avgShiftHours.toFixed(1)}h avg/shift
+              </span>
+            </div>
+            <div className="analytics-kpi-card">
+              <span className="kpi-label">Task Completion</span>
+              <strong className="kpi-value">{uDone.length} / {uTasks.length}</strong>
+              <span className="kpi-sub">
+                {uTasks.length ? Math.round((uDone.length / uTasks.length) * 100) : 100}% rate · {onTimeRate}% on-time
+              </span>
+            </div>
+            <div className="analytics-kpi-card">
+              <span className="kpi-label">Work Utilization</span>
+              <strong className="kpi-value">{utilization}%</strong>
+              <span className="kpi-sub">
+                {duration(totalBreakSec)} break time ({totalBreakHours.toFixed(1)}h)
+              </span>
+            </div>
+            <div className="analytics-kpi-card highlight">
+              <span className="kpi-label">Performance Score</span>
+              <strong className="kpi-value">{performanceScore}<span style={{ fontSize: 14, fontWeight: 500 }}>/100</span></strong>
+              <span className="kpi-sub">
+                {uBlocked.length ? <span style={{ color: 'var(--red)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="flag" size={11} />{uBlocked.length} blocked</span> : <span style={{ color: 'var(--green)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="check" size={11} />0 blockers</span>} · {uOverdue.length ? <span style={{ color: 'var(--yellow)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="alert" size={11} />{uOverdue.length} overdue</span> : <span style={{ color: 'var(--green)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="check" size={11} />On track</span>}
+              </span>
+            </div>
+          </div>
+
+          {/* 7-Day Hours Rhythm Bar Chart */}
+          <section className="card" style={{ marginBottom: 18, padding: 18 }}>
+            <div className="card-head" style={{ marginBottom: 12 }}>
+              <div>
+                <h3 style={{ margin: 0 }}>7-Day Work Rhythm</h3>
+                <span className="sub">Individual focused work hours logged per day</span>
+              </div>
+              <span className="tag">Last 7 Days</span>
+            </div>
+            <div className="analytics-bar-chart">
+              {daySeries.map(ds => {
+                const heightPct = Math.min(100, Math.round((ds.hours / maxDayHours) * 100));
+                return (
+                  <div key={ds.date} className="analytics-bar-col">
+                    <span className="bar-val">{ds.hours > 0 ? `${ds.hours.toFixed(1)}h` : '0h'}</span>
+                    <div className="bar-track">
+                      <div
+                        className="bar-fill"
+                        style={{ height: `${Math.max(4, heightPct)}%` }}
+                        title={`${ds.label}: ${ds.hours.toFixed(2)}h (${ds.count} shifts)`}
+                      />
+                    </div>
+                    <span className="bar-label">{ds.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Assigned Tasks Portfolio with Assignment & Completion Dates */}
+          <section className="card" style={{ marginBottom: 18, padding: 18 }}>
+            <div className="card-head" style={{ marginBottom: 12 }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Assigned Tasks Portfolio ({uTasks.length})</h3>
+                <span className="sub">Tasks assigned to {u.name} with verified dates</span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <span className="tag green">{uDone.length} Done</span>
+                <span className="tag">{uOpen.length} Active</span>
+                {uBlocked.length > 0 && <span className="tag red">{uBlocked.length} Blocked</span>}
+                {uOverdue.length > 0 && <span className="tag yellow">{uOverdue.length} Overdue</span>}
+              </div>
+            </div>
+            <div className="analytics-tasks-list">
+              {uTasks.map(t => {
+                const isOverdue = t.due && t.due < todayStr && t.status !== 'Done';
+                const proj = state.projects.find(p => p.id === t.project);
+                return (
+                  <div key={t.id} className="analytics-task-row">
+                    <div className="grow">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <strong>{t.title}</strong>
+                        {proj && <span className="sub">◈ {proj.title}</span>}
+                        {t.blocked && <span className="tag red" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="flag" size={11} />Blocked</span>}
+                      </div>
+                      <div className="analytics-task-dates">
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="calendar" size={11} /><b>Assigned:</b> {fmtDate(t.assigned_at || t.created)}</span>
+                        {t.due && (
+                          <span style={isOverdue ? { color: '#b53833', fontWeight: 600 } : undefined}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="clock" size={11} /><b>Due:</b></span> {fmtDate(t.due)}{isOverdue ? ' (Overdue)' : ''}
+                          </span>
+                        )}
+                        {t.status === 'Done' ? (
+                          <span style={{ color: 'var(--accent, #145c40)', fontWeight: 600 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={11} /><b>Completed:</b> {fmtDate(t.completed_at || t.created)}</span>
+                          </span>
+                        ) : (
+                          <span className="muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="loader" size={11} />In progress</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="sub">{t.priority || 'Medium'}</span>
+                      <span className={`tag ${t.status === 'Done' ? 'green' : t.status === 'In progress' ? 'purple' : ''}`}>
+                        {t.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              {uTasks.length === 0 && (
+                <div className="empty">No tasks currently assigned to this member.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Shift Work Notes & Timesheet Log */}
+          <section className="card" style={{ marginBottom: 18, padding: 18 }}>
+            <div className="card-head" style={{ marginBottom: 12 }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Shift Work Notes &amp; Timesheet Log</h3>
+                <span className="sub">Recent shift accomplishment summaries written by {u.name}</span>
+              </div>
+              <span className="tag">{recentShiftsWithNotes.length} Logged</span>
+            </div>
+            <div className="analytics-notes-list">
+              {recentShiftsWithNotes.map((c, idx) => {
+                const shiftWork = worked(c, currentTime);
+                const shiftBreak = breakDuration(c, currentTime);
+                const p = state.projects.find(prj => prj.id === c.project);
+                const t = state.tasks.find(tsk => tsk.id === c.task);
+                const shiftDate = new Date(c.start * 1000).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                return (
+                  <div key={c.id || idx} className="analytics-shift-note-card">
+                    <div className="shift-note-head">
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <strong>{shiftDate}</strong>
+                        {p && <span className="tag purple">◈ {p.title}</span>}
+                        {t && <span className="sub">Task: {t.title}</span>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--muted)' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="clock" size={11} /><b>{(shiftWork / 3600).toFixed(1)}h</b> work</span>
+                        {shiftBreak > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="coffee" size={11} /><b>{duration(shiftBreak)}</b> break</span>}
+                      </div>
+                    </div>
+                    <div className="shift-note-body">
+                      {c.note ? (
+                        <blockquote>“{c.note}”</blockquote>
+                      ) : (
+                        <span className="muted">No shift note provided.</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {recentShiftsWithNotes.length === 0 && (
+                <div className="empty">No shift logs recorded for this member yet.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Activity & Contribution Trail */}
+          {memberActivities.length > 0 && (
+            <section className="card" style={{ padding: 18 }}>
+              <div className="card-head" style={{ marginBottom: 12 }}>
+                <h3 style={{ margin: 0 }}>Recent Activity &amp; Contributions</h3>
+                <span className="tag">{memberActivities.length} Events</span>
+              </div>
+              <div className="analytics-activity-list">
+                {memberActivities.map(a => (
+                  <div key={a.id} className="list-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
+                    <div className="grow">
+                      <strong>{a.summary || a.title}</strong>
+                      {a.detail && <div className="sub" style={{ marginTop: 2 }}>{a.detail}</div>}
+                    </div>
+                    <span className="sub" style={{ fontSize: 11 }}>
+                      {a.createdAt ? fmtDate(a.createdAt) : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-end' }}>
+            <button className="primary" onClick={() => setModal(null)}>Close Analytics</button>
+          </div>
+        </div>
+      );
+    }
+
     // View Profile
     if (type === 'person') {
       const liveUser = state.users.find(item => item.id === data.id) || data;
@@ -5780,7 +6255,7 @@ export default function SyneolabApp() {
         <div className="modal" role="dialog">
           <div className="card-head">
             <h2>{u.name}</h2>
-            <button className="small" onClick={() => setModal(null)}>✕</button>
+            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
           </div>
           <div style={{ textAlign: 'center', margin: '18px 0' }}>
             <Avatar user={u} big />
@@ -5791,13 +6266,29 @@ export default function SyneolabApp() {
               {uPositions.map(pos => (
                 <span key={pos} className="tag purple">{pos}</span>
               ))}
-              {u.department && <span className="tag">{u.department}</span>}
-              {isAdmin && u.role === 'admin' && <span className="tag">Admin</span>}
+              {isAdmin && (
+                isTargetSuperAdmin(u) ? (
+                  <span className="tag super-admin-tag"><Icon name="zap" size={11} style={{ marginRight: 3 }} />Super Admin</span>
+                ) : isTargetAdmin(u) ? (
+                  <span className="tag">Admin</span>
+                ) : (
+                  <span className="tag">Employee</span>
+                )
+              )}
               <span className={`tag ${liveClock ? (liveClock.break_start ? 'yellow' : 'green') : ''}`}>
                 {liveClock ? (liveClock.break_start ? 'On break' : 'Clocked in') : 'Offline'}
               </span>
             </div>
             <a className="link" href={`mailto:${u.email}`}>{u.email}</a>
+            <div style={{ marginTop: 12 }}>
+              <button
+                type="button"
+                className="small primary"
+                onClick={() => setModal({ type: 'memberAnalytics', id: u.id, data: u })}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="analytics" size={13} />View Full Member Analytics <Icon name="arrow" size={11} /></span>
+              </button>
+            </div>
           </div>
 
           {isAdmin && (
@@ -5842,7 +6333,7 @@ export default function SyneolabApp() {
                         handleSaveMemberPositions(u, next);
                       }}
                     >
-                      <span>{selected ? '✓ ' : '+ '}{pos}</span>
+                      <span>{selected ? <Icon name="check" size={11} style={{ marginRight: 3 }} /> : <Icon name="plus" size={11} style={{ marginRight: 3 }} />}{pos}</span>
                     </button>
                   );
                 })}
@@ -5990,10 +6481,25 @@ export default function SyneolabApp() {
                 </div>
                 <div className="field">
                   <label>Role</label>
-                  <select name="role" defaultValue={u.role}>
-                    <option value="member">Member</option>
-                    <option value="admin">Administrator</option>
-                  </select>
+                  {isSuperAdmin ? (
+                    <select name="role" defaultValue={isTargetSuperAdmin(u) ? 'admin' : (u.role || 'member')}>
+                      <option value="member">Member</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  ) : (
+                    <>
+                      <input type="hidden" name="role" value={u.role || 'member'} />
+                      <input
+                        type="text"
+                        disabled
+                        value={isTargetSuperAdmin(u) ? 'Super Administrator (Protected)' : isTargetAdmin(u) ? 'Administrator (Protected)' : 'Member'}
+                        style={{ opacity: 0.85 }}
+                      />
+                      <span className="sub" style={{ fontSize: 11, marginTop: 4, display: 'block' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="lock" size={12} />Only the Super Administrator can change user roles.</span>
+                      </span>
+                    </>
+                  )}
                 </div>
                 <div className="field">
                   <label>Reset password (leave blank to keep)</label>
@@ -6001,7 +6507,7 @@ export default function SyneolabApp() {
                 </div>
                 <div className="actions" style={{ marginTop: 15 }}>
                   <button className="primary">Save changes</button>
-                  {u.id !== user.id && (
+                  {u.id !== user.id && !isTargetSuperAdmin(u) && (isSuperAdmin || !isTargetAdmin(u)) && (
                     <button
                       type="button"
                       className="small"
@@ -6034,7 +6540,7 @@ export default function SyneolabApp() {
         <div className="modal" role="dialog">
           <div className="card-head">
             <h2>A little focus starts here</h2>
-            <button className="small" onClick={() => setModal(null)}>✕</button>
+            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
           </div>
           <form
             onSubmit={async e => {
@@ -6094,7 +6600,7 @@ export default function SyneolabApp() {
               <span className="eyebrow" style={{ margin: 0 }}>Shift Wrap-Up Required</span>
               <h2 style={{ marginTop: 4 }}>Log your work summary to clock out</h2>
             </div>
-            <button className="small" onClick={() => setModal(null)}>✕</button>
+            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
           </div>
           <div className="note" style={{ marginBottom: 16 }}>
             <strong>Mandatory work note:</strong> Please summarize what you accomplished during this shift so the workspace administrator can track project progress and daily deliverables accurately.
@@ -6128,6 +6634,7 @@ export default function SyneolabApp() {
                     body: { ...linkedTask, status: fd.taskStatus }
                   });
                 }
+                setModal(null);
                 await handleClock('stop', {
                   project: fd.project ?? activeClock?.project ?? '',
                   task: fd.task ?? activeClock?.task ?? '',
@@ -6174,6 +6681,12 @@ export default function SyneolabApp() {
                 </select>
               </div>
             )}
+            {activeClock?.note && (
+              <div style={{ marginBottom: 14, padding: '10px 14px', borderRadius: 8, background: 'var(--bg)', borderLeft: '3px solid var(--accent, #145c40)', fontSize: 12.5 }}>
+                <span className="sub" style={{ display: 'block', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 10.5, marginBottom: 2 }}>Clock-in shift focus</span>
+                <span style={{ color: 'var(--ink)' }}>“{activeClock.note}”</span>
+              </div>
+            )}
             <div className="field">
               <label>Work summary / accomplishments (Required before clock-out) *</label>
               <textarea
@@ -6182,7 +6695,7 @@ export default function SyneolabApp() {
                 minLength={3}
                 rows={4}
                 autoFocus
-                defaultValue={data.note ?? activeClock?.note ?? ''}
+                defaultValue=""
                 placeholder="Summarize what you completed, key deliverables, PRs/designs updated, or next steps…"
               />
             </div>
@@ -6221,7 +6734,7 @@ export default function SyneolabApp() {
                 {isAdmin ? 'Employee Task, Goal, Clock-Out & Announcement Activity' : 'Your Assigned & Personal Notifications'}
               </h2>
             </div>
-            <button className="small" onClick={() => setModal(null)}>✕</button>
+            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
           </div>
           <div className="actions" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
             <div className="period-switch">
@@ -6340,7 +6853,7 @@ export default function SyneolabApp() {
         <div className="modal" role="dialog">
           <div className="card-head">
             <h2>Edit time entry</h2>
-            <button className="small" onClick={() => setModal(null)}>✕</button>
+            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
           </div>
           <p className="sub" style={{ marginBottom: 15 }}>
             {owner?.name || 'Former member'}{!data.end ? ' · still running — saving will clock them out' : ''}
@@ -6438,7 +6951,7 @@ export default function SyneolabApp() {
         <div className="modal" role="dialog">
           <div className="card-head">
             <h2>Add team member</h2>
-            <button className="small" onClick={() => setModal(null)}>✕</button>
+            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
           </div>
           <form
             onSubmit={async e => {
@@ -6504,10 +7017,20 @@ export default function SyneolabApp() {
               </div>
               <div className="field">
                 <label>Role</label>
-                <select name="role">
-                  <option value="member">member</option>
-                  <option value="admin">admin</option>
-                </select>
+                {isSuperAdmin ? (
+                  <select name="role">
+                    <option value="member">member</option>
+                    <option value="admin">admin</option>
+                  </select>
+                ) : (
+                  <>
+                    <input type="hidden" name="role" value="member" />
+                    <input type="text" disabled value="Member (Employee)" style={{ opacity: 0.85 }} />
+                    <span className="sub" style={{ fontSize: 11, marginTop: 4, display: 'block' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="lock" size={12} />Only the Super Administrator can create Administrator accounts.</span>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             <div className="field">
@@ -6561,7 +7084,7 @@ export default function SyneolabApp() {
                         );
                       }}
                     >
-                      <span>{isSel ? '✓ ' : '+ '}{pos}</span>
+                      <span>{isSel ? <Icon name="check" size={11} style={{ marginRight: 3 }} /> : <Icon name="plus" size={11} style={{ marginRight: 3 }} />}{pos}</span>
                     </button>
                   );
                 })}
@@ -6600,7 +7123,7 @@ export default function SyneolabApp() {
       <div className="modal" role="dialog">
         <div className="card-head">
           <h2>{id ? (editable ? 'Edit' : 'View') : 'New'} {singularLabel}</h2>
-          <button className="small" onClick={() => setModal(null)}>✕</button>
+          <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
         </div>
         <form
           onSubmit={async e => {
@@ -6616,6 +7139,8 @@ export default function SyneolabApp() {
               body.end = new Date(body.end).toISOString();
             }
             if (type === 'tasks') {
+              body.startDate = (fd.get('startDate') || data.startDate || '').toString().trim();
+              body.due = (fd.get('due') || data.due || '').toString().trim();
               body.blocked = fd.get('blocked') === 'on';
               body.notifyEmail = fd.get('notifyEmail') === 'on';
               body.notifyEveryone = fd.get('notifyEveryone') === 'on';
@@ -6627,8 +7152,29 @@ export default function SyneolabApp() {
                 : body.assignee
                 ? [body.assignee]
                 : [user.id];
+              body.assigned_at = data.assigned_at || (body.assignees?.length || body.assignee ? new Date().toISOString() : null);
+              if (body.status === 'Done') {
+                body.completed_at = data.completed_at || new Date().toISOString();
+              } else {
+                body.completed_at = null;
+              }
+              if (isAdminTaskForEmployee) {
+                // Ensure scope fields are locked to original values for assigned employees
+                body.title = data.title;
+                body.description = data.description || '';
+                body.project = data.project;
+                body.assignee = data.assignee;
+                body.assignees = data.assignees;
+                body.priority = data.priority;
+                body.startDate = data.startDate;
+                body.due = data.due;
+                body.estimateHours = data.estimateHours;
+                body.department = data.department;
+              }
             }
             if (type === 'projects') {
+              body.startDate = (fd.get('startDate') || data.startDate || '').toString().trim();
+              body.due = (fd.get('due') || data.due || '').toString().trim();
               body.targetHours = Number(body.targetHours || 0);
               body.budget = Number(body.budget || 0);
               body.milestones = data.milestones || [];
@@ -6709,12 +7255,12 @@ export default function SyneolabApp() {
           )}
           {isAdminTaskForEmployee && (
             <div className="note" style={{ marginBottom: 15 }}>
-              🔒 <b>RBAC Least-Privilege Scope:</b> This task was assigned by an administrator. Scope fields (Title, Project, Priority, Due date, Estimated hours) are locked to Admin control, while you can update <b>Status</b>, <b>Deliverable URL</b>, <b>Blocker flag</b>, <b>Subtasks</b>, and <b>Comments</b>.
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="lock" size={13} /><b>RBAC Least-Privilege Scope:</b></span> This task was assigned by an administrator. Scope fields (Title, Project, Priority, Due date, Estimated hours) are locked to Admin control, while you can update <b>Status</b>, <b>Deliverable URL</b>, <b>Blocker flag</b>, <b>Subtasks</b>, and <b>Comments</b>.
             </div>
           )}
           {isAdminGoalForEmployee && (
             <div className="note" style={{ marginBottom: 15 }}>
-              🎯 <b>Collaborative Goal Sync:</b> This goal was assigned by an administrator. Scope fields (Title, Cadence, Target Value, Due date) are locked to Admin control, while you can update <b>Current Progress</b>, <b>Status</b>, <b>Key Results Checklist</b>, and <b>Team Discussion Comments</b>.
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="target" size={13} /><b>Collaborative Goal Sync:</b></span> This goal was assigned by an administrator. Scope fields (Title, Cadence, Target Value, Due date) are locked to Admin control, while you can update <b>Current Progress</b>, <b>Status</b>, <b>Key Results Checklist</b>, and <b>Team Discussion Comments</b>.
             </div>
           )}
           <fieldset disabled={!editable} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
@@ -6811,22 +7357,26 @@ export default function SyneolabApp() {
                   </select>
                 </div>
                 <div className="field">
-                  <label>Due date</label>
-                  <input name="due" type="date" defaultValue={data.due || ''} />
+                  <label>Kickoff / Start date</label>
+                  <input name="startDate" type="date" defaultValue={data.startDate || ''} />
                 </div>
               </div>
               <div className="form-row">
                 <div className="field">
+                  <label>Target deadline (Due date)</label>
+                  <input name="due" type="date" defaultValue={data.due || ''} />
+                </div>
+                <div className="field">
                   <label>Target hours (capacity)</label>
                   <input name="targetHours" type="number" min="0" step="1" defaultValue={data.targetHours || 0} />
                 </div>
-                {isAdmin && (
-                  <div className="field">
-                    <label>Budget ({currency})</label>
-                    <input name="budget" type="number" min="0" step="100" defaultValue={data.budget || 0} />
-                  </div>
-                )}
               </div>
+              {isAdmin && (
+                <div className="field">
+                  <label>Budget ({currency})</label>
+                  <input name="budget" type="number" min="0" step="100" defaultValue={data.budget || 0} />
+                </div>
+              )}
               <div className="field">
                 <label>Milestones ({(data.milestones || []).filter(m => m.done).length}/{(data.milestones || []).length} completed)</label>
                 <div className="checklist-editor">
@@ -6854,7 +7404,7 @@ export default function SyneolabApp() {
                             updateModalData({ milestones: next });
                           }}
                         >
-                          ✕
+                          <Icon name="x" size={11} />
                         </button>
                       )}
                     </div>
@@ -6958,6 +7508,33 @@ export default function SyneolabApp() {
                   </div>
                 </div>
               )}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span className="tag" title="Kickoff / Start date">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="play" size={11} />Start: {fmtDate(data.startDate || data.assigned_at || data.created || new Date())}</span>
+                </span>
+                <span className="tag" title="Date task was assigned">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="calendar" size={11} />Assigned: {fmtDate(data.assigned_at || data.created || new Date())}</span>
+                </span>
+                {data.status === 'Done' ? (
+                  <span className="tag green" title="Date task was completed">
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="check" size={11} />Completed: {fmtDate(data.completed_at || new Date())}</span>
+                  </span>
+                ) : (
+                  <span className="tag yellow" title="Task status">
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="loader" size={11} />Status: {data.status || 'To do'}</span>
+                  </span>
+                )}
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Kickoff / Start date</label>
+                  <input name="startDate" type="date" defaultValue={data.startDate || ''} disabled={isAdminTaskForEmployee} />
+                </div>
+                <div className="field">
+                  <label>Task deadline (Due date)</label>
+                  <input name="due" type="date" defaultValue={data.due || ''} disabled={isAdminTaskForEmployee} />
+                </div>
+              </div>
               <div className="form-row">
                 <div className="field">
                   <label>Status</label>
@@ -6973,10 +7550,6 @@ export default function SyneolabApp() {
                 </div>
               </div>
               <div className="form-row">
-                <div className="field">
-                  <label>Due date</label>
-                  <input name="due" type="date" defaultValue={data.due || ''} disabled={isAdminTaskForEmployee} />
-                </div>
                 <div className="field">
                   <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>Department</span>
@@ -7000,16 +7573,14 @@ export default function SyneolabApp() {
                     {departments.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
-              </div>
-              <div className="form-row">
                 <div className="field">
                   <label>Estimated hours</label>
                   <input name="estimateHours" type="number" min="0" step="0.5" defaultValue={data.estimateHours || 0} disabled={isAdminTaskForEmployee} />
                 </div>
-                <div className="field">
-                  <label>Deliverable / PR / Figma URL</label>
-                  <input name="deliverableUrl" type="url" placeholder="https://…" defaultValue={data.deliverableUrl || ''} />
-                </div>
+              </div>
+              <div className="field">
+                <label>Deliverable / PR / Figma URL</label>
+                <input name="deliverableUrl" type="url" placeholder="https://…" defaultValue={data.deliverableUrl || ''} />
               </div>
 
               {/* Blocker Flag */}
@@ -7059,7 +7630,7 @@ export default function SyneolabApp() {
                             updateModalData({ subtasks: next });
                           }}
                         >
-                          ✕
+                          <Icon name="x" size={11} />
                         </button>
                       )}
                     </div>
@@ -7741,7 +8312,7 @@ export default function SyneolabApp() {
                             updateModalData({ subtasks: next });
                           }}
                         >
-                          ✕
+                          <Icon name="x" size={11} />
                         </button>
                       )}
                     </div>
@@ -8093,16 +8664,16 @@ export default function SyneolabApp() {
       {liveAlert && (
         <div className="admin-live-alert" role="alert">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <span className="eyebrow" style={{ margin: 0, color: 'var(--green)' }}>
-              ● Live Employee Update {liveAlert.extraCount > 0 ? `(+${liveAlert.extraCount} more)` : ''}
+            <span className="eyebrow" style={{ margin: 0, color: 'var(--green)', display: 'inline-flex', alignItems: 'center' }}>
+              <Icon name="dot" size={10} style={{ color: 'var(--green)', marginRight: 4 }} />Live Employee Update {liveAlert.extraCount > 0 ? `(+${liveAlert.extraCount} more)` : ''}
             </span>
             <button
               type="button"
-              className="small"
-              style={{ padding: '2px 7px', fontSize: 11 }}
+              className="icon-btn-ghost close-btn"
               onClick={() => setLiveAlert(null)}
+              aria-label="Close notification"
             >
-              ✕
+              <Icon name="x" size={13} />
             </button>
           </div>
           <strong style={{ fontSize: 13.5 }}>{liveAlert.summary}</strong>

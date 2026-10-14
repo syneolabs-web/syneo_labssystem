@@ -11,8 +11,21 @@ export const POST = api(async ({ body, user }) => {
   const queuedJob =
     body.kind === 'leads' ||
     body.kind === 'meetings' ||
-    Boolean(body.body?.notifyEmail || body.body?.notifyEveryone);
-  if (queuedJob) after(processJobs);
+    Boolean(body.body?.notifyEmail || body.body?.notifyEveryone || body.body?.sendToEveryone);
+  if (queuedJob) {
+    try {
+      if (typeof after === 'function') {
+        after(async () => {
+          try {
+            await processJobs();
+          } catch (e) {
+            console.error('Email/Job delivery error:', e.message);
+          }
+        });
+      }
+    } catch {}
+    processJobs().catch(e => console.error('Immediate delivery error:', e.message));
+  }
   return { id };
 });
 
