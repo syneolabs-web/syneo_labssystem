@@ -1697,3 +1697,549 @@ html[data-dark="true"] .shift-note-body blockquote {
 
 
 
+
+/* ============================================================
+   Streak Leaderboards & Attendance Analytics Bento Layout
+   ============================================================ */
+
+.streak-dashboard-section {
+  margin-bottom: 24px;
+}
+
+.streak-bento-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.12fr) minmax(460px, 1.88fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .streak-bento-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Leaderboard Card (following Top Contributors pattern) */
+.streak-leaderboard-card {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+}
+
+.streak-leaderboard-card .card-head {
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.streak-tab-toggle {
+  display: inline-flex;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+
+html[data-dark="true"] .streak-tab-toggle {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.streak-tab-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.streak-tab-btn:hover {
+  color: var(--ink);
+  transform: none;
+}
+
+.streak-tab-btn.active {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+html[data-dark="true"] .streak-tab-btn.active {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.streak-lead-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.streak-lead-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 8px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s ease, transform 0.15s ease;
+  border-radius: 8px;
+}
+
+.streak-lead-row:last-child {
+  border-bottom: 0;
+}
+
+.streak-lead-row:hover {
+  background: color-mix(in srgb, var(--light) 30%, transparent);
+}
+
+html[data-dark="true"] .streak-lead-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.streak-rank-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.streak-rank-badge.rank-1 {
+  color: #f59e0b;
+}
+
+.streak-rank-badge.rank-2 {
+  color: #94a3b8;
+}
+
+.streak-rank-badge.rank-3 {
+  color: #d97706;
+}
+
+.streak-lead-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.streak-lead-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.streak-lead-sub {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.streak-lead-progress {
+  height: 3px;
+  max-width: 180px;
+  width: 100%;
+  background: var(--light);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+html[data-dark="true"] .streak-lead-progress {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.streak-lead-progress i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #6366f1 0%, #10b981 100%);
+  transition: width 0.3s ease;
+}
+
+.streak-lead-progress.clock i {
+  background: linear-gradient(90deg, #8b5cf6 0%, #3b82f6 100%);
+}
+
+.streak-lead-metric {
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.streak-lead-metric strong {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.streak-lead-metric small {
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+/* Right-hand side: Member Habit Matrix */
+.member-habit-matrix {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+}
+
+.member-habit-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.member-habit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.member-habit-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+html[data-dark="true"] .member-habit-card {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.member-habit-card:hover {
+  border-color: color-mix(in srgb, var(--green) 50%, var(--line));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.member-habit-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.member-habit-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.member-habit-identity strong {
+  font-size: 12px;
+  font-weight: 650;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.member-habit-identity strong:hover {
+  color: var(--green);
+}
+
+.member-habit-identity .sub {
+  font-size: 10px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Habit Dials / Badges in Card */
+.member-habit-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+html[data-dark="true"] .member-habit-stats {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.habit-stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.habit-stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.habit-stat-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.habit-stat-sub {
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 7-Day Vertical Rhythm Capsules (Image 3 Diagram Pattern) */
+.rhythm-7d-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rhythm-7d-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rhythm-7d-bars {
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  height: 52px;
+  padding: 2px 0;
+}
+
+.rhythm-7d-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 3px;
+  position: relative;
+  cursor: default;
+}
+
+.rhythm-7d-track {
+  width: 100%;
+  max-width: 24px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--light);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+html[data-dark="true"] .rhythm-7d-track {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.rhythm-7d-col.is-today .rhythm-7d-track {
+  box-shadow: inset 0 0 0 1.5px var(--green);
+}
+
+.rhythm-7d-fill {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #3b82f6 0%, #10b981 100%);
+  transition: height 0.3s ease;
+}
+
+.rhythm-7d-check-dot {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 4px #10b981;
+}
+
+.rhythm-7d-day-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rhythm-7d-col.is-today .rhythm-7d-day-label {
+  color: var(--green);
+  font-weight: 750;
+}
+
+/* Card Actions */
+.member-habit-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+/* 14-Day Deep Rhythm Diagram in Member Analytics Modal */
+.rhythm-14d-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  height: 160px;
+  padding: 12px 4px 6px;
+}
+
+.rhythm-14d-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 5px;
+  position: relative;
+}
+
+.rhythm-14d-val {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.rhythm-14d-track {
+  width: 100%;
+  max-width: 32px;
+  height: 95px;
+  border-radius: 8px;
+  background: var(--line);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+html[data-dark="true"] .rhythm-14d-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rhythm-14d-col.is-today .rhythm-14d-track {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+
+.rhythm-14d-fill {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, #6366f1 0%, #06b6d4 100%);
+  transition: height 0.3s ease;
+}
+
+.rhythm-14d-flame {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #10b981;
+}
+
+.rhythm-14d-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.rhythm-14d-col.is-today .rhythm-14d-label {
+  color: var(--green);
+  font-weight: 750;
+}
+
+/* Individual User Hero Streak Banner */
+.my-streak-hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.my-streak-tile {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+html[data-dark="true"] .my-streak-tile {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.my-streak-tile-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.my-streak-tile-digits {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { worked, breakDuration, completion, series } from '../lib/metrics.js';
+import { worked, breakDuration, completion, series, calculateMemberStreaks } from '../lib/metrics.js';
 
 test('worked and breakDuration track server-persisted work and break seconds', () => {
   const c1 = { start: 1000, end: null, break_seconds: 300, break_start: null };
@@ -38,5 +38,47 @@ test('completion and series helpers', () => {
 
   const s = series([], 7, 1700000000);
   assert.equal(s.length, 7);
+});
+
+test('calculateMemberStreaks accurately tracks current streak, all-time record, and rhythm', () => {
+  const userId = 'user-1';
+  const refDate = '2026-10-24';
+
+  // 3-day consecutive standup up to today (2026-10-22, 2026-10-23, 2026-10-24)
+  // Plus an older 5-day historical streak (2026-09-01 to 2026-09-05)
+  const standups = [
+    { owner: userId, date: '2026-10-24', title: 'Finished sprint tasks' },
+    { owner: userId, date: '2026-10-23', title: 'Reviewed pull requests' },
+    { owner: userId, date: '2026-10-22', title: 'Backend schema design' },
+    { owner: userId, date: '2026-09-01', title: 'Day 1' },
+    { owner: userId, date: '2026-09-02', title: 'Day 2' },
+    { owner: userId, date: '2026-09-03', title: 'Day 3' },
+    { owner: userId, date: '2026-09-04', title: 'Day 4' },
+    { owner: userId, date: '2026-09-05', title: 'Day 5' }
+  ];
+
+  // 2-day consecutive clock (2026-10-23, 2026-10-24)
+  const t24 = Math.floor(new Date('2026-10-24T09:00:00Z').getTime() / 1000);
+  const t23 = Math.floor(new Date('2026-10-23T09:00:00Z').getTime() / 1000);
+  const clocks = [
+    { user_id: userId, start: t24, end: t24 + 14400 },
+    { user_id: userId, start: t23, end: t23 + 28800 }
+  ];
+
+  const res = calculateMemberStreaks(userId, standups, clocks, refDate, t24 + 15000);
+
+  assert.equal(res.checkinStreak, 3);
+  assert.equal(res.checkedToday, true);
+  assert.equal(res.bestCheckinStreak, 5); // 5-day historical record
+  assert.equal(res.clockStreak, 2);
+  assert.equal(res.clockedToday, true);
+  assert.equal(res.bestClockStreak, 2);
+  assert.equal(res.totalCheckins, 8);
+  assert.equal(res.totalClockDays, 2);
+  assert.equal(res.last14Days.length, 14);
+  assert.equal(res.last7Days.length, 7);
+  assert.equal(res.last14Days[13].isToday, true);
+  assert.equal(res.last14Days[13].hasCheckin, true);
+  assert.equal(res.last14Days[13].hasClock, true);
 });
 

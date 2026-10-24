@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { themes, getThemePalette, key, worked, breakDuration, series, completion, points } from '@/lib/metrics';
+import { themes, getThemePalette, key, worked, breakDuration, series, completion, points, calculateMemberStreaks } from '@/lib/metrics';
 
 const paths = {
   dashboard: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
@@ -45,7 +45,9 @@ const paths = {
   circle: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
   externalLink: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6 M15 3h6v6 M10 14L21 3',
-  flame: 'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z'
+  flame: 'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z',
+  trophy: 'M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2 M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2 M4 5h16 M6 3v7a6 6 0 0 0 12 0V3 M9 21h6 M12 16v5',
+  medal: 'M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M8.21 13.89L7 23l5-3 5 3-1.21-9.11'
 };
 
 const Icon = ({ name, className = 'icon', size, style, strokeWidth = 2 }) => (
@@ -164,93 +166,6 @@ const isTodayStandup = (s, refDate = new Date()) => {
   return false;
 };
 
-const calculateMemberStreaks = (userId, standups = [], clocks = [], refDate = new Date()) => {
-  const today = new Date(refDate);
-  const todayK = key(today);
-
-  // Set of dates the user submitted a standup/check-in
-  const standupDates = new Set();
-  for (const s of standups) {
-    if (s.owner === userId) {
-      if (s.date) standupDates.add(s.date);
-      else if (s.created) {
-        standupDates.add(s.created.slice(0, 10));
-        try { standupDates.add(key(new Date(s.created))); } catch {}
-      }
-    }
-  }
-
-  // Set of dates the user clocked in
-  const clockDates = new Set();
-  for (const c of clocks) {
-    if (c.user_id === userId && c.start) {
-      clockDates.add(key(new Date(c.start * 1000)));
-    }
-  }
-
-  const getStreak = dates => {
-    let current = 0;
-    const checkedToday = dates.has(todayK);
-    let checkDate = new Date(today);
-
-    if (checkedToday) {
-      current = 1;
-      checkDate.setDate(checkDate.getDate() - 1);
-    } else {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      if (dates.has(key(yesterday))) {
-        checkDate = yesterday;
-      } else {
-        return { current: 0, checkedToday: false };
-      }
-    }
-
-    while (true) {
-      const k = key(checkDate);
-      if (dates.has(k)) {
-        if (checkDate.getTime() !== today.getTime()) {
-          current++;
-        }
-        checkDate.setDate(checkDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-
-    return { current, checkedToday };
-  };
-
-  const checkin = getStreak(standupDates);
-  const clock = getStreak(clockDates);
-
-  // Last 7 days visual history dots (oldest to today)
-  const last7Days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dKey = key(d);
-    const dayLabel = d.toLocaleDateString(undefined, { weekday: 'narrow' });
-    last7Days.push({
-      date: dKey,
-      dayLabel,
-      isToday: i === 0,
-      hasCheckin: standupDates.has(dKey),
-      hasClock: clockDates.has(dKey)
-    });
-  }
-
-  return {
-    checkinStreak: checkin.current,
-    checkedToday: checkin.checkedToday,
-    clockStreak: clock.current,
-    clockedToday: clock.checkedToday,
-    last7Days,
-    totalCheckins: standupDates.size,
-    totalClockDays: clockDates.size
-  };
-};
-
 export default function SyneolabApp() {
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
@@ -305,6 +220,7 @@ export default function SyneolabApp() {
   const [timesheetLimit, setTimesheetLimit] = useState(50);
   const [streakFilter, setStreakFilter] = useState('all'); // 'all' | 'checked_in' | 'pending' | 'clocked_in'
   const [streakSearch, setStreakSearch] = useState('');
+  const [streakBoardTab, setStreakBoardTab] = useState('checkin'); // 'checkin' | 'clock'
   const [currentTime, setCurrentTime] = useState(Date.now() / 1000);
 
   // Core State
@@ -1440,7 +1356,7 @@ export default function SyneolabApp() {
 
     // Individual Member Streaks and Attendance Analytics
     const memberStreaksList = (state.users || []).map(u => {
-      const streaks = calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr);
+      const streaks = calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr, currentTime);
       const activeClock = (state.clocks || []).find(c => c.user_id === u.id && !c.end);
       const todayStandup = todayStandups.find(s => s.owner === u.id);
       const uWeekClocks = (state.clocks || []).filter(c => c.user_id === u.id && c.start && key(new Date(c.start * 1000)) >= weekStartK);
@@ -1459,17 +1375,36 @@ export default function SyneolabApp() {
     const clockedInNowMembersCount = memberStreaksList.filter(m => m.activeClock && !m.activeClock.break_start).length;
     const onBreakNowMembersCount = memberStreaksList.filter(m => m.activeClock?.break_start).length;
 
-    // Sort by checkin streak descending, then clock streak
-    const sortedStreaksList = [...memberStreaksList].sort((a, b) => {
+    // Leaderboard Rankings (Check-in Streak and Clock Attendance Streak)
+    const checkinRanked = [...memberStreaksList].sort((a, b) => {
       if (b.checkinStreak !== a.checkinStreak) return b.checkinStreak - a.checkinStreak;
-      return b.clockStreak - a.clockStreak;
+      if (b.bestCheckinStreak !== a.bestCheckinStreak) return b.bestCheckinStreak - a.bestCheckinStreak;
+      return b.totalCheckins - a.totalCheckins;
+    });
+    const checkinRankMap = new Map();
+    checkinRanked.forEach((m, idx) => checkinRankMap.set(m.user.id, idx + 1));
+
+    const clockRanked = [...memberStreaksList].sort((a, b) => {
+      if (b.clockStreak !== a.clockStreak) return b.clockStreak - a.clockStreak;
+      if (b.bestClockStreak !== a.bestClockStreak) return b.bestClockStreak - a.bestClockStreak;
+      return b.weekHours - a.weekHours;
+    });
+    const clockRankMap = new Map();
+    clockRanked.forEach((m, idx) => clockRankMap.set(m.user.id, idx + 1));
+
+    // Attach ranks
+    memberStreaksList.forEach(m => {
+      m.checkinRank = checkinRankMap.get(m.user.id) || 1;
+      m.clockRank = clockRankMap.get(m.user.id) || 1;
     });
 
-    const topCheckinMember = sortedStreaksList[0];
-    const topClockMember = [...memberStreaksList].sort((a, b) => b.clockStreak - a.clockStreak)[0];
+    const topCheckinMember = checkinRanked[0];
+    const topClockMember = clockRanked[0];
+    const maxCheckinStreak = Math.max(1, ...memberStreaksList.map(m => m.checkinStreak));
+    const maxClockStreak = Math.max(1, ...memberStreaksList.map(m => m.clockStreak));
 
     // Filter members for the streak tracking board
-    const filteredMemberStreaks = sortedStreaksList.filter(m => {
+    const filteredMemberStreaks = memberStreaksList.filter(m => {
       if (streakFilter === 'checked_in' && !m.checkedToday) return false;
       if (streakFilter === 'pending' && m.checkedToday) return false;
       if (streakFilter === 'clocked_in' && (!m.activeClock || m.activeClock.break_start)) return false;
@@ -1487,9 +1422,14 @@ export default function SyneolabApp() {
       user,
       checkinStreak: 0,
       checkedToday: false,
+      bestCheckinStreak: 0,
+      checkinRank: 1,
       clockStreak: 0,
       clockedToday: false,
+      bestClockStreak: 0,
+      clockRank: 1,
       last7Days: [],
+      last14Days: [],
       weekHours: 0
     };
 
@@ -1589,390 +1529,510 @@ export default function SyneolabApp() {
           </button>
         </div>
 
-        {/* Individual Member Streaks & Live Attendance Analytics */}
+        {/* Individual Member Streaks & Live Attendance Analytics Bento */}
         {isAdmin ? (
-          <section className="card" style={{ marginBottom: 22, overflow: 'hidden' }}>
-            <div className="card-head" style={{ flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <h3 style={{ fontSize: 16 }}>Individual member streak &amp; attendance analytics</h3>
-                  <span className="tag green" style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    <Icon name="shield" size={11} style={{ marginRight: 3 }} />Live Tracking
-                  </span>
-                </div>
-                <p className="sub" style={{ margin: '3px 0 0' }}>
-                  Live tracking of daily check-in streaks, clock-in consistency, and active shift presence across all team members.
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <button className="small" onClick={() => navigate('pulse')}>
-                  <Icon name="pulse" size={12} /> Pulse &amp; Goals ↗
-                </button>
-                <button className="small" onClick={() => navigate('clock')}>
-                  <Icon name="clock" size={12} /> Timesheets ↗
-                </button>
-              </div>
-            </div>
-
+          <section className="streak-dashboard-section">
             {/* Quick Metrics KPI Bar */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginBottom: 16 }}>
-              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
-                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Icon name="pulse" size={13} /> Check-ins today
-                </span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                  <strong style={{ fontSize: 20 }}>{checkedInTodayMembersCount} / {state.users.length}</strong>
-                  <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
-                    {state.users.length ? Math.round((checkedInTodayMembersCount / state.users.length) * 100) : 0}% synced
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
-                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Icon name="clock" size={13} /> Active presence
-                </span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                  <strong style={{ fontSize: 20 }}>{clockedInNowMembersCount} working</strong>
-                  {onBreakNowMembersCount > 0 && <span style={{ fontSize: 11, color: '#d97706' }}>· {onBreakNowMembersCount} break</span>}
-                </div>
-              </div>
-
-              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
-                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Icon name="flame" size={13} /> Top check-in streak
-                </span>
-                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <strong style={{ fontSize: 15 }}>{topCheckinMember?.user?.name || '—'}</strong>
-                  {topCheckinMember?.checkinStreak > 0 && (
-                    <span className="tag green" style={{ padding: '2px 7px', fontSize: 11 }}>
-                      {topCheckinMember.checkinStreak}d streak
+            <div className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
+              <div className="card-head" style={{ margin: 0, flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h3 style={{ fontSize: 16 }}>Individual member streak &amp; attendance analytics</h3>
+                    <span className="tag green" style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      <Icon name="shield" size={11} style={{ marginRight: 3 }} />Live Tracking
                     </span>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
-                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Icon name="zap" size={13} /> Top clock streak
-                </span>
-                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <strong style={{ fontSize: 15 }}>{topClockMember?.user?.name || '—'}</strong>
-                  {topClockMember?.clockStreak > 0 && (
-                    <span className="tag purple" style={{ padding: '2px 7px', fontSize: 11 }}>
-                      {topClockMember.clockStreak}d streak
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Search & Filter Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {[
-                  ['all', `All members (${memberStreaksList.length})`],
-                  ['checked_in', `Checked in today (${checkedInTodayMembersCount})`],
-                  ['pending', `Pending check-in (${memberStreaksList.length - checkedInTodayMembersCount})`],
-                  ['clocked_in', `Clocked in now (${clockedInNowMembersCount})`]
-                ].map(([k, label]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    className={`small ${streakFilter === k ? 'primary' : ''}`}
-                    onClick={() => setStreakFilter(k)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ minWidth: 220 }}>
-                <input
-                  type="text"
-                  placeholder="Search member or department…"
-                  value={streakSearch}
-                  onChange={e => setStreakSearch(e.target.value)}
-                  style={{ padding: '6px 12px', fontSize: 12, borderRadius: 20 }}
-                />
-              </div>
-            </div>
-
-            {/* Members Streak Table / Card Rows */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filteredMemberStreaks.map(m => {
-                const uPos = getUserPositions(m.user);
-                const isTargetSuper = isTargetSuperAdmin(m.user);
-                const isTargetAdm = isTargetAdmin(m.user);
-                return (
-                  <div
-                    key={m.user.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 14px',
-                      borderRadius: 12,
-                      background: 'var(--white)',
-                      border: '1px solid var(--line)',
-                      gap: 14,
-                      flexWrap: 'wrap'
-                    }}
-                  >
-                    {/* Member identity */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 210 }}>
-                      <Avatar user={m.user} />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <strong
-                            style={{ cursor: 'pointer', textDecoration: 'none' }}
-                            onClick={() => setModal({ type: 'person', id: m.user.id, data: m.user })}
-                          >
-                            {m.user.name}
-                          </strong>
-                          {isTargetSuper ? (
-                            <span className="tag super-admin-tag" style={{ fontSize: 9.5, padding: '1px 5px' }}>Super Admin</span>
-                          ) : isTargetAdm ? (
-                            <span className="tag" style={{ fontSize: 9.5, padding: '1px 5px' }}>Admin</span>
-                          ) : null}
-                        </div>
-                        <span className="sub" style={{ fontSize: 11, display: 'block' }}>
-                          {uPos.length ? uPos.join(' · ') : m.user.department || 'Workspace'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Daily Check-in Streak Column */}
-                    <div style={{ minWidth: 170 }}>
-                      <span className="sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 2 }}>
-                        Daily Check-in
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span
-                          className={`tag ${m.checkinStreak > 0 ? 'green' : ''}`}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}
-                          title={`${m.checkinStreak} consecutive days checked in`}
-                        >
-                          <Icon name="flame" size={12} />
-                          {m.checkinStreak}d streak
-                        </span>
-                        {m.checkedToday ? (
-                          <span className="tag green" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <Icon name="check" size={11} />Checked in
-                          </span>
-                        ) : (
-                          <span className="tag yellow" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <Icon name="pulse" size={11} />Pending
-                          </span>
-                        )}
-                      </div>
-                      {m.todayStandup && (
-                        <span className="sub" style={{ fontSize: 11, display: 'block', marginTop: 3, maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          Focus: “{m.todayStandup.title}”
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Clock-in Streak & Presence Column */}
-                    <div style={{ minWidth: 170 }}>
-                      <span className="sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 2 }}>
-                        Clock-in &amp; Shift
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span
-                          className={`tag ${m.clockStreak > 0 ? 'purple' : ''}`}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}
-                          title={`${m.clockStreak} consecutive days clocked in`}
-                        >
-                          <Icon name="zap" size={12} />
-                          {m.clockStreak}d streak
-                        </span>
-                        {m.activeClock ? (
-                          m.activeClock.break_start ? (
-                            <span className="tag yellow" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                              <Icon name="coffee" size={11} />Break ({duration(breakDuration(m.activeClock, currentTime))})
-                            </span>
-                          ) : (
-                            <span className="tag green" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                              <i style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
-                              Working ({duration(worked(m.activeClock, currentTime))})
-                            </span>
-                          )
-                        ) : (
-                          <span className="tag" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                            Off shift
-                          </span>
-                        )}
-                      </div>
-                      <span className="sub" style={{ fontSize: 11, display: 'block', marginTop: 3 }}>
-                        {m.weekHours.toFixed(1)}h logged this week
-                      </span>
-                    </div>
-
-                    {/* 7-Day History Mini Matrix */}
-                    <div style={{ minWidth: 140 }}>
-                      <span className="sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 3 }}>
-                        7-day consistency
-                      </span>
-                      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                        {m.last7Days.map(d => (
-                          <div
-                            key={d.date}
-                            title={`${d.date} (${d.dayLabel}): ${d.hasCheckin ? 'Check-in posted' : 'No check-in'} · ${d.hasClock ? 'Clocked in' : 'No clock'}`}
-                            style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              gap: 2,
-                              padding: '3px 4px',
-                              borderRadius: 6,
-                              background: d.isToday ? 'var(--light)' : 'transparent',
-                              border: d.isToday ? '1px solid var(--green)' : '1px solid transparent'
-                            }}
-                          >
-                            <span style={{ fontSize: 9, fontWeight: d.isToday ? 700 : 500, color: d.isToday ? 'var(--green)' : 'var(--muted)' }}>
-                              {d.dayLabel}
-                            </span>
-                            <i
-                              style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                background: d.hasCheckin ? 'var(--green)' : 'var(--line)',
-                                display: 'block'
-                              }}
-                            />
-                            <i
-                              style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                background: d.hasClock ? '#8b5cf6' : 'var(--line)',
-                                display: 'block'
-                              }}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        className="small"
-                        onClick={() => setModal({ type: 'memberAnalytics', id: m.user.id, data: m.user })}
-                        title="Open full performance and timesheet analytics for this member"
-                      >
-                        <Icon name="analytics" size={12} />
-                        Analytics
-                      </button>
-                      {m.todayStandup ? (
-                        <button
-                          type="button"
-                          className="small"
-                          onClick={() => setModal({ type: 'standups', id: m.todayStandup.id, data: m.todayStandup })}
-                          title="View today's check-in submission"
-                        >
-                          Check-in
-                        </button>
-                      ) : null}
-                    </div>
                   </div>
-                );
-              })}
-              {filteredMemberStreaks.length === 0 && (
-                <div className="empty" style={{ padding: '24px 16px' }}>
-                  <strong>No members match this filter</strong>
-                  Try choosing "All members" or clearing the search box.
+                  <p className="sub" style={{ margin: '3px 0 0' }}>
+                    Live tracking of daily check-in streaks, clock-in consistency, and active shift presence across all team members.
+                  </p>
                 </div>
-              )}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button className="small" onClick={() => navigate('pulse')}>
+                    <Icon name="pulse" size={12} /> Pulse &amp; Goals ↗
+                  </button>
+                  <button className="small" onClick={() => navigate('clock')}>
+                    <Icon name="clock" size={12} /> Timesheets ↗
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginTop: 14 }}>
+                <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                  <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Icon name="pulse" size={13} /> Check-ins today
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                    <strong style={{ fontSize: 20 }}>{checkedInTodayMembersCount} / {state.users.length}</strong>
+                    <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
+                      {state.users.length ? Math.round((checkedInTodayMembersCount / state.users.length) * 100) : 0}% synced
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                  <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Icon name="clock" size={13} /> Active presence
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                    <strong style={{ fontSize: 20 }}>{clockedInNowMembersCount} working</strong>
+                    {onBreakNowMembersCount > 0 && <span style={{ fontSize: 11, color: '#d97706' }}>· {onBreakNowMembersCount} break</span>}
+                  </div>
+                </div>
+
+                <div
+                  style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)', cursor: 'pointer' }}
+                  onClick={() => topCheckinMember?.user && setModal({ type: 'memberAnalytics', id: topCheckinMember.user.id, data: topCheckinMember.user })}
+                  title="View member analytics"
+                >
+                  <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Icon name="flame" size={13} style={{ color: 'var(--green)' }} /> Top check-in streak
+                  </span>
+                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <strong style={{ fontSize: 15 }}>{topCheckinMember?.user?.name || '—'}</strong>
+                    {topCheckinMember?.checkinStreak > 0 && (
+                      <span className="tag green" style={{ padding: '2px 7px', fontSize: 11 }}>
+                        <Icon name="trophy" size={10} style={{ marginRight: 3, color: '#f59e0b' }} />
+                        {topCheckinMember.checkinStreak}d streak
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)', cursor: 'pointer' }}
+                  onClick={() => topClockMember?.user && setModal({ type: 'memberAnalytics', id: topClockMember.user.id, data: topClockMember.user })}
+                  title="View member analytics"
+                >
+                  <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Icon name="zap" size={13} style={{ color: '#8b5cf6' }} /> Top clock streak
+                  </span>
+                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <strong style={{ fontSize: 15 }}>{topClockMember?.user?.name || '—'}</strong>
+                    {topClockMember?.clockStreak > 0 && (
+                      <span className="tag purple" style={{ padding: '2px 7px', fontSize: 11 }}>
+                        <Icon name="trophy" size={10} style={{ marginRight: 3, color: '#f59e0b' }} />
+                        {topClockMember.clockStreak}d streak
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bento Dual-Card Section */}
+            <div className="streak-bento-layout">
+              {/* Card 1: Streak Leaderboards (following Image 2 Top Contributors Diagram Pattern) */}
+              <div className="card streak-leaderboard-card">
+                <div className="card-head">
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 15 }}>Streak Leaderboards</h3>
+                    <span className="sub">Consistency rankings &amp; records</span>
+                  </div>
+                  <div className="streak-tab-toggle">
+                    <button
+                      type="button"
+                      className={`streak-tab-btn ${streakBoardTab === 'checkin' ? 'active' : ''}`}
+                      onClick={() => setStreakBoardTab('checkin')}
+                    >
+                      <Icon name="flame" size={12} /> Check-ins
+                    </button>
+                    <button
+                      type="button"
+                      className={`streak-tab-btn ${streakBoardTab === 'clock' ? 'active' : ''}`}
+                      onClick={() => setStreakBoardTab('clock')}
+                    >
+                      <Icon name="zap" size={12} /> Attendance
+                    </button>
+                  </div>
+                </div>
+
+                <div className="streak-lead-list">
+                  {(streakBoardTab === 'checkin' ? checkinRanked : clockRanked).map((m, idx) => {
+                    const streakVal = streakBoardTab === 'checkin' ? m.checkinStreak : m.clockStreak;
+                    const bestVal = streakBoardTab === 'checkin' ? m.bestCheckinStreak : m.bestClockStreak;
+                    const maxVal = streakBoardTab === 'checkin' ? maxCheckinStreak : maxClockStreak;
+                    const pct = maxVal > 0 ? Math.max(8, Math.round((streakVal / maxVal) * 100)) : 8;
+                    const uPos = getUserPositions(m.user);
+
+                    return (
+                      <div
+                        key={m.user.id}
+                        className="streak-lead-row"
+                        onClick={() => setModal({ type: 'memberAnalytics', id: m.user.id, data: m.user })}
+                        title="Click to view full consistency analytics"
+                      >
+                        <span className={`streak-rank-badge ${idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''}`}>
+                          {idx === 0 ? <Icon name="trophy" size={12} style={{ color: '#f59e0b' }} /> : String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <Avatar user={m.user} />
+                        <div className="streak-lead-info">
+                          <div className="streak-lead-title">
+                            <span>{m.user.name}</span>
+                            {isTargetSuperAdmin(m.user) ? (
+                              <span className="tag super-admin-tag" style={{ fontSize: 8.5, padding: '1px 4px' }}>Super</span>
+                            ) : isTargetAdmin(m.user) ? (
+                              <span className="tag" style={{ fontSize: 8.5, padding: '1px 4px' }}>Admin</span>
+                            ) : null}
+                          </div>
+                          <span className="streak-lead-sub">
+                            {uPos[0] || m.user.department || 'Workspace'}
+                          </span>
+                          <div className={`streak-lead-progress ${streakBoardTab === 'clock' ? 'clock' : ''}`}>
+                            <i style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <div className="streak-lead-metric">
+                          <strong>
+                            <Icon name={streakBoardTab === 'checkin' ? 'flame' : 'zap'} size={12} style={{ color: streakBoardTab === 'checkin' ? 'var(--green)' : '#8b5cf6' }} />
+                            {streakVal}d
+                          </strong>
+                          <small>Best: {bestVal}d</small>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="sub" style={{ fontSize: 10 }}>Updated in real-time</span>
+                  <button className="small" onClick={() => navigate('analytics')}>
+                    <Icon name="analytics" size={11} /> Deep Analytics ↗
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 2: Live Presence & 7-Day Consistency Matrix (following Image 3 Diagram Pattern) */}
+              <div className="card member-habit-matrix">
+                <div className="card-head" style={{ marginBottom: 12 }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 15 }}>Team Habit &amp; Shift Matrix</h3>
+                    <span className="sub">Live shift presence and 7-day consistency rhythms</span>
+                  </div>
+                </div>
+
+                {/* Controls: Filter Pills & Search */}
+                <div className="member-habit-controls">
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {[
+                      ['all', `All (${memberStreaksList.length})`],
+                      ['checked_in', `Checked in (${checkedInTodayMembersCount})`],
+                      ['pending', `Pending (${memberStreaksList.length - checkedInTodayMembersCount})`],
+                      ['clocked_in', `Working (${clockedInNowMembersCount})`]
+                    ].map(([k, label]) => (
+                      <button
+                        key={k}
+                        type="button"
+                        className={`small ${streakFilter === k ? 'primary' : ''}`}
+                        onClick={() => setStreakFilter(k)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ minWidth: 200 }}>
+                    <input
+                      type="text"
+                      placeholder="Search member or role…"
+                      value={streakSearch}
+                      onChange={e => setStreakSearch(e.target.value)}
+                      style={{ padding: '6px 12px', fontSize: 11.5, borderRadius: 20 }}
+                    />
+                  </div>
+                </div>
+
+                {/* Grid of Member Habit Cards */}
+                <div className="member-habit-grid">
+                  {filteredMemberStreaks.map(m => {
+                    const uPos = getUserPositions(m.user);
+                    const isTargetSuper = isTargetSuperAdmin(m.user);
+                    const isTargetAdm = isTargetAdmin(m.user);
+                    const maxMiniHours = Math.max(8, ...m.last7Days.map(d => d.hours || 0));
+
+                    return (
+                      <div key={m.user.id} className="member-habit-card">
+                        {/* Card Header: Avatar, Name, Live Presence Badge */}
+                        <div className="member-habit-card-head">
+                          <div className="member-habit-identity">
+                            <Avatar user={m.user} />
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                <strong onClick={() => setModal({ type: 'person', id: m.user.id, data: m.user })}>
+                                  {m.user.name}
+                                </strong>
+                                {isTargetSuper ? (
+                                  <span className="tag super-admin-tag" style={{ fontSize: 9, padding: '1px 4px' }}>Super</span>
+                                ) : isTargetAdm ? (
+                                  <span className="tag" style={{ fontSize: 9, padding: '1px 4px' }}>Admin</span>
+                                ) : null}
+                              </div>
+                              <span className="sub">{uPos[0] || m.user.department || 'Workspace'}</span>
+                            </div>
+                          </div>
+
+                          {m.activeClock ? (
+                            m.activeClock.break_start ? (
+                              <span className="tag yellow" style={{ fontSize: 10, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                <Icon name="coffee" size={11} />Break ({duration(breakDuration(m.activeClock, currentTime))})
+                              </span>
+                            ) : (
+                              <span className="tag green" style={{ fontSize: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                <i style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
+                                Working ({duration(worked(m.activeClock, currentTime))})
+                              </span>
+                            )
+                          ) : (
+                            <span className="tag" style={{ fontSize: 10, color: 'var(--muted)' }}>Off shift</span>
+                          )}
+                        </div>
+
+                        {/* Habit Dials (Check-in and Clock streaks) */}
+                        <div className="member-habit-stats">
+                          <div className="habit-stat-box">
+                            <span className="habit-stat-label">
+                              <Icon name="flame" size={11} style={{ color: 'var(--green)' }} /> Check-in
+                            </span>
+                            <span className="habit-stat-val">
+                              {m.checkinStreak}d streak
+                              {m.checkedToday ? (
+                                <span className="tag green" style={{ fontSize: 9, padding: '1px 5px' }}>Done</span>
+                              ) : (
+                                <span className="tag yellow" style={{ fontSize: 9, padding: '1px 5px' }}>Pending</span>
+                              )}
+                            </span>
+                            <span className="habit-stat-sub">
+                              {m.todayStandup ? `“${m.todayStandup.title}”` : `Record: ${m.bestCheckinStreak}d`}
+                            </span>
+                          </div>
+
+                          <div className="habit-stat-box">
+                            <span className="habit-stat-label">
+                              <Icon name="zap" size={11} style={{ color: '#8b5cf6' }} /> Attendance
+                            </span>
+                            <span className="habit-stat-val">
+                              {m.clockStreak}d streak
+                            </span>
+                            <span className="habit-stat-sub">
+                              {m.weekHours.toFixed(1)}h this week
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 7-Day Vertical Rhythm Capsules (Image 3 Diagram Pattern) */}
+                        <div className="rhythm-7d-matrix">
+                          <div className="rhythm-7d-head">
+                            <span>7-Day Rhythm</span>
+                            <span>{m.last7Days.filter(d => d.hasCheckin).length}/7 checked</span>
+                          </div>
+                          <div className="rhythm-7d-bars">
+                            {m.last7Days.map(d => {
+                              const fillPct = maxMiniHours > 0 && d.hours > 0 ? Math.min(100, Math.round((d.hours / maxMiniHours) * 100)) : (d.hasClock ? 35 : 0);
+                              return (
+                                <div
+                                  key={d.date}
+                                  className={`rhythm-7d-col ${d.isToday ? 'is-today' : ''}`}
+                                  title={`${d.date} (${d.shortDay}): ${d.hasCheckin ? 'Check-in submitted' : 'No check-in'} · ${d.hours.toFixed(1)}h clocked`}
+                                >
+                                  <div className="rhythm-7d-track">
+                                    {d.hasCheckin && <span className="rhythm-7d-check-dot" />}
+                                    <div className="rhythm-7d-fill" style={{ height: `${Math.max(d.hours > 0 ? 15 : 0, fillPct)}%` }} />
+                                  </div>
+                                  <span className="rhythm-7d-day-label">{d.dayLabel}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Card Footer Actions */}
+                        <div className="member-habit-foot">
+                          <button
+                            type="button"
+                            className="small"
+                            onClick={() => setModal({ type: 'memberAnalytics', id: m.user.id, data: m.user })}
+                          >
+                            <Icon name="analytics" size={12} /> Analytics
+                          </button>
+                          {m.todayStandup ? (
+                            <button
+                              type="button"
+                              className="small"
+                              onClick={() => setModal({ type: 'standups', id: m.todayStandup.id, data: m.todayStandup })}
+                            >
+                              Check-in ↗
+                            </button>
+                          ) : (
+                            <span className="sub" style={{ fontSize: 10 }}>Rank #{m.checkinRank}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {filteredMemberStreaks.length === 0 && (
+                  <div className="empty" style={{ padding: '24px 16px' }}>
+                    <strong>No members match this filter</strong>
+                    Try choosing "All" or clearing the search box.
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         ) : (
-          <section className="card" style={{ marginBottom: 22 }}>
-            <div className="card-head">
-              <div>
-                <span className="eyebrow" style={{ margin: 0 }}>My Habits &amp; Work Consistency</span>
-                <h3 style={{ margin: '3px 0 0', fontSize: 16 }}>My daily check-in &amp; clock-in streaks</h3>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  className="small primary"
-                  onClick={() =>
-                    setModal(
-                      myTodayStandup
-                        ? { type: 'standups', id: myTodayStandup.id, data: myTodayStandup }
-                        : { type: 'standups', data: { date: todayStr, mood: 'Focused' } }
-                    )
-                  }
-                >
-                  {myTodayStandup ? 'Edit today’s check-in' : 'Post daily check-in'}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-              <div style={{ padding: 14, borderRadius: 14, background: 'var(--bg)', border: '1px solid var(--line)' }}>
-                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Icon name="flame" size={14} style={{ color: 'var(--green)' }} /> Daily check-in streak
-                </span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0' }}>
-                  <strong style={{ fontSize: 26, fontWeight: 700 }}>{myMemberStreak.checkinStreak}</strong>
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>days streak</span>
+          <section className="streak-dashboard-section">
+            <div className="streak-bento-layout">
+              {/* My Habit Streaks & All-Time Records */}
+              <div className="card" style={{ padding: 20 }}>
+                <div className="card-head" style={{ marginBottom: 14 }}>
+                  <div>
+                    <span className="eyebrow" style={{ margin: 0 }}>My Habits &amp; Personal Record</span>
+                    <h3 style={{ margin: '3px 0 0', fontSize: 16 }}>My Consistency &amp; Team Rank</h3>
+                  </div>
+                  <button
+                    className="small primary"
+                    onClick={() =>
+                      setModal(
+                        myTodayStandup
+                          ? { type: 'standups', id: myTodayStandup.id, data: myTodayStandup }
+                          : { type: 'standups', data: { date: todayStr, mood: 'Focused' } }
+                      )
+                    }
+                  >
+                    {myTodayStandup ? "Edit today's check-in" : 'Post daily check-in'}
+                  </button>
                 </div>
-                <span className="sub" style={{ fontSize: 11 }}>
-                  {myMemberStreak.checkedToday ? (
-                    <span style={{ color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      <Icon name="check" size={12} />Checked in for today!
-                    </span>
-                  ) : (
-                    <span style={{ color: '#d97706', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      <Icon name="pulse" size={12} />Pending check-in today
-                    </span>
-                  )}
-                </span>
-              </div>
 
-              <div style={{ padding: 14, borderRadius: 14, background: 'var(--bg)', border: '1px solid var(--line)' }}>
-                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Icon name="zap" size={14} style={{ color: '#8b5cf6' }} /> Clock-in consistency streak
-                </span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0' }}>
-                  <strong style={{ fontSize: 26, fontWeight: 700 }}>{myMemberStreak.clockStreak}</strong>
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>days streak</span>
-                </div>
-                <span className="sub" style={{ fontSize: 11 }}>
-                  {myMemberStreak.weekHours.toFixed(1)}h focused work logged this week
-                </span>
-              </div>
-
-              <div style={{ padding: 14, borderRadius: 14, background: 'var(--bg)', border: '1px solid var(--line)' }}>
-                <span className="sub" style={{ fontSize: 11, display: 'block', marginBottom: 8 }}>
-                  7-day consistency (Top: Check-in · Bottom: Clock)
-                </span>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {myMemberStreak.last7Days.map(d => (
-                    <div
-                      key={d.date}
-                      title={`${d.date} (${d.dayLabel}): ${d.hasCheckin ? 'Checked in' : 'No check-in'} · ${d.hasClock ? 'Clocked in' : 'No shift'}`}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 3,
-                        padding: '4px 6px',
-                        borderRadius: 8,
-                        background: d.isToday ? 'var(--light)' : 'var(--white)',
-                        border: d.isToday ? '1px solid var(--green)' : '1px solid var(--line)'
-                      }}
-                    >
-                      <span style={{ fontSize: 10, fontWeight: d.isToday ? 700 : 500, color: d.isToday ? 'var(--green)' : 'var(--muted)' }}>
-                        {d.dayLabel}
+                {/* 2 Bento KPI Tiles for Employee */}
+                <div className="my-streak-hero" style={{ marginBottom: 16 }}>
+                  <div className="my-streak-tile">
+                    <div className="my-streak-tile-head">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <Icon name="flame" size={14} style={{ color: 'var(--green)' }} /> Daily Check-in Streak
                       </span>
-                      <i style={{ width: 7, height: 7, borderRadius: '50%', background: d.hasCheckin ? 'var(--green)' : 'var(--line)' }} />
-                      <i style={{ width: 7, height: 7, borderRadius: '50%', background: d.hasClock ? '#8b5cf6' : 'var(--line)' }} />
+                      <span className="tag green" style={{ fontSize: 9.5 }}>Rank #{myMemberStreak.checkinRank}</span>
                     </div>
-                  ))}
+                    <div className="my-streak-tile-digits">{myMemberStreak.checkinStreak}<small style={{ fontSize: 13, fontWeight: 500, color: 'var(--muted)', marginLeft: 5 }}>days</small></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="sub" style={{ fontSize: 10.5 }}>
+                        {myMemberStreak.checkedToday ? (
+                          <span style={{ color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                            <Icon name="check" size={11} />Checked in today!
+                          </span>
+                        ) : (
+                          <span style={{ color: '#d97706', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                            <Icon name="pulse" size={11} />Pending check-in
+                          </span>
+                        )}
+                      </span>
+                      <span className="sub" style={{ fontSize: 10.5, fontWeight: 600 }}>Best: {myMemberStreak.bestCheckinStreak}d</span>
+                    </div>
+                  </div>
+
+                  <div className="my-streak-tile">
+                    <div className="my-streak-tile-head">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <Icon name="zap" size={14} style={{ color: '#8b5cf6' }} /> Shift Consistency
+                      </span>
+                      <span className="tag purple" style={{ fontSize: 9.5 }}>Rank #{myMemberStreak.clockRank}</span>
+                    </div>
+                    <div className="my-streak-tile-digits">{myMemberStreak.clockStreak}<small style={{ fontSize: 13, fontWeight: 500, color: 'var(--muted)', marginLeft: 5 }}>days</small></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="sub" style={{ fontSize: 10.5 }}>
+                        {myMemberStreak.activeClock ? 'Currently clocked in' : `${myMemberStreak.weekHours.toFixed(1)}h this week`}
+                      </span>
+                      <span className="sub" style={{ fontSize: 10.5, fontWeight: 600 }}>Best: {myMemberStreak.bestClockStreak}d</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 7-Day Rhythm Diagram */}
+                <div className="rhythm-7d-matrix" style={{ marginTop: 8 }}>
+                  <div className="rhythm-7d-head">
+                    <span>7-Day Work &amp; Check-in Rhythm</span>
+                    <span>{myMemberStreak.last7Days.filter(d => d.hasCheckin).length} of 7 days completed</span>
+                  </div>
+                  <div className="rhythm-7d-bars" style={{ height: 60 }}>
+                    {myMemberStreak.last7Days.map(d => (
+                      <div
+                        key={d.date}
+                        className={`rhythm-7d-col ${d.isToday ? 'is-today' : ''}`}
+                        title={`${d.date} (${d.shortDay}): ${d.hasCheckin ? 'Check-in done' : 'No check-in'} · ${d.hours.toFixed(1)}h worked`}
+                      >
+                        <div className="rhythm-7d-track" style={{ height: 44 }}>
+                          {d.hasCheckin && <span className="rhythm-7d-check-dot" />}
+                          <div className="rhythm-7d-fill" style={{ height: `${d.hours > 0 ? Math.min(100, Math.round((d.hours / 8) * 100)) : (d.hasClock ? 40 : 0)}%` }} />
+                        </div>
+                        <span className="rhythm-7d-day-label">{d.dayLabel}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Streak Leaderboard (Visible to Employee too!) */}
+              <div className="card streak-leaderboard-card">
+                <div className="card-head">
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 15 }}>Team Streak Leaderboard</h3>
+                    <span className="sub">See where you stand among your peers</span>
+                  </div>
+                  <div className="streak-tab-toggle">
+                    <button
+                      type="button"
+                      className={`streak-tab-btn ${streakBoardTab === 'checkin' ? 'active' : ''}`}
+                      onClick={() => setStreakBoardTab('checkin')}
+                    >
+                      <Icon name="flame" size={12} /> Check-ins
+                    </button>
+                    <button
+                      type="button"
+                      className={`streak-tab-btn ${streakBoardTab === 'clock' ? 'active' : ''}`}
+                      onClick={() => setStreakBoardTab('clock')}
+                    >
+                      <Icon name="zap" size={12} /> Attendance
+                    </button>
+                  </div>
+                </div>
+
+                <div className="streak-lead-list">
+                  {(streakBoardTab === 'checkin' ? checkinRanked : clockRanked).slice(0, 6).map((m, idx) => {
+                    const isMe = m.user.id === user?.id;
+                    const streakVal = streakBoardTab === 'checkin' ? m.checkinStreak : m.clockStreak;
+                    const bestVal = streakBoardTab === 'checkin' ? m.bestCheckinStreak : m.bestClockStreak;
+                    const maxVal = streakBoardTab === 'checkin' ? maxCheckinStreak : maxClockStreak;
+                    const pct = maxVal > 0 ? Math.max(8, Math.round((streakVal / maxVal) * 100)) : 8;
+
+                    return (
+                      <div
+                        key={m.user.id}
+                        className="streak-lead-row"
+                        style={{
+                          background: isMe ? 'color-mix(in srgb, var(--green) 12%, transparent)' : undefined,
+                          borderLeft: isMe ? '3px solid var(--green)' : undefined
+                        }}
+                      >
+                        <span className={`streak-rank-badge ${idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''}`}>
+                          {idx === 0 ? <Icon name="trophy" size={12} style={{ color: '#f59e0b' }} /> : String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <Avatar user={m.user} />
+                        <div className="streak-lead-info">
+                          <div className="streak-lead-title">
+                            <span>{m.user.name}</span>
+                            {isMe && <span className="tag green" style={{ fontSize: 8.5, padding: '1px 5px' }}>You</span>}
+                          </div>
+                          <div className={`streak-lead-progress ${streakBoardTab === 'clock' ? 'clock' : ''}`}>
+                            <i style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <div className="streak-lead-metric">
+                          <strong>
+                            <Icon name={streakBoardTab === 'checkin' ? 'flame' : 'zap'} size={12} style={{ color: streakBoardTab === 'checkin' ? 'var(--green)' : '#8b5cf6' }} />
+                            {streakVal}d
+                          </strong>
+                          <small>Record: {bestVal}d</small>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -5177,6 +5237,22 @@ export default function SyneolabApp() {
       }))
       .sort((a, b) => b.hours - a.hours);
 
+    // Streak Analytics List & Rankings
+    const streakAnalyticsList = (state.users || []).map(u => ({
+      user: u,
+      ...calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr, currentTime)
+    }));
+    const checkinRankedAnalytics = [...streakAnalyticsList].sort((a, b) => {
+      if (b.checkinStreak !== a.checkinStreak) return b.checkinStreak - a.checkinStreak;
+      if (b.bestCheckinStreak !== a.bestCheckinStreak) return b.bestCheckinStreak - a.bestCheckinStreak;
+      return b.totalCheckins - a.totalCheckins;
+    });
+    const clockRankedAnalytics = [...streakAnalyticsList].sort((a, b) => {
+      if (b.clockStreak !== a.clockStreak) return b.clockStreak - a.clockStreak;
+      if (b.bestClockStreak !== a.bestClockStreak) return b.bestClockStreak - a.bestClockStreak;
+      return b.totalClockDays - a.totalClockDays;
+    });
+
     const comp = completion(state.tasks);
 
     // Focus chart
@@ -5422,6 +5498,91 @@ export default function SyneolabApp() {
             ))}
           </section>
         </div>
+
+        {/* Team Streak & Habit Leaderboard Section */}
+        <section className="card" style={{ marginBottom: 20 }}>
+          <div className="card-head" style={{ flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h3 style={{ margin: 0, fontSize: 16 }}>Team Streak &amp; Habit Leaderboard</h3>
+                <span className="tag green" style={{ fontSize: 10.5 }}>
+                  <Icon name="trophy" size={11} style={{ marginRight: 3, color: '#f59e0b' }} />
+                  Consistency Rankings
+                </span>
+              </div>
+              <p className="sub" style={{ margin: '3px 0 0' }}>
+                All-time record streaks and consecutive daily check-ins across the team.
+              </p>
+            </div>
+            <div className="streak-tab-toggle">
+              <button
+                type="button"
+                className={`streak-tab-btn ${streakBoardTab === 'checkin' ? 'active' : ''}`}
+                onClick={() => setStreakBoardTab('checkin')}
+              >
+                <Icon name="flame" size={12} /> Daily Check-ins
+              </button>
+              <button
+                type="button"
+                className={`streak-tab-btn ${streakBoardTab === 'clock' ? 'active' : ''}`}
+                onClick={() => setStreakBoardTab('clock')}
+              >
+                <Icon name="zap" size={12} /> Shift Attendance
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+            {(streakBoardTab === 'checkin' ? checkinRankedAnalytics : clockRankedAnalytics).map((m, idx) => {
+              const streakVal = streakBoardTab === 'checkin' ? m.checkinStreak : m.clockStreak;
+              const bestVal = streakBoardTab === 'checkin' ? m.bestCheckinStreak : m.bestClockStreak;
+              const maxVal = streakBoardTab === 'checkin'
+                ? Math.max(1, ...checkinRankedAnalytics.map(x => x.checkinStreak))
+                : Math.max(1, ...clockRankedAnalytics.map(x => x.clockStreak));
+              const pct = maxVal > 0 ? Math.max(8, Math.round((streakVal / maxVal) * 100)) : 8;
+              const uPos = getUserPositions(m.user);
+
+              return (
+                <div
+                  key={m.user.id}
+                  className="streak-lead-row"
+                  style={{
+                    background: 'var(--bg)',
+                    borderRadius: 12,
+                    border: '1px solid var(--line)',
+                    padding: '12px 14px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setModal({ type: 'memberAnalytics', id: m.user.id, data: m.user })}
+                >
+                  <span className={`streak-rank-badge ${idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''}`}>
+                    {idx === 0 ? <Icon name="trophy" size={13} style={{ color: '#f59e0b' }} /> : String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <Avatar user={m.user} />
+                  <div className="streak-lead-info">
+                    <div className="streak-lead-title">
+                      <span>{m.user.name}</span>
+                      {m.user.id === user?.id && <span className="tag green" style={{ fontSize: 8.5, padding: '1px 4px' }}>You</span>}
+                    </div>
+                    <span className="streak-lead-sub">
+                      {uPos[0] || m.user.department || 'Workspace'} · Best: {bestVal}d
+                    </span>
+                    <div className={`streak-lead-progress ${streakBoardTab === 'clock' ? 'clock' : ''}`}>
+                      <i style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                  <div className="streak-lead-metric">
+                    <strong>
+                      <Icon name={streakBoardTab === 'checkin' ? 'flame' : 'zap'} size={12} style={{ color: streakBoardTab === 'checkin' ? 'var(--green)' : '#8b5cf6' }} />
+                      {streakVal}d
+                    </strong>
+                    <small>{streakBoardTab === 'checkin' ? `${m.totalCheckins} check-ins` : `${m.totalClockDays} work days`}</small>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {renderEmployeePerformanceSuite('analytics')}
       </>
@@ -6608,7 +6769,26 @@ export default function SyneolabApp() {
         .filter(a => a.actorId === u.id || a.targetUserId === u.id || (Array.isArray(a.targetUserIds) && a.targetUserIds.includes(u.id)))
         .slice(0, 8);
 
-      const uStreaks = calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr);
+      const uStreaks = calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr, currentTime);
+
+      // Compute ranks across all members for u
+      const allMemberStreaks = (state.users || []).map(usr => ({
+        user: usr,
+        ...calculateMemberStreaks(usr.id, state.standups || [], state.clocks || [], todayStr, currentTime)
+      }));
+      const checkinRankList = [...allMemberStreaks].sort((a, b) => {
+        if (b.checkinStreak !== a.checkinStreak) return b.checkinStreak - a.checkinStreak;
+        if (b.bestCheckinStreak !== a.bestCheckinStreak) return b.bestCheckinStreak - a.bestCheckinStreak;
+        return b.totalCheckins - a.totalCheckins;
+      });
+      const uCheckinRank = checkinRankList.findIndex(m => m.user.id === u.id) + 1;
+
+      const clockRankList = [...allMemberStreaks].sort((a, b) => {
+        if (b.clockStreak !== a.clockStreak) return b.clockStreak - a.clockStreak;
+        if (b.bestClockStreak !== a.bestClockStreak) return b.bestClockStreak - a.bestClockStreak;
+        return b.totalClockDays - a.totalClockDays;
+      });
+      const uClockRank = clockRankList.findIndex(m => m.user.id === u.id) + 1;
 
       return (
         <div className="modal modal-wide member-analytics-modal" role="dialog" style={{ maxWidth: 960 }}>
@@ -6632,12 +6812,12 @@ export default function SyneolabApp() {
                     {activeShift ? (activeShift.break_start ? <><Icon name="coffee" size={12} style={{ marginRight: 4 }} />On break</> : <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Clocked in</>) : <><Icon name="dot" size={10} style={{ marginRight: 4, opacity: 0.5 }} />Offline</>}
                   </span>
                   <span className="tag green" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <Icon name="flame" size={12} />
-                    {uStreaks.checkinStreak}d check-in streak
+                    <Icon name="trophy" size={11} style={{ color: '#f59e0b' }} />
+                    Rank #{uCheckinRank} Check-ins ({uStreaks.checkinStreak}d streak)
                   </span>
                   <span className="tag purple" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <Icon name="zap" size={12} />
-                    {uStreaks.clockStreak}d clock streak
+                    <Icon name="zap" size={11} />
+                    Rank #{uClockRank} Shifts ({uStreaks.clockStreak}d streak)
                   </span>
                 </div>
               </div>
@@ -6681,6 +6861,130 @@ export default function SyneolabApp() {
               </span>
             </div>
           </div>
+
+          {/* Habit Streaks, Consistency Records & 14-Day Visual Rhythm Diagram */}
+          <section className="card" style={{ marginBottom: 18, padding: 18 }}>
+            <div className="card-head" style={{ marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 style={{ margin: 0 }}>Habit Consistency &amp; Streak Records</h3>
+                  <span className="tag green" style={{ fontSize: 10 }}>
+                    <Icon name="trophy" size={11} style={{ marginRight: 3, color: '#f59e0b' }} />
+                    Team Rank #{uCheckinRank}
+                  </span>
+                </div>
+                <span className="sub">Lifetime check-in consistency, shift attendance, and 14-day rhythm</span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <span className="tag green" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name="flame" size={12} />
+                  {uCheckinRank === 1 ? '🥇 #1 Team Check-in Streak' : `#${uCheckinRank} in Check-in Streak`}
+                </span>
+                <span className="tag purple" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name="zap" size={12} />
+                  {uClockRank === 1 ? '⚡ #1 Attendance Consistency' : `#${uClockRank} in Clock Consistency`}
+                </span>
+              </div>
+            </div>
+
+            {/* 4-Bento Streak Metric Tiles */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
+              <div style={{ padding: 14, borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="flame" size={13} style={{ color: 'var(--green)' }} /> Current Check-in Streak
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '6px 0 4px' }}>
+                  <strong style={{ fontSize: 24, fontWeight: 800 }}>{uStreaks.checkinStreak}</strong>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>days streak</span>
+                </div>
+                <span className="sub" style={{ fontSize: 10.5 }}>
+                  {uStreaks.checkedToday ? (
+                    <span style={{ color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <Icon name="check" size={11} />Checked in today
+                    </span>
+                  ) : (
+                    <span style={{ color: '#d97706', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <Icon name="pulse" size={11} />Pending today
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              <div style={{ padding: 14, borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="trophy" size={13} style={{ color: '#f59e0b' }} /> Best Check-in Record
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '6px 0 4px' }}>
+                  <strong style={{ fontSize: 24, fontWeight: 800 }}>{uStreaks.bestCheckinStreak}</strong>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>days all-time</span>
+                </div>
+                <span className="sub" style={{ fontSize: 10.5 }}>
+                  {uStreaks.totalCheckins} lifetime check-in days
+                </span>
+              </div>
+
+              <div style={{ padding: 14, borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="zap" size={13} style={{ color: '#8b5cf6' }} /> Current Clock Streak
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '6px 0 4px' }}>
+                  <strong style={{ fontSize: 24, fontWeight: 800 }}>{uStreaks.clockStreak}</strong>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>days streak</span>
+                </div>
+                <span className="sub" style={{ fontSize: 10.5 }}>
+                  {activeShift ? 'Currently clocked in' : 'Off shift'}
+                </span>
+              </div>
+
+              <div style={{ padding: 14, borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="medal" size={13} style={{ color: '#3b82f6' }} /> Best Clock Record
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '6px 0 4px' }}>
+                  <strong style={{ fontSize: 24, fontWeight: 800 }}>{uStreaks.bestClockStreak}</strong>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>days all-time</span>
+                </div>
+                <span className="sub" style={{ fontSize: 10.5 }}>
+                  {uStreaks.totalClockDays} active working days
+                </span>
+              </div>
+            </div>
+
+            {/* 14-Day Visual Rhythm & Habit Timeline (Diagram Pattern from Image 3) */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <strong style={{ fontSize: 12 }}>14-Day Work &amp; Habit Rhythm Timeline</strong>
+                <span className="sub" style={{ fontSize: 11 }}>Pill Fill: Work Hours · Dot: Daily Check-in</span>
+              </div>
+              <div className="rhythm-14d-container">
+                {uStreaks.last14Days.map(ds => {
+                  const maxRhythmHours = Math.max(8, ...uStreaks.last14Days.map(d => d.hours || 0));
+                  const fillPct = maxRhythmHours > 0 && ds.hours > 0 ? Math.min(100, Math.round((ds.hours / maxRhythmHours) * 100)) : (ds.hasClock ? 25 : 0);
+                  return (
+                    <div
+                      key={ds.date}
+                      className={`rhythm-14d-col ${ds.isToday ? 'is-today' : ''}`}
+                      title={`${ds.date} (${ds.shortDay}): ${ds.hasCheckin ? (ds.standup ? `Checked in: “${ds.standup.title}”` : 'Checked in') : 'No check-in'} · ${ds.hours.toFixed(1)}h worked`}
+                    >
+                      <span className="rhythm-14d-val">{ds.hours > 0 ? `${ds.hours.toFixed(1)}h` : '0h'}</span>
+                      <div className="rhythm-14d-track">
+                        {ds.hasCheckin && (
+                          <span className="rhythm-14d-flame" title="Daily check-in posted">
+                            <Icon name="flame" size={12} />
+                          </span>
+                        )}
+                        <div className="rhythm-14d-fill" style={{ height: `${Math.max(ds.hours > 0 ? 12 : 0, fillPct)}%` }} />
+                      </div>
+                      <span className="rhythm-14d-label">
+                        <span style={{ display: 'block' }}>{ds.shortDay}</span>
+                        <span style={{ opacity: 0.7, fontSize: 8.5 }}>{ds.shortDate}</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
 
           {/* 7-Day Hours Rhythm Bar Chart */}
           <section className="card" style={{ marginBottom: 18, padding: 18 }}>
