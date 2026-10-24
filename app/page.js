@@ -98,9 +98,9 @@ const SyneoLogo = ({ size = 30, idPrefix = 'syneo' }) => (
 const SyneoWordmark = ({ height = 17, color = 'currentColor' }) => (
   <svg
     height={height}
-    viewBox="98 180 524 80"
+    viewBox="98 180 600 80"
     fill={color}
-    aria-label="SYNEO LAB"
+    aria-label="SYNEO LABS"
     style={{ display: 'inline-block', width: 'auto', flexShrink: 0 }}
   >
     {/* S */}
@@ -121,6 +121,10 @@ const SyneoWordmark = ({ height = 17, color = 'currentColor' }) => (
     <path d="M 513 185 L 486 255 L 499 255 L 519 201 L 539 255 L 552 255 L 525 185 Z" />
     {/* B */}
     <path d="M 559 185 L 559 196 L 589 196 C 596 196 601 200 601 205 C 601 210 596 214 589 214 L 559 214 L 559 225 L 592 225 C 600 225 605 229 605 235 C 605 240 600 244 592 244 L 559 244 L 559 255 L 593 255 C 608 255 618 247 618 235 C 618 227 613 221 605 219 C 611 216 614 211 614 204 C 614 192 604 185 590 185 Z" />
+    {/* S */}
+    <g transform="translate(526, 0)">
+      <path d="M 164 205 C 164 191 151 184 134 184 C 116 184 104 192 104 204 C 104 216 115 221 133 224 C 146 226 151 229 151 235 C 151 241 144 245 133 245 C 121 245 114 240 113 232 L 101 232 C 102 247 114 256 133 256 C 152 256 164 247 164 234 C 164 221 153 216 135 213 C 122 211 116 208 116 203 C 116 198 123 194 133 194 C 144 194 151 198 152 205 Z" />
+    </g>
   </svg>
 );
 
@@ -9430,16 +9434,45 @@ export default function SyneolabApp() {
 
   return (
     <div className="shell">
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <SyneoLogo size={34} idPrefix="sidebar" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <SyneoWordmark height={15} color="var(--ink)" />
-            <span style={{ fontSize: 7.2, letterSpacing: '0.14em', color: 'var(--soft)', fontWeight: 600 }}>
-              CREATIVITY MEETS INNOVATIONS
-            </span>
+        <div className="sidebar-header">
+          <div
+            className="brand"
+            onClick={() => {
+              navigate('dashboard');
+              setSidebarOpen(false);
+            }}
+            role="button"
+            tabIndex={0}
+            title="Go to Dashboard"
+            style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+          >
+            <SyneoLogo size={34} idPrefix="sidebar" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <SyneoWordmark height={15} color="var(--ink)" />
+              <span style={{ fontSize: 7.2, letterSpacing: '0.14em', color: 'var(--soft)', fontWeight: 600 }}>
+                CREATIVITY MEETS INNOVATIONS
+              </span>
+            </div>
           </div>
+          <button
+            type="button"
+            className="sidebar-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close navigation"
+          >
+            <Icon name="x" size={18} />
+          </button>
         </div>
         <div className="sidebar-nav">
           <div className="eyebrow">Workspace</div>
@@ -9502,6 +9535,16 @@ export default function SyneolabApp() {
           >
             <Icon name="menu" />
           </button>
+          <div
+            className="topbar-brand"
+            onClick={() => navigate('dashboard')}
+            role="button"
+            tabIndex={0}
+            title="Go to Dashboard"
+          >
+            <SyneoLogo size={26} idPrefix="topbar" />
+            <SyneoWordmark height={13} color="var(--ink)" />
+          </div>
           <div className="search">
             <Icon name="search" />
             <input
@@ -9600,9 +9643,15 @@ export default function SyneolabApp() {
         <div className="content">
           {renderCurrentView()}
           <div className="footer-note" style={{ marginTop: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <span
+              onClick={() => navigate('dashboard')}
+              role="button"
+              tabIndex={0}
+              title="Go to Dashboard"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+            >
               <SyneoLogo size={18} idPrefix="footer" />
-              <b>SYNEO LAB WORKSPACE</b>
+              <b>SYNEO LABS WORKSPACE</b>
             </span>
             <span>“WHERE CREATIVITY MEETS INNOVATIONS”</span>
           </div>
