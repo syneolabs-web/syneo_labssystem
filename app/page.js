@@ -152,6 +152,16 @@ const isSuperAdminEmail = email => {
   const e = (email || '').toLowerCase().trim();
   return e === 'syneolabs@gmail.com';
 };
+const isTodayStandup = (s, refDate = new Date()) => {
+  if (!s || (!s.created && !s.date)) return false;
+  const refKey = key(refDate);
+  if (s.date && s.date === refKey) return true;
+  if ((s.created || '').slice(0, 10) === refKey) return true;
+  try {
+    if (s.created && key(new Date(s.created)) === refKey) return true;
+  } catch {}
+  return false;
+};
 
 export default function SyneolabApp() {
   const [mounted, setMounted] = useState(false);
@@ -1316,7 +1326,9 @@ export default function SyneolabApp() {
     const blockedTasks = state.tasks.filter(t => t.blocked && t.status !== 'Done');
     const overdueTasks = state.tasks.filter(t => t.due && t.due < todayStr && t.status !== 'Done');
     const dueLeads = state.leads.filter(l => l.followup && l.followup <= todayStr && !['Won', 'Lost'].includes(l.stage));
-    const todayStandups = (state.standups || []).filter(s => (s.created || '').slice(0, 10) === todayStr);
+    const todayStandups = (state.standups || []).filter(s => isTodayStandup(s));
+    const myTodayStandup = todayStandups.find(s => s.owner === user?.id);
+    const uniqueCheckedInCount = new Set(todayStandups.map(s => s.owner)).size;
     const workingCount = state.clocks.filter(c => !c.end && !c.break_start).length;
     const breakCount = state.clocks.filter(c => !c.end && c.break_start).length;
 
@@ -1335,9 +1347,15 @@ export default function SyneolabApp() {
             <p className="sub">Everything your team is building, in one calm place.</p>
           </div>
           <div className="actions">
-            <button onClick={() => setModal({ type: 'standups', data: {} })}>
-              <Icon name="pulse" /> Daily check-in
-            </button>
+            {myTodayStandup ? (
+              <button onClick={() => setModal({ type: 'standups', id: myTodayStandup.id, data: myTodayStandup })}>
+                <Icon name="check" size={14} /> Edit today's check-in
+              </button>
+            ) : (
+              <button onClick={() => setModal({ type: 'standups', data: { date: todayStr, mood: 'Focused' } })}>
+                <Icon name="pulse" /> Daily check-in
+              </button>
+            )}
             {isAdmin && (
               <button className="primary" onClick={() => setModal({ type: 'projects', data: {} })}>
                 <Icon name="plus" /> Add project
@@ -1413,7 +1431,7 @@ export default function SyneolabApp() {
             onClick={() => navigate('pulse')}
           >
             <i className="dot" style={{ background: 'var(--mid)' }} />
-            <span><b>{todayStandups.length}</b> Team check-ins today · <b>{(state.goals || []).length}</b> Goals</span>
+            <span><b>{uniqueCheckedInCount}</b> Team check-in{uniqueCheckedInCount === 1 ? '' : 's'} today · <b>{(state.goals || []).length}</b> Goals</span>
           </button>
         </div>
 
@@ -5280,7 +5298,9 @@ export default function SyneolabApp() {
     const goals = isAdmin
       ? state.goals || []
       : (state.goals || []).filter(g => isGoalAssignedToUser(g, user.id));
-    const todayStandups = standups.filter(s => (s.created || '').slice(0, 10) === todayStr);
+    const todayStandups = standups.filter(s => isTodayStandup(s));
+    const myTodayStandup = todayStandups.find(s => s.owner === user.id);
+    const uniqueCheckedInOwners = new Set(todayStandups.map(s => s.owner));
     const activeBlockersCount =
       state.tasks.filter(t => t.blocked && t.status !== 'Done').length +
       todayStandups.filter(s => s.blockers && s.blockers.trim()).length +
@@ -5316,7 +5336,7 @@ export default function SyneolabApp() {
     });
 
     const filteredStandups = standups.filter(s => {
-      if (filter === 'Today') return (s.created || '').slice(0, 10) === todayStr;
+      if (filter === 'Today') return isTodayStandup(s);
       if (filter === 'With blockers') return Boolean(s.blockers && s.blockers.trim());
       if (filter === 'My check-ins') return s.owner === user.id;
       return true;
@@ -5366,9 +5386,15 @@ export default function SyneolabApp() {
             <button onClick={() => openNewGoalModal('monthly', isAdmin ? 'all' : user.id)}>
               <Icon name="plus" /> Monthly goal
             </button>
-            <button className="primary" onClick={() => setModal({ type: 'standups', data: { mood: 'Focused' } })}>
-              <Icon name="plus" /> Post daily check-in
-            </button>
+            {myTodayStandup ? (
+              <button className="primary" onClick={() => setModal({ type: 'standups', id: myTodayStandup.id, data: myTodayStandup })}>
+                <Icon name="check" size={14} /> Edit today's check-in
+              </button>
+            ) : (
+              <button className="primary" onClick={() => setModal({ type: 'standups', data: { date: todayStr, mood: 'Focused' } })}>
+                <Icon name="plus" /> Post daily check-in
+              </button>
+            )}
           </div>
         </div>
 
@@ -5376,9 +5402,9 @@ export default function SyneolabApp() {
           <div className="stat green">
             <span>Check-ins today</span>
             <span className="arrow"><Icon name="arrow" /></span>
-            <span className="value">{todayStandups.length}/{state.users.length}</span>
+            <span className="value">{uniqueCheckedInOwners.size}/{state.users.length}</span>
             <span className="sub">
-              {todayStandups.some(s => s.owner === user.id) ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={12} />You checked in today</span> : 'Daily team sync rhythm'}
+              {myTodayStandup ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={12} />You checked in today</span> : 'Daily team sync rhythm'}
             </span>
           </div>
           <div className="stat" style={{ cursor: 'pointer' }} onClick={() => setGoalPeriodFilter('daily')}>
@@ -5478,9 +5504,19 @@ export default function SyneolabApp() {
                   </div>
 
                   <div style={{ fontSize: 12, padding: '6px 9px', borderRadius: 8, background: 'var(--white)', border: '1px solid var(--line)' }}>
-                    <span className="sub" style={{ fontSize: 10.5, display: 'block', marginBottom: 2 }}>
-                      Today’s check-in focus:
-                    </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                      <span className="sub" style={{ fontSize: 10.5 }}>Today’s check-in focus:</span>
+                      {checkedIn && canEdit('standups', checkedIn) && (
+                        <button
+                          type="button"
+                          className="icon-btn-ghost"
+                          style={{ padding: '0 4px', fontSize: 11, height: 'auto', textDecoration: 'underline' }}
+                          onClick={() => setModal({ type: 'standups', id: checkedIn.id, data: checkedIn })}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
                     <strong style={{ fontSize: 12, fontWeight: 600 }}>
                       {checkedIn ? checkedIn.title : 'No check-in posted yet today'}
                     </strong>
@@ -5488,6 +5524,16 @@ export default function SyneolabApp() {
                       <div style={{ color: '#ef4444', fontSize: 11, marginTop: 3, fontWeight: 600 }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="alert" size={12} />Blocker: {checkedIn.blockers}</span>
                       </div>
+                    )}
+                    {!checkedIn && u.id === user.id && (
+                      <button
+                        type="button"
+                        className="small primary"
+                        style={{ marginTop: 6, width: '100%' }}
+                        onClick={() => setModal({ type: 'standups', data: { date: todayStr, mood: 'Focused' } })}
+                      >
+                        <Icon name="plus" size={12} /> Check in now
+                      </button>
                     )}
                   </div>
 
@@ -7104,11 +7150,16 @@ export default function SyneolabApp() {
     }
 
     // Generic CRUD for projects, tasks, leads, meetings, announcements, standups, goals
-    const editable = canEdit(type, { ...data, id });
+    const todayStr = key(new Date());
+    const myTodayStandup = type === 'standups' ? (state.standups || []).find(s => s.owner === user?.id && isTodayStandup(s)) : null;
+    const effectiveData = type === 'standups' && !id && myTodayStandup ? { ...myTodayStandup, ...data } : data;
+    const effectiveId = type === 'standups' && !id && myTodayStandup ? myTodayStandup.id : id;
+
+    const editable = canEdit(type, { ...effectiveData, id: effectiveId });
     const isAdminTaskForEmployee =
-      type === 'tasks' && !isAdmin && Boolean(id && data.owner && data.owner !== user.id);
+      type === 'tasks' && !isAdmin && Boolean(effectiveId && effectiveData.owner && effectiveData.owner !== user.id);
     const isAdminGoalForEmployee =
-      type === 'goals' && !isAdmin && Boolean(id && data.owner && data.owner !== user.id);
+      type === 'goals' && !isAdmin && Boolean(effectiveId && effectiveData.owner && effectiveData.owner !== user.id);
     const singularLabel =
       type === 'standups'
         ? 'check-in'
@@ -7122,7 +7173,7 @@ export default function SyneolabApp() {
     return (
       <div className="modal" role="dialog">
         <div className="card-head">
-          <h2>{id ? (editable ? 'Edit' : 'View') : 'New'} {singularLabel}</h2>
+          <h2>{effectiveId ? (editable ? 'Edit' : 'View') : 'New'} {singularLabel}</h2>
           <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
         </div>
         <form
@@ -7139,47 +7190,47 @@ export default function SyneolabApp() {
               body.end = new Date(body.end).toISOString();
             }
             if (type === 'tasks') {
-              body.startDate = (fd.get('startDate') || data.startDate || '').toString().trim();
-              body.due = (fd.get('due') || data.due || '').toString().trim();
+              body.startDate = (fd.get('startDate') || effectiveData.startDate || '').toString().trim();
+              body.due = (fd.get('due') || effectiveData.due || '').toString().trim();
               body.blocked = fd.get('blocked') === 'on';
               body.notifyEmail = fd.get('notifyEmail') === 'on';
               body.notifyEveryone = fd.get('notifyEveryone') === 'on';
-              body.estimateHours = Number(body.estimateHours ?? data.estimateHours ?? 0);
-              body.subtasks = data.subtasks || [];
-              body.comments = data.comments || [];
-              body.assignees = Array.isArray(data.assignees)
-                ? data.assignees
+              body.estimateHours = Number(body.estimateHours ?? effectiveData.estimateHours ?? 0);
+              body.subtasks = effectiveData.subtasks || [];
+              body.comments = effectiveData.comments || [];
+              body.assignees = Array.isArray(effectiveData.assignees)
+                ? effectiveData.assignees
                 : body.assignee
                 ? [body.assignee]
                 : [user.id];
-              body.assigned_at = data.assigned_at || (body.assignees?.length || body.assignee ? new Date().toISOString() : null);
+              body.assigned_at = effectiveData.assigned_at || (body.assignees?.length || body.assignee ? new Date().toISOString() : null);
               if (body.status === 'Done') {
-                body.completed_at = data.completed_at || new Date().toISOString();
+                body.completed_at = effectiveData.completed_at || new Date().toISOString();
               } else {
                 body.completed_at = null;
               }
               if (isAdminTaskForEmployee) {
                 // Ensure scope fields are locked to original values for assigned employees
-                body.title = data.title;
-                body.description = data.description || '';
-                body.project = data.project;
-                body.assignee = data.assignee;
-                body.assignees = data.assignees;
-                body.priority = data.priority;
-                body.startDate = data.startDate;
-                body.due = data.due;
-                body.estimateHours = data.estimateHours;
-                body.department = data.department;
+                body.title = effectiveData.title;
+                body.description = effectiveData.description || '';
+                body.project = effectiveData.project;
+                body.assignee = effectiveData.assignee;
+                body.assignees = effectiveData.assignees;
+                body.priority = effectiveData.priority;
+                body.startDate = effectiveData.startDate;
+                body.due = effectiveData.due;
+                body.estimateHours = effectiveData.estimateHours;
+                body.department = effectiveData.department;
               }
             }
             if (type === 'projects') {
-              body.startDate = (fd.get('startDate') || data.startDate || '').toString().trim();
-              body.due = (fd.get('due') || data.due || '').toString().trim();
+              body.startDate = (fd.get('startDate') || effectiveData.startDate || '').toString().trim();
+              body.due = (fd.get('due') || effectiveData.due || '').toString().trim();
               body.targetHours = Number(body.targetHours || 0);
               body.budget = Number(body.budget || 0);
-              body.milestones = data.milestones || [];
-              body.members = Array.isArray(data.members)
-                ? data.members
+              body.milestones = effectiveData.milestones || [];
+              body.members = Array.isArray(effectiveData.members)
+                ? effectiveData.members
                 : body.lead
                 ? [body.lead]
                 : [];
@@ -7193,45 +7244,49 @@ export default function SyneolabApp() {
               body.notifyEveryone = fd.get('notifyEveryone') === 'on';
             }
             if (type === 'goals') {
-              body.currentValue = Number(body.currentValue ?? data.currentValue ?? 0);
-              body.targetValue = Number(body.targetValue ?? data.targetValue ?? 100);
-              body.period = body.period || data.period || 'weekly';
-              body.status = body.status || data.status || 'On track';
-              body.subtasks = data.subtasks || [];
-              body.comments = data.comments || [];
+              body.currentValue = Number(body.currentValue ?? effectiveData.currentValue ?? 0);
+              body.targetValue = Number(body.targetValue ?? effectiveData.targetValue ?? 100);
+              body.period = body.period || effectiveData.period || 'weekly';
+              body.status = body.status || effectiveData.status || 'On track';
+              body.subtasks = effectiveData.subtasks || [];
+              body.comments = effectiveData.comments || [];
               if (!isAdmin && !isAdminGoalForEmployee) {
                 body.assignee = user.id;
                 body.assignees = [user.id];
               } else {
-                body.assignees = Array.isArray(data.assignees)
-                  ? data.assignees
+                body.assignees = Array.isArray(effectiveData.assignees)
+                  ? effectiveData.assignees
                   : body.assignee && body.assignee !== 'all'
                   ? [body.assignee]
                   : [];
               }
             }
+            if (type === 'standups') {
+              body.date = body.date || effectiveData.date || todayStr;
+            }
+            const targetId = effectiveId;
             const mergedRecord = {
-              ...data,
+              ...effectiveData,
               ...body,
-              id: id || `temp_${Date.now()}`,
-              owner: data.owner || user.id,
-              created: data.created || new Date().toISOString()
+              id: targetId || `temp_${Date.now()}`,
+              owner: effectiveData.owner || user.id,
+              created: effectiveData.created || new Date().toISOString()
             };
             const prevCollection = Array.isArray(state[type]) ? state[type] : [];
             // 0ms optimistic UI update & modal close
             if (Array.isArray(state[type])) {
               setState(prev => ({
                 ...prev,
-                [type]: id
-                  ? prev[type].map(item => (item.id === id ? mergedRecord : item))
+                [type]: targetId
+                  ? prev[type].map(item => (item.id === targetId ? mergedRecord : item))
                   : [mergedRecord, ...prev[type]]
               }));
             }
             setModal(null);
             showToast('Saved. Workspace is up to date.');
             try {
-              const saved = await handleApi('/api/record', { kind: type, id, body: { ...data, ...body } });
-              if (!id && saved?.id && Array.isArray(state[type])) {
+              const saved = await handleApi('/api/record', { kind: type, id: targetId, body: { ...effectiveData, ...body } });
+              if (!targetId && saved?.id && Array.isArray(state[type])) {
                 setState(prev => ({
                   ...prev,
                   [type]: prev[type].map(item => (item.id === mergedRecord.id ? { ...mergedRecord, id: saved.id } : item))
@@ -7250,7 +7305,7 @@ export default function SyneolabApp() {
             <div className="note" style={{ marginBottom: 15 }}>
               {['projects', 'meetings', 'announcements'].includes(type)
                 ? 'Only administrators can change this.'
-                : `Only ${state.users.find(u => u.id === data.owner)?.name || 'its creator'}, an assigned collaborator, or an administrator can change this.`}
+                : `Only ${state.users.find(u => u.id === effectiveData.owner)?.name || 'its creator'}, an assigned collaborator, or an administrator can change this.`}
             </div>
           )}
           {isAdminTaskForEmployee && (
@@ -7274,7 +7329,7 @@ export default function SyneolabApp() {
                 ? 'Objective / goal title'
                 : 'Title'}
             </label>
-            <input name="title" type="text" required defaultValue={data.title || ''} disabled={isAdminTaskForEmployee || isAdminGoalForEmployee} />
+            <input name="title" type="text" required defaultValue={effectiveData.title || ''} disabled={isAdminTaskForEmployee || isAdminGoalForEmployee} />
           </div>
 
           {type === 'projects' && (
@@ -8017,10 +8072,25 @@ export default function SyneolabApp() {
 
           {type === 'standups' && (
             <>
+              {effectiveId ? (
+                <div className="note" style={{ marginBottom: 15, background: 'rgba(34, 197, 94, 0.08)', borderColor: 'var(--green)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <Icon name="check" size={13} />
+                    <b>Daily check-in:</b>
+                  </span> Updating your check-in for today ({fmtDate(effectiveData.date || todayStr)}).
+                </div>
+              ) : (
+                <div className="note" style={{ marginBottom: 15 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <Icon name="pulse" size={13} />
+                    <b>Daily check-in:</b>
+                  </span> Check in once per day to share your focus, energy, and blockers with the team. You can edit your check-in anytime today.
+                </div>
+              )}
               <div className="form-row">
                 <div className="field">
                   <label>Primary project {!isAdmin && <span className="sub">(Assigned projects only)</span>}</label>
-                  <select name="project" defaultValue={data.project || assignedProjects[0]?.id || ''}>
+                  <select name="project" defaultValue={effectiveData.project || assignedProjects[0]?.id || ''}>
                     {assignedProjects.length === 0 && (
                       <option value="">No assigned projects</option>
                     )}
@@ -8029,7 +8099,7 @@ export default function SyneolabApp() {
                 </div>
                 <div className="field">
                   <label>Current energy / mode</label>
-                  <select name="mood" defaultValue={data.mood || 'Focused'}>
+                  <select name="mood" defaultValue={effectiveData.mood || 'Focused'}>
                     {['Focused', 'Energized', 'Heads-down', 'Need a hand'].map(m => (
                       <option key={m} value={m}>{m}</option>
                     ))}
@@ -8038,11 +8108,11 @@ export default function SyneolabApp() {
               </div>
               <div className="field">
                 <label>Completed recently</label>
-                <textarea name="yesterday" placeholder="Key wins or progress since your last check-in…" defaultValue={data.yesterday || ''} />
+                <textarea name="yesterday" placeholder="Key wins or progress since your last check-in…" defaultValue={effectiveData.yesterday || ''} />
               </div>
               <div className="field">
                 <label>Blockers or help needed (optional)</label>
-                <textarea name="blockers" placeholder="Anything slowing you down or waiting on review?" defaultValue={data.blockers || ''} />
+                <textarea name="blockers" placeholder="Anything slowing you down or waiting on review?" defaultValue={effectiveData.blockers || ''} />
               </div>
             </>
           )}
