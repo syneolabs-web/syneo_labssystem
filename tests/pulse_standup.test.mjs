@@ -107,9 +107,57 @@ test('Pulse Single Daily Check-in Enforcement', { skip: skipDbTests }, async t =
     assert.ok(standupBId, 'Member B check-in created successfully');
   });
 
+  let goalId;
+  await t.test('Goal current progress accepts 89, 100, and clamps values > 100 to 100', async () => {
+    goalId = await saveRecord(
+      'goals',
+      null,
+      {
+        title: 'Q4 Frontend Velocity',
+        currentValue: 89,
+        targetValue: 100,
+        period: 'quarterly',
+        status: 'On track'
+      },
+      memberA
+    );
+    assert.ok(goalId, 'Goal created');
+    let ws = await getWorkspaceState(memberA);
+    let g = ws.goals.find(item => item.id === goalId);
+    assert.equal(g.currentValue, 89, 'Current value 89 accepted');
+
+    // Update to 100
+    await saveRecord(
+      'goals',
+      goalId,
+      {
+        currentValue: 100
+      },
+      memberA
+    );
+    ws = await getWorkspaceState(memberA);
+    g = ws.goals.find(item => item.id === goalId);
+    assert.equal(g.currentValue, 100, 'Current value 100 accepted');
+    assert.equal(g.status, 'Completed', '100% progress automatically completes goal');
+
+    // Attempt to set 250 -> clamped to 100
+    await saveRecord(
+      'goals',
+      goalId,
+      {
+        currentValue: 250
+      },
+      memberA
+    );
+    ws = await getWorkspaceState(memberA);
+    g = ws.goals.find(item => item.id === goalId);
+    assert.equal(g.currentValue, 100, 'Current value clamped to maximum 100');
+  });
+
   await t.test('Clean up test records', async () => {
     if (standupAId) await deleteRecord(standupAId, memberA);
     if (standupBId) await deleteRecord(standupBId, memberB);
+    if (goalId) await deleteRecord(goalId, memberA);
     await closeDatabase();
   });
 });

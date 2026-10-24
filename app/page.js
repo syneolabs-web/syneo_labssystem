@@ -44,7 +44,8 @@ const paths = {
   dot: 'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
   circle: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-  externalLink: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6 M15 3h6v6 M10 14L21 3'
+  externalLink: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6 M15 3h6v6 M10 14L21 3',
+  flame: 'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z'
 };
 
 const Icon = ({ name, className = 'icon', size, style, strokeWidth = 2 }) => (
@@ -163,6 +164,93 @@ const isTodayStandup = (s, refDate = new Date()) => {
   return false;
 };
 
+const calculateMemberStreaks = (userId, standups = [], clocks = [], refDate = new Date()) => {
+  const today = new Date(refDate);
+  const todayK = key(today);
+
+  // Set of dates the user submitted a standup/check-in
+  const standupDates = new Set();
+  for (const s of standups) {
+    if (s.owner === userId) {
+      if (s.date) standupDates.add(s.date);
+      else if (s.created) {
+        standupDates.add(s.created.slice(0, 10));
+        try { standupDates.add(key(new Date(s.created))); } catch {}
+      }
+    }
+  }
+
+  // Set of dates the user clocked in
+  const clockDates = new Set();
+  for (const c of clocks) {
+    if (c.user_id === userId && c.start) {
+      clockDates.add(key(new Date(c.start * 1000)));
+    }
+  }
+
+  const getStreak = dates => {
+    let current = 0;
+    const checkedToday = dates.has(todayK);
+    let checkDate = new Date(today);
+
+    if (checkedToday) {
+      current = 1;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (dates.has(key(yesterday))) {
+        checkDate = yesterday;
+      } else {
+        return { current: 0, checkedToday: false };
+      }
+    }
+
+    while (true) {
+      const k = key(checkDate);
+      if (dates.has(k)) {
+        if (checkDate.getTime() !== today.getTime()) {
+          current++;
+        }
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    return { current, checkedToday };
+  };
+
+  const checkin = getStreak(standupDates);
+  const clock = getStreak(clockDates);
+
+  // Last 7 days visual history dots (oldest to today)
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dKey = key(d);
+    const dayLabel = d.toLocaleDateString(undefined, { weekday: 'narrow' });
+    last7Days.push({
+      date: dKey,
+      dayLabel,
+      isToday: i === 0,
+      hasCheckin: standupDates.has(dKey),
+      hasClock: clockDates.has(dKey)
+    });
+  }
+
+  return {
+    checkinStreak: checkin.current,
+    checkedToday: checkin.checkedToday,
+    clockStreak: clock.current,
+    clockedToday: clock.checkedToday,
+    last7Days,
+    totalCheckins: standupDates.size,
+    totalClockDays: clockDates.size
+  };
+};
+
 export default function SyneolabApp() {
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
@@ -215,6 +303,8 @@ export default function SyneolabApp() {
   const [timesheetSearch, setTimesheetSearch] = useState('');
   const [timesheetDateFilter, setTimesheetDateFilter] = useState('');
   const [timesheetLimit, setTimesheetLimit] = useState(50);
+  const [streakFilter, setStreakFilter] = useState('all'); // 'all' | 'checked_in' | 'pending' | 'clocked_in'
+  const [streakSearch, setStreakSearch] = useState('');
   const [currentTime, setCurrentTime] = useState(Date.now() / 1000);
 
   // Core State
@@ -953,7 +1043,8 @@ export default function SyneolabApp() {
     const prevGoals = state.goals || [];
     const nextGoal = { ...goal, ...patch };
     const targetVal = Math.max(1, Number(nextGoal.targetValue || 100));
-    const curVal = Math.max(0, Number(nextGoal.currentValue || 0));
+    const curVal = Math.min(100, Math.max(0, Number(nextGoal.currentValue || 0)));
+    nextGoal.currentValue = curVal;
     if (curVal >= targetVal) {
       nextGoal.status = 'Completed';
     } else if (nextGoal.status === 'Completed' && curVal < targetVal) {
@@ -1339,6 +1430,69 @@ export default function SyneolabApp() {
     const maxTasks = Math.max(1, ...state.projects.map(p => state.tasks.filter(t => t.project === p.id).length));
     const comp = completion(state.tasks);
 
+    // Calculate week start for weekly hours
+    const nowD = new Date();
+    const dayOfWeek = nowD.getDay(); // 0 is Sunday
+    const mondayOffset = (dayOfWeek + 6) % 7;
+    const weekStartD = new Date(nowD);
+    weekStartD.setDate(nowD.getDate() - mondayOffset);
+    const weekStartK = key(weekStartD);
+
+    // Individual Member Streaks and Attendance Analytics
+    const memberStreaksList = (state.users || []).map(u => {
+      const streaks = calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr);
+      const activeClock = (state.clocks || []).find(c => c.user_id === u.id && !c.end);
+      const todayStandup = todayStandups.find(s => s.owner === u.id);
+      const uWeekClocks = (state.clocks || []).filter(c => c.user_id === u.id && c.start && key(new Date(c.start * 1000)) >= weekStartK);
+      const weekHours = uWeekClocks.reduce((sum, c) => sum + worked(c, currentTime) / 3600, 0);
+
+      return {
+        user: u,
+        ...streaks,
+        activeClock,
+        todayStandup,
+        weekHours
+      };
+    });
+
+    const checkedInTodayMembersCount = memberStreaksList.filter(m => m.checkedToday).length;
+    const clockedInNowMembersCount = memberStreaksList.filter(m => m.activeClock && !m.activeClock.break_start).length;
+    const onBreakNowMembersCount = memberStreaksList.filter(m => m.activeClock?.break_start).length;
+
+    // Sort by checkin streak descending, then clock streak
+    const sortedStreaksList = [...memberStreaksList].sort((a, b) => {
+      if (b.checkinStreak !== a.checkinStreak) return b.checkinStreak - a.checkinStreak;
+      return b.clockStreak - a.clockStreak;
+    });
+
+    const topCheckinMember = sortedStreaksList[0];
+    const topClockMember = [...memberStreaksList].sort((a, b) => b.clockStreak - a.clockStreak)[0];
+
+    // Filter members for the streak tracking board
+    const filteredMemberStreaks = sortedStreaksList.filter(m => {
+      if (streakFilter === 'checked_in' && !m.checkedToday) return false;
+      if (streakFilter === 'pending' && m.checkedToday) return false;
+      if (streakFilter === 'clocked_in' && (!m.activeClock || m.activeClock.break_start)) return false;
+      if (streakSearch) {
+        const q = streakSearch.toLowerCase().trim();
+        const matchesName = (m.user.name || '').toLowerCase().includes(q);
+        const matchesDept = (m.user.department || '').toLowerCase().includes(q);
+        const matchesPos = getUserPositions(m.user).some(pos => pos.toLowerCase().includes(q));
+        if (!matchesName && !matchesDept && !matchesPos) return false;
+      }
+      return true;
+    });
+
+    const myMemberStreak = memberStreaksList.find(m => m.user.id === user?.id) || {
+      user,
+      checkinStreak: 0,
+      checkedToday: false,
+      clockStreak: 0,
+      clockedToday: false,
+      last7Days: [],
+      weekHours: 0
+    };
+
     return (
       <>
         <div className="page-head">
@@ -1434,6 +1588,396 @@ export default function SyneolabApp() {
             <span><b>{uniqueCheckedInCount}</b> Team check-in{uniqueCheckedInCount === 1 ? '' : 's'} today · <b>{(state.goals || []).length}</b> Goals</span>
           </button>
         </div>
+
+        {/* Individual Member Streaks & Live Attendance Analytics */}
+        {isAdmin ? (
+          <section className="card" style={{ marginBottom: 22, overflow: 'hidden' }}>
+            <div className="card-head" style={{ flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 style={{ fontSize: 16 }}>Individual member streak &amp; attendance analytics</h3>
+                  <span className="tag green" style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    <Icon name="shield" size={11} style={{ marginRight: 3 }} />Live Tracking
+                  </span>
+                </div>
+                <p className="sub" style={{ margin: '3px 0 0' }}>
+                  Live tracking of daily check-in streaks, clock-in consistency, and active shift presence across all team members.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button className="small" onClick={() => navigate('pulse')}>
+                  <Icon name="pulse" size={12} /> Pulse &amp; Goals ↗
+                </button>
+                <button className="small" onClick={() => navigate('clock')}>
+                  <Icon name="clock" size={12} /> Timesheets ↗
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics KPI Bar */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginBottom: 16 }}>
+              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="pulse" size={13} /> Check-ins today
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                  <strong style={{ fontSize: 20 }}>{checkedInTodayMembersCount} / {state.users.length}</strong>
+                  <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
+                    {state.users.length ? Math.round((checkedInTodayMembersCount / state.users.length) * 100) : 0}% synced
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="clock" size={13} /> Active presence
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                  <strong style={{ fontSize: 20 }}>{clockedInNowMembersCount} working</strong>
+                  {onBreakNowMembersCount > 0 && <span style={{ fontSize: 11, color: '#d97706' }}>· {onBreakNowMembersCount} break</span>}
+                </div>
+              </div>
+
+              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="flame" size={13} /> Top check-in streak
+                </span>
+                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ fontSize: 15 }}>{topCheckinMember?.user?.name || '—'}</strong>
+                  {topCheckinMember?.checkinStreak > 0 && (
+                    <span className="tag green" style={{ padding: '2px 7px', fontSize: 11 }}>
+                      {topCheckinMember.checkinStreak}d streak
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="zap" size={13} /> Top clock streak
+                </span>
+                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ fontSize: 15 }}>{topClockMember?.user?.name || '—'}</strong>
+                  {topClockMember?.clockStreak > 0 && (
+                    <span className="tag purple" style={{ padding: '2px 7px', fontSize: 11 }}>
+                      {topClockMember.clockStreak}d streak
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Search & Filter Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {[
+                  ['all', `All members (${memberStreaksList.length})`],
+                  ['checked_in', `Checked in today (${checkedInTodayMembersCount})`],
+                  ['pending', `Pending check-in (${memberStreaksList.length - checkedInTodayMembersCount})`],
+                  ['clocked_in', `Clocked in now (${clockedInNowMembersCount})`]
+                ].map(([k, label]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    className={`small ${streakFilter === k ? 'primary' : ''}`}
+                    onClick={() => setStreakFilter(k)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ minWidth: 220 }}>
+                <input
+                  type="text"
+                  placeholder="Search member or department…"
+                  value={streakSearch}
+                  onChange={e => setStreakSearch(e.target.value)}
+                  style={{ padding: '6px 12px', fontSize: 12, borderRadius: 20 }}
+                />
+              </div>
+            </div>
+
+            {/* Members Streak Table / Card Rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {filteredMemberStreaks.map(m => {
+                const uPos = getUserPositions(m.user);
+                const isTargetSuper = isTargetSuperAdmin(m.user);
+                const isTargetAdm = isTargetAdmin(m.user);
+                return (
+                  <div
+                    key={m.user.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: 12,
+                      background: 'var(--white)',
+                      border: '1px solid var(--line)',
+                      gap: 14,
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    {/* Member identity */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 210 }}>
+                      <Avatar user={m.user} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <strong
+                            style={{ cursor: 'pointer', textDecoration: 'none' }}
+                            onClick={() => setModal({ type: 'person', id: m.user.id, data: m.user })}
+                          >
+                            {m.user.name}
+                          </strong>
+                          {isTargetSuper ? (
+                            <span className="tag super-admin-tag" style={{ fontSize: 9.5, padding: '1px 5px' }}>Super Admin</span>
+                          ) : isTargetAdm ? (
+                            <span className="tag" style={{ fontSize: 9.5, padding: '1px 5px' }}>Admin</span>
+                          ) : null}
+                        </div>
+                        <span className="sub" style={{ fontSize: 11, display: 'block' }}>
+                          {uPos.length ? uPos.join(' · ') : m.user.department || 'Workspace'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Daily Check-in Streak Column */}
+                    <div style={{ minWidth: 170 }}>
+                      <span className="sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 2 }}>
+                        Daily Check-in
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span
+                          className={`tag ${m.checkinStreak > 0 ? 'green' : ''}`}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}
+                          title={`${m.checkinStreak} consecutive days checked in`}
+                        >
+                          <Icon name="flame" size={12} />
+                          {m.checkinStreak}d streak
+                        </span>
+                        {m.checkedToday ? (
+                          <span className="tag green" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                            <Icon name="check" size={11} />Checked in
+                          </span>
+                        ) : (
+                          <span className="tag yellow" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                            <Icon name="pulse" size={11} />Pending
+                          </span>
+                        )}
+                      </div>
+                      {m.todayStandup && (
+                        <span className="sub" style={{ fontSize: 11, display: 'block', marginTop: 3, maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          Focus: “{m.todayStandup.title}”
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Clock-in Streak & Presence Column */}
+                    <div style={{ minWidth: 170 }}>
+                      <span className="sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 2 }}>
+                        Clock-in &amp; Shift
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span
+                          className={`tag ${m.clockStreak > 0 ? 'purple' : ''}`}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}
+                          title={`${m.clockStreak} consecutive days clocked in`}
+                        >
+                          <Icon name="zap" size={12} />
+                          {m.clockStreak}d streak
+                        </span>
+                        {m.activeClock ? (
+                          m.activeClock.break_start ? (
+                            <span className="tag yellow" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                              <Icon name="coffee" size={11} />Break ({duration(breakDuration(m.activeClock, currentTime))})
+                            </span>
+                          ) : (
+                            <span className="tag green" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <i style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
+                              Working ({duration(worked(m.activeClock, currentTime))})
+                            </span>
+                          )
+                        ) : (
+                          <span className="tag" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                            Off shift
+                          </span>
+                        )}
+                      </div>
+                      <span className="sub" style={{ fontSize: 11, display: 'block', marginTop: 3 }}>
+                        {m.weekHours.toFixed(1)}h logged this week
+                      </span>
+                    </div>
+
+                    {/* 7-Day History Mini Matrix */}
+                    <div style={{ minWidth: 140 }}>
+                      <span className="sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 3 }}>
+                        7-day consistency
+                      </span>
+                      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                        {m.last7Days.map(d => (
+                          <div
+                            key={d.date}
+                            title={`${d.date} (${d.dayLabel}): ${d.hasCheckin ? 'Check-in posted' : 'No check-in'} · ${d.hasClock ? 'Clocked in' : 'No clock'}`}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: 2,
+                              padding: '3px 4px',
+                              borderRadius: 6,
+                              background: d.isToday ? 'var(--light)' : 'transparent',
+                              border: d.isToday ? '1px solid var(--green)' : '1px solid transparent'
+                            }}
+                          >
+                            <span style={{ fontSize: 9, fontWeight: d.isToday ? 700 : 500, color: d.isToday ? 'var(--green)' : 'var(--muted)' }}>
+                              {d.dayLabel}
+                            </span>
+                            <i
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                background: d.hasCheckin ? 'var(--green)' : 'var(--line)',
+                                display: 'block'
+                              }}
+                            />
+                            <i
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                background: d.hasClock ? '#8b5cf6' : 'var(--line)',
+                                display: 'block'
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="small"
+                        onClick={() => setModal({ type: 'memberAnalytics', id: m.user.id, data: m.user })}
+                        title="Open full performance and timesheet analytics for this member"
+                      >
+                        <Icon name="analytics" size={12} />
+                        Analytics
+                      </button>
+                      {m.todayStandup ? (
+                        <button
+                          type="button"
+                          className="small"
+                          onClick={() => setModal({ type: 'standups', id: m.todayStandup.id, data: m.todayStandup })}
+                          title="View today's check-in submission"
+                        >
+                          Check-in
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredMemberStreaks.length === 0 && (
+                <div className="empty" style={{ padding: '24px 16px' }}>
+                  <strong>No members match this filter</strong>
+                  Try choosing "All members" or clearing the search box.
+                </div>
+              )}
+            </div>
+          </section>
+        ) : (
+          <section className="card" style={{ marginBottom: 22 }}>
+            <div className="card-head">
+              <div>
+                <span className="eyebrow" style={{ margin: 0 }}>My Habits &amp; Work Consistency</span>
+                <h3 style={{ margin: '3px 0 0', fontSize: 16 }}>My daily check-in &amp; clock-in streaks</h3>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="small primary"
+                  onClick={() =>
+                    setModal(
+                      myTodayStandup
+                        ? { type: 'standups', id: myTodayStandup.id, data: myTodayStandup }
+                        : { type: 'standups', data: { date: todayStr, mood: 'Focused' } }
+                    )
+                  }
+                >
+                  {myTodayStandup ? 'Edit today’s check-in' : 'Post daily check-in'}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+              <div style={{ padding: 14, borderRadius: 14, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="flame" size={14} style={{ color: 'var(--green)' }} /> Daily check-in streak
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0' }}>
+                  <strong style={{ fontSize: 26, fontWeight: 700 }}>{myMemberStreak.checkinStreak}</strong>
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>days streak</span>
+                </div>
+                <span className="sub" style={{ fontSize: 11 }}>
+                  {myMemberStreak.checkedToday ? (
+                    <span style={{ color: 'var(--green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <Icon name="check" size={12} />Checked in for today!
+                    </span>
+                  ) : (
+                    <span style={{ color: '#d97706', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <Icon name="pulse" size={12} />Pending check-in today
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              <div style={{ padding: 14, borderRadius: 14, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon name="zap" size={14} style={{ color: '#8b5cf6' }} /> Clock-in consistency streak
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0' }}>
+                  <strong style={{ fontSize: 26, fontWeight: 700 }}>{myMemberStreak.clockStreak}</strong>
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>days streak</span>
+                </div>
+                <span className="sub" style={{ fontSize: 11 }}>
+                  {myMemberStreak.weekHours.toFixed(1)}h focused work logged this week
+                </span>
+              </div>
+
+              <div style={{ padding: 14, borderRadius: 14, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                <span className="sub" style={{ fontSize: 11, display: 'block', marginBottom: 8 }}>
+                  7-day consistency (Top: Check-in · Bottom: Clock)
+                </span>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {myMemberStreak.last7Days.map(d => (
+                    <div
+                      key={d.date}
+                      title={`${d.date} (${d.dayLabel}): ${d.hasCheckin ? 'Checked in' : 'No check-in'} · ${d.hasClock ? 'Clocked in' : 'No shift'}`}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 3,
+                        padding: '4px 6px',
+                        borderRadius: 8,
+                        background: d.isToday ? 'var(--light)' : 'var(--white)',
+                        border: d.isToday ? '1px solid var(--green)' : '1px solid var(--line)'
+                      }}
+                    >
+                      <span style={{ fontSize: 10, fontWeight: d.isToday ? 700 : 500, color: d.isToday ? 'var(--green)' : 'var(--muted)' }}>
+                        {d.dayLabel}
+                      </span>
+                      <i style={{ width: 7, height: 7, borderRadius: '50%', background: d.hasCheckin ? 'var(--green)' : 'var(--line)' }} />
+                      <i style={{ width: 7, height: 7, borderRadius: '50%', background: d.hasClock ? '#8b5cf6' : 'var(--line)' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         <div className="bento-grid">
           {/* Project Analytics Pillars */}
@@ -1580,6 +2124,7 @@ export default function SyneolabApp() {
               const activeGoal = uGoals.find(g => g.status !== 'Completed') || uGoals[0];
               const uClock = state.clocks.find(c => c.user_id === u.id && !c.end);
               const uPositions = getUserPositions(u);
+              const uMemberStreak = memberStreaksList.find(m => m.user.id === u.id);
               return (
                 <div key={u.id} className="list-row" onClick={() => setModal({ type: 'person', id: u.id, data: u })} style={{ cursor: 'pointer' }}>
                   <Avatar user={u} />
@@ -1595,9 +2140,17 @@ export default function SyneolabApp() {
                         : u.department}
                     </span>
                   </div>
-                  <span className={`tag ${uClock ? (uClock.break_start ? 'yellow' : 'green') : activeTask ? 'yellow' : ''}`}>
-                    {uClock ? (uClock.break_start ? 'On break' : 'Clocked in') : activeTask ? activeTask.status : 'Available'}
-                  </span>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    {uMemberStreak?.checkinStreak > 0 && (
+                      <span className="tag green" style={{ fontSize: 10.5, padding: '2px 7px' }} title={`${uMemberStreak.checkinStreak} day check-in streak`}>
+                        <Icon name="flame" size={11} style={{ marginRight: 2 }} />
+                        {uMemberStreak.checkinStreak}d
+                      </span>
+                    )}
+                    <span className={`tag ${uClock ? (uClock.break_start ? 'yellow' : 'green') : activeTask ? 'yellow' : ''}`}>
+                      {uClock ? (uClock.break_start ? 'On break' : 'Clocked in') : activeTask ? activeTask.status : 'Available'}
+                    </span>
+                  </div>
                 </div>
               );
             })}
@@ -6055,6 +6608,8 @@ export default function SyneolabApp() {
         .filter(a => a.actorId === u.id || a.targetUserId === u.id || (Array.isArray(a.targetUserIds) && a.targetUserIds.includes(u.id)))
         .slice(0, 8);
 
+      const uStreaks = calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr);
+
       return (
         <div className="modal modal-wide member-analytics-modal" role="dialog" style={{ maxWidth: 960 }}>
           <div className="card-head">
@@ -6075,6 +6630,14 @@ export default function SyneolabApp() {
                   )}
                   <span className={`tag ${activeShift ? (activeShift.break_start ? 'yellow' : 'green') : ''}`}>
                     {activeShift ? (activeShift.break_start ? <><Icon name="coffee" size={12} style={{ marginRight: 4 }} />On break</> : <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Clocked in</>) : <><Icon name="dot" size={10} style={{ marginRight: 4, opacity: 0.5 }} />Offline</>}
+                  </span>
+                  <span className="tag green" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <Icon name="flame" size={12} />
+                    {uStreaks.checkinStreak}d check-in streak
+                  </span>
+                  <span className="tag purple" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <Icon name="zap" size={12} />
+                    {uStreaks.clockStreak}d clock streak
                   </span>
                 </div>
               </div>
@@ -7244,8 +7807,10 @@ export default function SyneolabApp() {
               body.notifyEveryone = fd.get('notifyEveryone') === 'on';
             }
             if (type === 'goals') {
-              body.currentValue = Number(body.currentValue ?? effectiveData.currentValue ?? 0);
-              body.targetValue = Number(body.targetValue ?? effectiveData.targetValue ?? 100);
+              const rawCur = fd.get('currentValue') ?? body.currentValue ?? effectiveData.currentValue ?? 0;
+              const parsedCur = Number(rawCur || 0);
+              body.currentValue = Math.min(100, Math.max(0, Number.isNaN(parsedCur) ? 0 : parsedCur));
+              body.targetValue = Math.max(1, Number(body.targetValue ?? effectiveData.targetValue ?? 100));
               body.period = body.period || effectiveData.period || 'weekly';
               body.status = body.status || effectiveData.status || 'On track';
               body.subtasks = effectiveData.subtasks || [];
@@ -8285,15 +8850,32 @@ export default function SyneolabApp() {
 
               <div className="form-row">
                 <div className="field">
-                  <label>Current progress value</label>
+                  <label>Current progress value (0 – 100%)</label>
                   <input
-                    key={`cur-${data.currentValue ?? 0}`}
                     name="currentValue"
                     type="number"
-                    step="any"
+                    min="0"
+                    max="100"
+                    step="1"
                     required
-                    defaultValue={data.currentValue ?? 0}
-                    onChange={e => updateModalData({ currentValue: Number(e.target.value || 0) })}
+                    placeholder="0"
+                    value={data.currentValue ?? 0}
+                    onChange={e => {
+                      const raw = e.target.value;
+                      if (raw === '') {
+                        updateModalData({ currentValue: '' });
+                        return;
+                      }
+                      const num = Number(raw);
+                      if (Number.isNaN(num)) return;
+                      const clamped = Math.min(100, Math.max(0, num));
+                      updateModalData({ currentValue: clamped });
+                    }}
+                    onBlur={e => {
+                      const num = Number(e.target.value || 0);
+                      const clamped = Math.min(100, Math.max(0, Number.isNaN(num) ? 0 : num));
+                      updateModalData({ currentValue: clamped });
+                    }}
                   />
                 </div>
                 <div className="field">
