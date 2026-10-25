@@ -3806,8 +3806,8 @@ export default function SyneolabApp() {
 
         {/* Top Grid: Live Time Tracker + 7-Day Attendance & Capacity Matrix */}
         <div className="clock-top-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <section className={`card timer-card ${activeClock?.break_start ? 'is-on-break' : ''}`} style={{ flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+            <section className={`card timer-card ${activeClock?.break_start ? 'is-on-break' : ''}`} style={{ flex: 1, minWidth: 0 }}>
               <div className="card-head">
                 <h3>Time tracker</h3>
                 <span className="timer-state">
@@ -3890,9 +3890,9 @@ export default function SyneolabApp() {
           </div>
 
           {/* 7-Day Attendance & Capacity Matrix */}
-          <section className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <section className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
             <div>
-              <div className="card-head">
+              <div className="card-head" style={{ flexWrap: 'wrap', gap: 8 }}>
                 <div>
                   <h3>{isAdmin ? 'Weekly team attendance & capacity (Last 7 days)' : 'My 7-day attendance & focus (Last 7 days)'}</h3>
                   <p className="sub" style={{ marginTop: 4 }}>
@@ -3904,7 +3904,7 @@ export default function SyneolabApp() {
                 <span className="tag">40h weekly target</span>
               </div>
               <div className="table-wrap">
-                <table>
+                <table style={{ minWidth: 640 }}>
                   <thead>
                     <tr>
                       <th>Team member</th>
@@ -5179,6 +5179,7 @@ export default function SyneolabApp() {
 
   // 10. Analytics View
   const renderAnalytics = () => {
+    const todayStr = key(new Date());
     const scopedClocks = isAdmin ? state.clocks : state.clocks.filter(c => c.user_id === user.id);
     const daysData = series(scopedClocks, analyticsDays, currentTime);
     const prevData = series(scopedClocks, analyticsDays, currentTime, analyticsDays);
@@ -5536,7 +5537,7 @@ export default function SyneolabApp() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 12 }}>
             {(streakBoardTab === 'checkin' ? checkinRankedAnalytics : clockRankedAnalytics).map((m, idx) => {
               const streakVal = streakBoardTab === 'checkin' ? m.checkinStreak : m.clockStreak;
               const bestVal = streakBoardTab === 'checkin' ? m.bestCheckinStreak : m.bestClockStreak;
@@ -6892,7 +6893,7 @@ export default function SyneolabApp() {
             </div>
 
             {/* 4-Bento Streak Metric Tiles */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 12, marginBottom: 16 }}>
               <div style={{ padding: 14, borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
                 <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <Icon name="flame" size={13} style={{ color: 'var(--green)' }} /> Current Check-in Streak
@@ -6956,9 +6957,9 @@ export default function SyneolabApp() {
 
             {/* 14-Day Visual Rhythm & Habit Timeline (Diagram Pattern from Image 3) */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
                 <strong style={{ fontSize: 12 }}>14-Day Work &amp; Habit Rhythm Timeline</strong>
-                <span className="sub" style={{ fontSize: 11 }}>Pill Fill: Work Hours · Dot: Daily Check-in</span>
+                <span className="sub" style={{ fontSize: 10.5 }}>Pill Fill: Work Hours · Dot: Daily Check-in</span>
               </div>
               <div className="rhythm-14d-container">
                 {uStreaks.last14Days.map(ds => {
@@ -6992,7 +6993,7 @@ export default function SyneolabApp() {
 
           {/* 7-Day Hours Rhythm Bar Chart */}
           <section className="card" style={{ marginBottom: 18, padding: 18 }}>
-            <div className="card-head" style={{ marginBottom: 12 }}>
+            <div className="card-head" style={{ marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <div>
                 <h3 style={{ margin: 0 }}>7-Day Work Rhythm</h3>
                 <span className="sub">Individual focused work hours logged per day</span>
