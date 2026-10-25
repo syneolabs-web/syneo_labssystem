@@ -225,6 +225,7 @@ export default function SyneolabApp() {
   const [streakFilter, setStreakFilter] = useState('all'); // 'all' | 'checked_in' | 'pending' | 'clocked_in'
   const [streakSearch, setStreakSearch] = useState('');
   const [streakBoardTab, setStreakBoardTab] = useState('checkin'); // 'checkin' | 'clock'
+  const [gaugeMode, setGaugeMode] = useState('completion'); // 'completion' | 'breakdown'
   const [currentTime, setCurrentTime] = useState(Date.now() / 1000);
 
   // Core State
@@ -2222,52 +2223,126 @@ export default function SyneolabApp() {
 
           {/* Project Progress Gauge */}
           <section className="card dashboard-progress">
-            <div className="card-head">
-              <h3>Project progress</h3>
-              <span className="mini-label">All tasks</span>
+            <div className="card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Project progress</h3>
+                <span className="sub" style={{ fontSize: 10 }}>Overall task velocity &amp; completion</span>
+              </div>
+              <div className="gauge-mode-toggle">
+                <button
+                  type="button"
+                  className={`gauge-toggle-btn ${gaugeMode === 'completion' ? 'active' : ''}`}
+                  onClick={() => setGaugeMode('completion')}
+                  title="View task completion rate"
+                >
+                  Completion ({comp.percent}%)
+                </button>
+                <button
+                  type="button"
+                  className={`gauge-toggle-btn ${gaugeMode === 'breakdown' ? 'active' : ''}`}
+                  onClick={() => setGaugeMode('breakdown')}
+                  title="View task status breakdown"
+                >
+                  All tasks ({comp.total})
+                </button>
+              </div>
             </div>
             <div className="gauge-wrap">
               <svg className="semi-gauge" viewBox="0 0 260 150" role="img" aria-label={`${comp.percent}% tasks completed`}>
                 <defs>
-                  <pattern id="gauge-stripes" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)">
-                    <rect width="5" height="5" fill="var(--bg)" />
-                    <path d="M0 0V5" stroke="var(--stripe)" strokeWidth="2" />
+                  <pattern id="gauge-stripes" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <rect width="6" height="6" fill="var(--bg)" />
+                    <path d="M0 0V6" stroke="var(--stripe, var(--line))" strokeWidth="2" opacity="0.65" />
                   </pattern>
+                  <linearGradient id="gauge-green-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#059669" />
+                  </linearGradient>
+                  <linearGradient id="gauge-purple-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#a78bfa" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
                 </defs>
-                <path d="M28 126 A102 102 0 0 1 232 126" fill="none" stroke="url(#gauge-stripes)" strokeWidth="29" strokeLinecap="round" />
-                {comp.done > 0 && (
-                  <path
-                    d="M28 126 A102 102 0 0 1 232 126"
-                    pathLength="100"
-                    fill="none"
-                    stroke="var(--green)"
-                    strokeWidth="29"
-                    strokeDasharray={`${comp.doneShare * 100} 100`}
-                    strokeLinecap="round"
-                  />
-                )}
-                {comp.ongoing > 0 && (
-                  <path
-                    d="M28 126 A102 102 0 0 1 232 126"
-                    pathLength="100"
-                    fill="none"
-                    stroke={darkMode ? 'var(--mid)' : 'var(--deep)'}
-                    strokeWidth="29"
-                    strokeDasharray={`${comp.ongoingShare * 100} 100`}
-                    strokeDashoffset={`-${comp.doneShare * 100}`}
-                    strokeLinecap={comp.done ? 'butt' : 'round'}
-                  />
+                {/* Background Semicircle Track */}
+                <path d="M28 126 A102 102 0 0 1 232 126" fill="none" stroke="url(#gauge-stripes)" strokeWidth="28" strokeLinecap="round" />
+
+                {gaugeMode === 'completion' ? (
+                  /* Completion Mode: Arc is 100% in sync with the central % value */
+                  comp.percent > 0 && (
+                    <path
+                      d="M28 126 A102 102 0 0 1 232 126"
+                      pathLength="100"
+                      fill="none"
+                      stroke="url(#gauge-green-grad)"
+                      strokeWidth="28"
+                      strokeDasharray={`${comp.percent} 100`}
+                      strokeLinecap="round"
+                    />
+                  )
+                ) : (
+                  /* Breakdown Mode: Clearly distinct emerald and purple segments */
+                  <>
+                    {comp.done > 0 && (
+                      <path
+                        d="M28 126 A102 102 0 0 1 232 126"
+                        pathLength="100"
+                        fill="none"
+                        stroke="url(#gauge-green-grad)"
+                        strokeWidth="28"
+                        strokeDasharray={`${comp.doneShare * 100} 100`}
+                        strokeLinecap={comp.ongoing > 0 ? 'round' : 'round'}
+                      />
+                    )}
+                    {comp.ongoing > 0 && (
+                      <path
+                        d="M28 126 A102 102 0 0 1 232 126"
+                        pathLength="100"
+                        fill="none"
+                        stroke="url(#gauge-purple-grad)"
+                        strokeWidth="28"
+                        strokeDasharray={`${comp.ongoingShare * 100} 100`}
+                        strokeDashoffset={`-${comp.doneShare * 100}`}
+                        strokeLinecap={comp.done > 0 ? 'round' : 'round'}
+                      />
+                    )}
+                  </>
                 )}
               </svg>
               <div className="gauge-label">
                 <b>{comp.percent}%</b>
-                <span>Tasks completed</span>
+                <span>{gaugeMode === 'completion' ? 'Tasks completed' : `${comp.done} of ${comp.total} completed`}</span>
               </div>
             </div>
+
+            {/* Segmented Distribution Bar */}
+            <div className="gauge-distribution-bar" title={`Completed: ${comp.done} · In progress: ${comp.ongoing} · Pending: ${comp.pending}`}>
+              {comp.done > 0 && (
+                <div
+                  className="dist-seg done"
+                  style={{ width: `${comp.doneShare * 100}%` }}
+                  title={`Completed: ${comp.done} (${Math.round(comp.doneShare * 100)}%)`}
+                />
+              )}
+              {comp.ongoing > 0 && (
+                <div
+                  className="dist-seg ongoing"
+                  style={{ width: `${comp.ongoingShare * 100}%` }}
+                  title={`In progress: ${comp.ongoing} (${Math.round(comp.ongoingShare * 100)}%)`}
+                />
+              )}
+              {comp.pending > 0 && (
+                <div
+                  className="dist-seg pending"
+                  style={{ width: `${(comp.pending / (comp.total || 1)) * 100}%` }}
+                  title={`Pending: ${comp.pending} (${Math.round(((comp.pending) / (comp.total || 1)) * 100)}%)`}
+                />
+              )}
+            </div>
+
             <div className="gauge-legend">
-              <span><i className="dot"></i>Completed <b>{comp.done}</b></span>
-              <span><i className="dot deep"></i>In progress <b>{comp.ongoing}</b></span>
-              <span><i className="dot striped"></i>Pending <b>{comp.pending}</b></span>
+              <span className="legend-item"><i className="dot" style={{ background: '#10b981' }}></i>Completed <b>{comp.done}</b> <small>({comp.percent}%)</small></span>
+              <span className="legend-item"><i className="dot" style={{ background: '#8b5cf6' }}></i>In progress <b>{comp.ongoing}</b> <small>({Math.round(comp.ongoingShare * 100)}%)</small></span>
+              <span className="legend-item"><i className="dot striped"></i>Pending <b>{comp.pending}</b> <small>({Math.round(((comp.pending) / (comp.total || 1)) * 100)}%)</small></span>
             </div>
           </section>
 

@@ -963,7 +963,7 @@ html[data-dark="true"] .project-symbol-3 {
 }
 
 html[data-dark="true"] .dot.deep {
-  background: var(--mid) !important;
+  background: #8b5cf6 !important;
 }
 
 html[data-dark="true"] .timer-controls button {
@@ -1544,6 +1544,115 @@ html[data-dark="true"] .analytics-kpi-card.highlight {
 .kpi-sub {
   font-size: 11.5px;
   color: var(--muted);
+}
+
+/* ============================================================
+   Project Progress Gauge Interactive & Polished UI
+   ============================================================ */
+
+.gauge-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 2px;
+  gap: 2px;
+}
+
+html[data-dark="true"] .gauge-mode-toggle {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.gauge-toggle-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.gauge-toggle-btn:hover {
+  color: var(--ink);
+}
+
+.gauge-toggle-btn.active {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+html[data-dark="true"] .gauge-toggle-btn.active {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.gauge-distribution-bar {
+  display: flex;
+  height: 4px;
+  width: 100%;
+  max-width: 220px;
+  margin: 10px auto 4px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--line);
+  gap: 2px;
+}
+
+html[data-dark="true"] .gauge-distribution-bar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dist-seg {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.dist-seg.done {
+  background: #10b981;
+}
+
+.dist-seg.ongoing {
+  background: #8b5cf6;
+}
+
+.dist-seg.pending {
+  background: color-mix(in srgb, var(--line) 80%, var(--muted));
+  opacity: 0.6;
+}
+
+.gauge-legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 10px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+}
+
+.legend-item b {
+  color: var(--ink);
+  margin-left: 2px;
+}
+
+.legend-item small {
+  font-size: 9px;
+  opacity: 0.75;
 }
 
 /* ============================================================
