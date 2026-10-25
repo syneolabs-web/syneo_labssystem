@@ -1546,63 +1546,355 @@ html[data-dark="true"] .analytics-kpi-card.highlight {
   color: var(--muted);
 }
 
-/* 7-Day Bar Chart */
-.analytics-bar-chart {
+/* ============================================================
+   7-Day Work Rhythm Clean & Polished UI (Linear / Apple aesthetic)
+   ============================================================ */
+
+.rhythm-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.rhythm-icon-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 24%, transparent);
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+html[data-dark="true"] .rhythm-icon-badge {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #34d399;
+}
+
+.rhythm-summary-chips {
   display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  height: 180px;
-  padding: 12px 6px 6px;
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  scrollbar-width: thin;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rhythm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+
+html[data-dark="true"] .rhythm-chip {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.rhythm-chip strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.rhythm-chip small {
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.rhythm-chip.primary {
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  border-color: color-mix(in srgb, var(--green) 26%, transparent);
+  color: var(--green);
+}
+
+.rhythm-chip.primary strong {
+  color: var(--green);
+}
+
+html[data-dark="true"] .rhythm-chip.primary {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.32);
+  color: #34d399;
+}
+
+html[data-dark="true"] .rhythm-chip.primary strong {
+  color: #34d399;
+}
+
+.rhythm-chip.highlight {
+  background: color-mix(in srgb, #6366f1 10%, transparent);
+  border-color: color-mix(in srgb, #6366f1 24%, transparent);
+  color: #6366f1;
+}
+
+.rhythm-chip.highlight strong {
+  color: #6366f1;
+}
+
+html[data-dark="true"] .rhythm-chip.highlight {
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.32);
+  color: #a5b4fc;
+}
+
+html[data-dark="true"] .rhythm-chip.highlight strong {
+  color: #a5b4fc;
+}
+
+.rhythm-chart-wrapper {
+  position: relative;
   width: 100%;
+  padding-top: 14px;
+  margin-bottom: 12px;
+}
+
+/* Benchmark Target Line */
+.rhythm-benchmark-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.benchmark-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+  margin-right: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+html[data-dark="true"] .benchmark-label {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.benchmark-dash {
+  flex: 1;
+  height: 1px;
+  border-top: 1px dashed color-mix(in srgb, var(--line) 85%, var(--muted));
+  opacity: 0.6;
+}
+
+html[data-dark="true"] .benchmark-dash {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Main 7-Day Chart Grid */
+.analytics-bar-chart {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  height: 185px !important;
+  padding: 6px 2px 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .analytics-bar-col {
-  flex: 0 0 44px !important;
-  min-width: 44px !important;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-  gap: 6px;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: 58px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  height: 100% !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  position: relative !important;
+  cursor: default !important;
+  transition: transform 0.15s ease !important;
 }
 
-.bar-val {
+.analytics-bar-col:hover {
+  transform: translateY(-2px);
+}
+
+.bar-val-wrap {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.bar-val-active {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 750;
   color: var(--ink);
+  letter-spacing: -0.2px;
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+}
+
+.bar-val-muted {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  opacity: 0.4;
+  display: inline-block;
+}
+
+.bar-track-shell {
+  height: 115px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .bar-track {
   width: 100%;
-  max-width: 44px;
-  height: 120px;
-  background: var(--line);
-  border-radius: 8px;
+  max-width: 28px;
+  height: 100%;
+  background: color-mix(in srgb, var(--bg) 65%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 9px;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
+  position: relative;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 html[data-dark="true"] .bar-track {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.analytics-bar-col.is-today .bar-track {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1.5px var(--green), 0 0 12px rgba(16, 185, 129, 0.22);
 }
 
 .bar-fill {
   width: 100%;
-  background: linear-gradient(180deg, var(--accent, #145c40) 0%, #2563eb 100%);
-  border-radius: 8px 8px 0 0;
-  transition: height 0.3s ease;
+  border-radius: 7px 7px 0 0;
+  background: linear-gradient(180deg, #10b981 0%, #06b6d4 100%);
+  position: relative;
+  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.bar-label {
+.bar-fill.active {
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.28);
+}
+
+.bar-fill-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 7px 7px 0 0;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.bar-label-group {
+  height: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+}
+
+.bar-weekday {
   font-size: 10.5px;
-  font-weight: 600;
-  color: var(--muted);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
   text-align: center;
+  white-space: nowrap;
+}
+
+.bar-weekday.today-text {
+  color: var(--green);
+  font-weight: 800;
+}
+
+.bar-date {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+/* Footer Insight Strip */
+.rhythm-chart-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+}
+
+.foot-insight {
+  font-size: 11px;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.foot-insight.muted {
+  color: var(--muted);
+}
+
+.foot-legend {
+  font-size: 10px;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.active {
+  background: linear-gradient(180deg, #10b981 0%, #06b6d4 100%);
+}
+
+.legend-dot.target {
+  background: var(--muted);
+  border: 1px dashed var(--muted);
+}
+
+.legend-dot.today {
+  background: var(--green);
+  box-shadow: 0 0 4px var(--green);
 }
 
 /* Tasks Portfolio in Analytics */
@@ -3039,18 +3331,65 @@ html, body {
   }
 
   .analytics-bar-chart {
-    height: 160px !important;
-    gap: 8px !important;
+    height: 165px !important;
+    gap: 4px !important;
+    padding: 2px 0 0 !important;
     width: 100% !important;
   }
 
   .analytics-bar-col {
-    flex: 0 0 40px !important;
-    min-width: 40px !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: 44px !important;
+    gap: 4px !important;
+  }
+
+  .bar-val-wrap {
+    height: 18px !important;
+  }
+
+  .bar-val-active {
+    font-size: 10px !important;
+  }
+
+  .bar-val-muted {
+    font-size: 10px !important;
+  }
+
+  .bar-track-shell {
+    height: 100px !important;
   }
 
   .bar-track {
-    height: 105px !important;
+    max-width: 24px !important;
+    border-radius: 7px !important;
+  }
+
+  .bar-label-group {
+    height: 30px !important;
+  }
+
+  .bar-weekday {
+    font-size: 9.5px !important;
+  }
+
+  .bar-date {
+    font-size: 8px !important;
+  }
+
+  .rhythm-summary-chips {
+    gap: 5px !important;
+  }
+
+  .rhythm-chip {
+    padding: 3px 8px !important;
+    font-size: 10px !important;
+  }
+
+  .rhythm-chart-foot {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
   }
 
   .tabs {
@@ -3139,5 +3478,18 @@ html, body {
   .streak-tab-btn {
     padding: 3px 7px !important;
     font-size: 9.5px !important;
+  }
+  .bar-track {
+    max-width: 19px !important;
+    border-radius: 5px !important;
+  }
+  .bar-val-active {
+    font-size: 9px !important;
+  }
+  .bar-weekday {
+    font-size: 8.5px !important;
+  }
+  .bar-date {
+    font-size: 7.5px !important;
   }
 }

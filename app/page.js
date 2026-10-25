@@ -6757,12 +6757,30 @@ export default function SyneolabApp() {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const dKey = key(d);
-        const dayLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' });
+        const shortDay = d.toLocaleDateString(undefined, { weekday: 'short' });
+        const shortDate = `${d.getMonth() + 1}/${d.getDate()}`;
+        const dayLabel = `${shortDay}, ${shortDate}`;
+        const fullDay = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
         const dayClocks = uClocks.filter(c => key(new Date(c.start * 1000)) === dKey);
         const dayHours = dayClocks.reduce((acc, c) => acc + worked(c, currentTime) / 3600, 0);
-        daySeries.push({ date: dKey, label: dayLabel, hours: dayHours, count: dayClocks.length });
+        const isToday = dKey === todayStr;
+        daySeries.push({
+          date: dKey,
+          label: dayLabel,
+          shortDay,
+          shortDate,
+          fullDay,
+          hours: dayHours,
+          count: dayClocks.length,
+          isToday
+        });
       }
-      const maxDayHours = Math.max(8, ...daySeries.map(s => s.hours));
+      const totalWeekHours = daySeries.reduce((acc, ds) => acc + ds.hours, 0);
+      const activeWeekDays = daySeries.filter(ds => ds.hours > 0).length;
+      const peakWeekDay = daySeries.reduce((max, ds) => (ds.hours > (max?.hours || 0) ? ds : max), null);
+      const avgDailyHours = activeWeekDays > 0 ? (totalWeekHours / activeWeekDays) : 0;
+      const benchmarkHours = 8;
+      const maxDayHours = Math.max(benchmarkHours, ...daySeries.map(s => s.hours));
 
       // Recent Shift Work Notes
       const recentShiftsWithNotes = uClocks
@@ -6971,7 +6989,9 @@ export default function SyneolabApp() {
                       className={`rhythm-14d-col ${ds.isToday ? 'is-today' : ''}`}
                       title={`${ds.date} (${ds.shortDay}): ${ds.hasCheckin ? (ds.standup ? `Checked in: “${ds.standup.title}”` : 'Checked in') : 'No check-in'} · ${ds.hours.toFixed(1)}h worked`}
                     >
-                      <span className="rhythm-14d-val">{ds.hours > 0 ? `${ds.hours.toFixed(1)}h` : '0h'}</span>
+                      <span className="rhythm-14d-val" style={ds.hours > 0 ? undefined : { opacity: 0.35 }}>
+                        {ds.hours > 0 ? `${ds.hours.toFixed(1)}h` : '—'}
+                      </span>
                       <div className="rhythm-14d-track">
                         {ds.hasCheckin && (
                           <span className="rhythm-14d-flame" title="Daily check-in posted">
@@ -6992,31 +7012,116 @@ export default function SyneolabApp() {
           </section>
 
           {/* 7-Day Hours Rhythm Bar Chart */}
-          <section className="card" style={{ marginBottom: 18, padding: 18 }}>
-            <div className="card-head" style={{ marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-              <div>
-                <h3 style={{ margin: 0 }}>7-Day Work Rhythm</h3>
-                <span className="sub">Individual focused work hours logged per day</span>
+          <section className="card rhythm-card" style={{ marginBottom: 18, padding: '20px 22px' }}>
+            <div className="card-head" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="rhythm-icon-badge">
+                  <Icon name="clock" size={15} />
+                </span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 14.5, fontWeight: 700, letterSpacing: '-0.2px' }}>7-Day Work Rhythm</h3>
+                  <span className="sub" style={{ fontSize: 11 }}>Focused shift hours logged per day</span>
+                </div>
               </div>
-              <span className="tag">Last 7 Days</span>
+              <div className="rhythm-summary-chips">
+                <span className="rhythm-chip primary">
+                  <Icon name="zap" size={11} />
+                  <strong>{totalWeekHours.toFixed(1)}h</strong>
+                  <small>total</small>
+                </span>
+                <span className="rhythm-chip">
+                  <Icon name="calendar" size={11} />
+                  <strong>{activeWeekDays}</strong>
+                  <small>of 7 days active</small>
+                </span>
+                {activeWeekDays > 0 && (
+                  <span className="rhythm-chip highlight">
+                    <Icon name="pulse" size={11} />
+                    <strong>{avgDailyHours.toFixed(1)}h</strong>
+                    <small>avg / active day</small>
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="analytics-bar-chart">
-              {daySeries.map(ds => {
-                const heightPct = Math.min(100, Math.round((ds.hours / maxDayHours) * 100));
-                return (
-                  <div key={ds.date} className="analytics-bar-col">
-                    <span className="bar-val">{ds.hours > 0 ? `${ds.hours.toFixed(1)}h` : '0h'}</span>
-                    <div className="bar-track">
-                      <div
-                        className="bar-fill"
-                        style={{ height: `${Math.max(4, heightPct)}%` }}
-                        title={`${ds.label}: ${ds.hours.toFixed(2)}h (${ds.count} shifts)`}
-                      />
+
+            {/* Visual Canvas with Baseline & Benchmark Pacing */}
+            <div className="rhythm-chart-wrapper">
+              {/* Benchmark Reference Line (8h standard workday) */}
+              <div
+                className="rhythm-benchmark-line"
+                style={{ bottom: `calc(38px + ${(8 / maxDayHours) * 115}px)` }}
+                title="8h Standard Workday Target"
+              >
+                <span className="benchmark-label">8h Target Pace</span>
+                <span className="benchmark-dash" />
+              </div>
+
+              <div className="analytics-bar-chart">
+                {daySeries.map(ds => {
+                  const heightPct = Math.min(100, Math.round((ds.hours / maxDayHours) * 100));
+                  const hasHours = ds.hours > 0;
+                  return (
+                    <div
+                      key={ds.date}
+                      className={`analytics-bar-col ${ds.isToday ? 'is-today' : ''} ${hasHours ? 'has-hours' : 'is-zero'}`}
+                    >
+                      {/* Top Metric Value */}
+                      <div className="bar-val-wrap">
+                        {hasHours ? (
+                          <span className="bar-val-active">
+                            {ds.hours.toFixed(1)}h
+                          </span>
+                        ) : (
+                          <span className="bar-val-muted">—</span>
+                        )}
+                      </div>
+
+                      {/* Pill Capsule Track */}
+                      <div className="bar-track-shell">
+                        <div
+                          className="bar-track"
+                          title={`${ds.fullDay}: ${ds.hours.toFixed(2)}h (${ds.count} shift${ds.count === 1 ? '' : 's'})`}
+                        >
+                          <div
+                            className={`bar-fill ${hasHours ? 'active' : ''}`}
+                            style={{ height: `${hasHours ? Math.max(12, heightPct) : 0}%` }}
+                          >
+                            {hasHours && <span className="bar-fill-glow" />}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom Fixed Date Label */}
+                      <div className="bar-label-group">
+                        <span className={`bar-weekday ${ds.isToday ? 'today-text' : ''}`}>{ds.shortDay}</span>
+                        <span className="bar-date">{ds.shortDate}</span>
+                      </div>
                     </div>
-                    <span className="bar-label">{ds.label}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer Insight Strip */}
+            <div className="rhythm-chart-foot">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                {peakWeekDay && peakWeekDay.hours > 0 ? (
+                  <span className="foot-insight">
+                    <Icon name="flame" size={12} style={{ color: '#f59e0b' }} />
+                    Peak output: <b>{peakWeekDay.shortDay}, {peakWeekDay.shortDate} ({peakWeekDay.hours.toFixed(1)}h)</b>
+                  </span>
+                ) : (
+                  <span className="foot-insight muted">
+                    <Icon name="clock" size={12} />
+                    No shifts logged this week yet
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span className="foot-legend"><i className="legend-dot active" /> Work Hours</span>
+                <span className="foot-legend"><i className="legend-dot target" /> 8h Target</span>
+                <span className="foot-legend"><i className="legend-dot today" /> Today</span>
+              </div>
             </div>
           </section>
 
