@@ -1560,7 +1560,7 @@ export default function SyneolabApp() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginTop: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 10, marginTop: 14 }}>
                 <div style={{ padding: '10px 14px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
                   <span className="sub" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
                     <Icon name="pulse" size={13} /> Check-ins today
@@ -1696,7 +1696,7 @@ export default function SyneolabApp() {
                     );
                   })}
                 </div>
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                   <span className="sub" style={{ fontSize: 10 }}>Updated in real-time</span>
                   <button className="small" onClick={() => navigate('analytics')}>
                     <Icon name="analytics" size={11} /> Deep Analytics ↗
@@ -1732,13 +1732,13 @@ export default function SyneolabApp() {
                       </button>
                     ))}
                   </div>
-                  <div style={{ minWidth: 200 }}>
+                  <div style={{ minWidth: 0, width: '100%', maxWidth: 240 }}>
                     <input
                       type="text"
                       placeholder="Search member or role…"
                       value={streakSearch}
                       onChange={e => setStreakSearch(e.target.value)}
-                      style={{ padding: '6px 12px', fontSize: 11.5, borderRadius: 20 }}
+                      style={{ padding: '6px 12px', fontSize: 11.5, borderRadius: 20, width: '100%', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
@@ -1802,7 +1802,7 @@ export default function SyneolabApp() {
                                 <span className="tag yellow" style={{ fontSize: 9, padding: '1px 5px' }}>Pending</span>
                               )}
                             </span>
-                            <span className="habit-stat-sub">
+                            <span className="habit-stat-sub" title={m.todayStandup ? `“${m.todayStandup.title}”` : `Record: ${m.bestCheckinStreak}d`}>
                               {m.todayStandup ? `“${m.todayStandup.title}”` : `Record: ${m.bestCheckinStreak}d`}
                             </span>
                           </div>

@@ -1744,18 +1744,24 @@ html[data-dark="true"] .shift-note-body blockquote {
 
 .streak-dashboard-section {
   margin-bottom: 24px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .streak-bento-layout {
   display: grid;
-  grid-template-columns: minmax(360px, 1.12fr) minmax(460px, 1.88fr);
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1.88fr);
   gap: 18px;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 1100px) {
   .streak-bento-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }
 
@@ -1764,12 +1770,21 @@ html[data-dark="true"] .shift-note-body blockquote {
   display: flex;
   flex-direction: column;
   padding: 18px 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .streak-leaderboard-card .card-head {
   margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .streak-tab-toggle {
@@ -1779,6 +1794,8 @@ html[data-dark="true"] .shift-note-body blockquote {
   border-radius: 20px;
   padding: 3px;
   gap: 2px;
+  max-width: 100%;
+  flex-shrink: 0;
 }
 
 html[data-dark="true"] .streak-tab-toggle {
@@ -1799,6 +1816,7 @@ html[data-dark="true"] .streak-tab-toggle {
   gap: 5px;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .streak-tab-btn:hover {
@@ -1821,16 +1839,22 @@ html[data-dark="true"] .streak-tab-btn.active {
   display: flex;
   flex-direction: column;
   flex: 1;
+  width: 100%;
+  min-width: 0;
 }
 
 .streak-lead-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 11px 8px;
   border-bottom: 1px solid var(--line);
   transition: background 0.15s ease, transform 0.15s ease;
   border-radius: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
 .streak-lead-row:last-child {
@@ -1849,7 +1873,7 @@ html[data-dark="true"] .streak-lead-row:hover {
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
-  width: 26px;
+  width: 24px;
   text-align: center;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
@@ -1871,8 +1895,9 @@ html[data-dark="true"] .streak-lead-row:hover {
 }
 
 .streak-lead-info {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .streak-lead-title {
@@ -1882,9 +1907,16 @@ html[data-dark="true"] .streak-lead-row:hover {
   font-size: 11.5px;
   font-weight: 650;
   color: var(--ink);
-  white-space: nowrap;
+  min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.streak-lead-title > span:first-child {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+  flex: 0 1 auto !important;
 }
 
 .streak-lead-sub {
@@ -1894,6 +1926,7 @@ html[data-dark="true"] .streak-lead-row:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+  min-width: 0;
 }
 
 .streak-lead-progress {
@@ -1929,6 +1962,8 @@ html[data-dark="true"] .streak-lead-progress {
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
+  margin-left: auto;
+  min-width: 48px;
 }
 
 .streak-lead-metric strong {
@@ -1950,6 +1985,10 @@ html[data-dark="true"] .streak-lead-progress {
   display: flex;
   flex-direction: column;
   padding: 18px 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .member-habit-controls {
@@ -1959,12 +1998,18 @@ html[data-dark="true"] .streak-lead-progress {
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 14px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .member-habit-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 14px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .member-habit-card {
@@ -1977,6 +2022,11 @@ html[data-dark="true"] .streak-lead-progress {
   justify-content: space-between;
   gap: 12px;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 html[data-dark="true"] .member-habit-card {
@@ -1994,6 +2044,8 @@ html[data-dark="true"] .member-habit-card {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .member-habit-identity {
@@ -2001,6 +2053,8 @@ html[data-dark="true"] .member-habit-card {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 
 .member-habit-identity strong {
@@ -2011,6 +2065,7 @@ html[data-dark="true"] .member-habit-card {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  min-width: 0;
 }
 
 .member-habit-identity strong:hover {
@@ -2023,17 +2078,22 @@ html[data-dark="true"] .member-habit-card {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 /* Habit Dials / Badges in Card */
 .member-habit-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 8px 10px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 8px !important;
+  padding: 8px 10px !important;
   background: var(--bg);
   border-radius: 10px;
   border: 1px solid var(--line);
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
 html[data-dark="true"] .member-habit-stats {
@@ -2045,6 +2105,9 @@ html[data-dark="true"] .member-habit-stats {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
 }
 
 .habit-stat-label {
@@ -2056,6 +2119,11 @@ html[data-dark="true"] .member-habit-stats {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .habit-stat-val {
@@ -2065,14 +2133,22 @@ html[data-dark="true"] .member-habit-stats {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .habit-stat-sub {
   font-size: 9.5px;
   color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 
 /* 7-Day Vertical Rhythm Capsules (Image 3 Diagram Pattern) */
@@ -2080,6 +2156,10 @@ html[data-dark="true"] .member-habit-stats {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .rhythm-7d-head {
@@ -2089,38 +2169,49 @@ html[data-dark="true"] .member-habit-stats {
   font-size: 9.5px;
   font-weight: 600;
   color: var(--muted);
+  width: 100%;
+  min-width: 0;
 }
 
 .rhythm-7d-bars {
-  display: flex;
-  gap: 5px;
-  align-items: flex-end;
-  height: 52px;
-  padding: 2px 0;
+  display: flex !important;
+  gap: 4px !important;
+  align-items: flex-end !important;
+  height: 48px !important;
+  padding: 2px 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  justify-content: space-between !important;
 }
 
 .rhythm-7d-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-  gap: 3px;
-  position: relative;
-  cursor: default;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: 32px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  height: 100% !important;
+  justify-content: flex-end !important;
+  gap: 3px !important;
+  position: relative !important;
+  cursor: default !important;
+  box-sizing: border-box !important;
 }
 
 .rhythm-7d-track {
-  width: 100%;
-  max-width: 24px;
-  height: 34px;
-  border-radius: 6px;
+  width: 100% !important;
+  max-width: 22px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
   background: var(--light);
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  position: relative;
+  display: flex !important;
+  align-items: flex-end !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-sizing: border-box !important;
   transition: all 0.2s ease;
 }
 
@@ -2155,6 +2246,7 @@ html[data-dark="true"] .rhythm-7d-track {
   font-size: 9px;
   font-weight: 600;
   color: var(--muted);
+  text-align: center;
 }
 
 .rhythm-7d-col.is-today .rhythm-7d-day-label {
@@ -2170,6 +2262,9 @@ html[data-dark="true"] .rhythm-7d-track {
   gap: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--line);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* 14-Day Deep Rhythm Diagram in Member Analytics Modal */
@@ -2596,29 +2691,106 @@ html, body {
     display: flex !important;
     flex-direction: column !important;
     gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   .bento-grid > .card {
     min-height: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .project-analytics {
+    height: auto !important;
+    min-height: 250px !important;
+  }
+
+  .project-bars {
+    gap: 5px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   .streak-bento-layout {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   .streak-leaderboard-card {
-    padding: 14px 14px !important;
+    padding: 14px 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .streak-leaderboard-card .card-head {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .streak-tab-toggle {
+    display: inline-flex !important;
+    flex-shrink: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .streak-tab-btn {
+    padding: 4px 10px !important;
+    font-size: 10.5px !important;
+  }
+
+  .streak-lead-row {
+    padding: 9px 4px !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .streak-lead-info {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .streak-lead-title {
+    font-size: 11px !important;
+  }
+
+  .streak-lead-metric strong {
+    font-size: 12px !important;
+  }
+
+  .streak-lead-metric small {
+    font-size: 9px !important;
   }
 
   .member-habit-matrix {
-    padding: 14px 14px !important;
+    padding: 14px 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
   }
 
   .member-habit-controls {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 8px !important;
+    width: 100% !important;
   }
 
   .member-habit-controls > div {
@@ -2632,17 +2804,34 @@ html, body {
   }
 
   .member-habit-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   .member-habit-card {
-    padding: 12px 14px !important;
+    padding: 12px 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
   }
 
-  .streak-lead-row {
-    padding: 10px 8px !important;
-    gap: 8px !important;
+  .rhythm-7d-bars {
+    gap: 3px !important;
+    height: 44px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .rhythm-7d-track {
+    max-width: 20px !important;
+    height: 28px !important;
+  }
+
+  .rhythm-7d-day-label {
+    font-size: 8.5px !important;
   }
 
   /* Bottom-Sheet Mobile Modals */
@@ -2931,5 +3120,24 @@ html, body {
   }
   .topbar {
     padding: 0 10px !important;
+  }
+  .rhythm-7d-bars {
+    gap: 2px !important;
+    height: 40px !important;
+  }
+  .rhythm-7d-col {
+    max-width: 26px !important;
+  }
+  .rhythm-7d-track {
+    max-width: 17px !important;
+    height: 26px !important;
+    border-radius: 4px !important;
+  }
+  .rhythm-7d-day-label {
+    font-size: 8px !important;
+  }
+  .streak-tab-btn {
+    padding: 3px 7px !important;
+    font-size: 9.5px !important;
   }
 }
