@@ -4166,15 +4166,15 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 }
 
 /* ============================================================
-   ELEVATED FOCUS TRACKER (LINEAR / APPLE ULTRA PHILOSOPHY)
+   ELEVATED FOCUS TRACKER (THEME-SYNCED & CALM / NO GLARE)
    ============================================================ */
 
 .modern-timer-card {
   position: relative;
-  background: radial-gradient(130% 120% at 50% 0%, rgba(16, 185, 129, 0.16) 0%, rgba(5, 29, 20, 0.98) 55%, #02120b 100%) !important;
-  border: 1px solid rgba(52, 211, 153, 0.22) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--deep) 94%, black) 0%, color-mix(in srgb, var(--deep) 78%, black) 100%) !important;
+  border: 1px solid color-mix(in srgb, var(--soft) 22%, transparent) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--deep) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   padding: 22px 24px !important;
   display: flex !important;
   flex-direction: column !important;
@@ -4183,33 +4183,20 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   color: #ffffff !important;
   overflow: hidden;
   isolation: isolate;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.3s ease;
 }
 
-.modern-timer-card:before {
-  display: none !important; /* Eliminate legacy diagonal repeating lines */
-}
-
+.modern-timer-card:before,
+.modern-timer-card:after,
+.modern-timer-card::before,
 .modern-timer-card::after {
-  content: '';
-  position: absolute;
-  top: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 280px;
-  height: 160px;
-  background: radial-gradient(ellipse, rgba(52, 211, 153, 0.22) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+  display: none !important; /* Eliminate glare hotspots and legacy stripes */
 }
 
 .modern-timer-card.is-on-break {
-  background: radial-gradient(130% 120% at 50% 0%, rgba(245, 158, 11, 0.16) 0%, rgba(30, 20, 6, 0.98) 55%, #140d04 100%) !important;
+  background: linear-gradient(155deg, #1c1305 0%, #100b02 100%) !important;
   border-color: rgba(245, 158, 11, 0.25) !important;
-}
-
-.modern-timer-card.is-on-break::after {
-  background: radial-gradient(ellipse, rgba(245, 158, 11, 0.22) 0%, transparent 70%);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
 .modern-timer-card > * {
@@ -4236,12 +4223,12 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: color-mix(in srgb, var(--green) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--soft) 30%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #34d399;
+  color: var(--soft);
   flex-shrink: 0;
 }
 
@@ -4262,7 +4249,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 .timer-sub {
   display: block;
   font-size: 11px;
-  color: rgba(209, 250, 229, 0.7);
+  color: color-mix(in srgb, var(--soft) 80%, white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4284,9 +4271,9 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 }
 
 .timer-radar-pill.is-working {
-  background: rgba(16, 185, 129, 0.18);
-  border: 1px solid rgba(52, 211, 153, 0.4);
-  color: #34d399;
+  background: color-mix(in srgb, var(--green) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
+  color: var(--soft);
 }
 
 .timer-radar-pill.is-break {
@@ -4298,7 +4285,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 .timer-radar-pill.is-idle {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .radar-dot {
@@ -4309,14 +4296,14 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 }
 
 .timer-radar-pill.is-working .radar-dot {
-  background: #34d399;
-  box-shadow: 0 0 8px #34d399;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
   animation: radar-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 .timer-radar-pill.is-break .radar-dot {
   background: #fbbf24;
-  box-shadow: 0 0 8px #fbbf24;
+  box-shadow: 0 0 6px #fbbf24;
   animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
@@ -4335,12 +4322,12 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(52, 211, 153, 0.2);
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--soft) 22%, transparent);
   border-radius: 10px;
   padding: 7px 12px;
   font-size: 11.5px;
-  color: #d1fae5;
+  color: color-mix(in srgb, var(--soft) 85%, white);
   min-width: 0;
 }
 
@@ -4354,8 +4341,8 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.6px;
-  background: rgba(52, 211, 153, 0.2);
-  color: #34d399;
+  background: color-mix(in srgb, var(--green) 25%, transparent);
+  color: var(--soft);
   padding: 2px 6px;
   border-radius: 4px;
   flex-shrink: 0;
@@ -4383,17 +4370,17 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   letter-spacing: 1.5px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  background: linear-gradient(180deg, #ffffff 30%, #a7f3d0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 16px rgba(52, 211, 153, 0.3));
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+  filter: none !important;
 }
 
 .is-on-break .timer-hero-value {
-  background: linear-gradient(180deg, #ffffff 30%, #fde68a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.3));
+  color: #fef3c7 !important;
+  -webkit-text-fill-color: #fef3c7 !important;
+  text-shadow: none !important;
+  filter: none !important;
 }
 
 .timer-rhythm-wave {
@@ -4401,21 +4388,21 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  height: 16px;
+  height: 14px;
   margin-top: 10px;
 }
 
 .wave-bar {
   width: 3px;
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
-  background: rgba(52, 211, 153, 0.3);
+  background: color-mix(in srgb, var(--soft) 30%, transparent);
   transition: height 0.2s ease, background 0.2s ease;
 }
 
 .timer-rhythm-wave.is-active .wave-bar {
-  background: #34d399;
-  box-shadow: 0 0 6px rgba(52, 211, 153, 0.5);
+  background: var(--soft);
+  box-shadow: none !important;
   animation: wave-pulse 1.4s ease-in-out infinite;
 }
 
@@ -4428,8 +4415,8 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 .timer-rhythm-wave.is-active .wb-7 { animation-delay: 0.35s; }
 
 @keyframes wave-pulse {
-  0%, 100% { height: 4px; }
-  50% { height: 14px; }
+  0%, 100% { height: 3px; }
+  50% { height: 11px; }
 }
 
 /* Bento Metric Tiles */
@@ -4448,15 +4435,15 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 }
 
 .timer-bento-tile.active-work {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(52, 211, 153, 0.4);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  border-color: color-mix(in srgb, var(--soft) 35%, transparent);
+  box-shadow: none !important;
 }
 
 .timer-bento-tile.active-break {
   background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: none !important;
 }
 
 .tile-eyebrow {
@@ -4476,7 +4463,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   border-radius: 50%;
 }
 
-.dot-work { background: #34d399; }
+.dot-work { background: var(--green); }
 .dot-break { background: #fbbf24; }
 
 .tile-value {
@@ -4489,7 +4476,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 
 .tile-foot {
   font-size: 10px;
-  color: rgba(209, 250, 229, 0.65);
+  color: color-mix(in srgb, var(--soft) 75%, white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4532,7 +4519,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 }
 
 .milestone-pct {
-  color: #34d399;
+  color: var(--soft);
   font-weight: 700;
   margin-left: 2px;
 }
@@ -4548,25 +4535,14 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 .milestone-bar {
   height: 100%;
   border-radius: 10px;
-  background: linear-gradient(90deg, #10b981 0%, #34d399 70%, #6ee7b7 100%);
+  background: linear-gradient(90deg, var(--mid) 0%, var(--green) 100%);
   position: relative;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  box-shadow: none !important;
 }
 
 .milestone-shine {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
-  animation: milestone-shimmer 2.5s infinite;
-}
-
-@keyframes milestone-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  display: none !important; /* No distracting shine sweep */
 }
 
 .milestone-sub {
@@ -4574,14 +4550,14 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   justify-content: space-between;
   gap: 8px;
   font-size: 10px;
-  color: rgba(209, 250, 229, 0.6);
+  color: color-mix(in srgb, var(--soft) 70%, white);
   margin-top: 6px;
 }
 
 /* Switch Active Focus Deck */
 .timer-switch-deck {
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 12px;
   padding: 10px 12px;
 }
@@ -4611,8 +4587,8 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 
 .custom-timer-select select {
   width: 100% !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   color: #ffffff !important;
   font-size: 11.5px !important;
   font-weight: 500 !important;
@@ -4629,17 +4605,17 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 }
 
 .custom-timer-select select:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(52, 211, 153, 0.4) !important;
+  background: rgba(255, 255, 255, 0.11) !important;
+  border-color: var(--soft) !important;
 }
 
 .custom-timer-select select:focus {
-  border-color: #34d399 !important;
-  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 25%, transparent) !important;
 }
 
 .custom-timer-select select option {
-  background: #062b1f !important;
+  background: var(--deep) !important;
   color: #ffffff !important;
 }
 
@@ -4683,47 +4659,46 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
 }
 
 .timer-action-btn.btn-clockin {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  background: linear-gradient(135deg, var(--mid) 0%, var(--green) 100%) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(110, 231, 183, 0.4) !important;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4) !important;
+  border: 1px solid color-mix(in srgb, var(--soft) 35%, transparent) !important;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--green) 28%, transparent) !important;
   font-size: 13px !important;
   padding: 13px 20px !important;
   width: 100%;
 }
 
 .timer-action-btn.btn-clockin:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+  filter: brightness(1.08);
   transform: translateY(-1px);
 }
 
 .timer-action-btn.btn-break {
   background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
   color: #ffffff !important;
 }
 
 .timer-action-btn.btn-break:hover {
   background: rgba(245, 158, 11, 0.18) !important;
-  border-color: rgba(245, 158, 11, 0.45) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
   color: #fef3c7 !important;
 }
 
 .timer-action-btn.btn-resume {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  background: linear-gradient(135deg, var(--mid) 0%, var(--green) 100%) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(110, 231, 183, 0.4) !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+  border: 1px solid color-mix(in srgb, var(--soft) 35%, transparent) !important;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--green) 28%, transparent) !important;
 }
 
 .timer-action-btn.btn-resume:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  filter: brightness(1.08);
 }
 
 .timer-action-btn.btn-clockout {
   background: rgba(239, 68, 68, 0.14) !important;
-  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  border: 1px solid rgba(239, 68, 68, 0.28) !important;
   color: #fca5a5 !important;
 }
 
@@ -4731,7 +4706,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   background: #ef4444 !important;
   border-color: #ef4444 !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.35) !important;
 }
 
 /* Trust Pill & Note */
@@ -4741,7 +4716,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   justify-content: center;
   gap: 6px;
   font-size: 10.5px;
-  color: rgba(209, 250, 229, 0.6);
+  color: color-mix(in srgb, var(--soft) 75%, white);
   text-align: center;
 }
 
@@ -4749,7 +4724,7 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #34d399;
+  background: var(--green);
 }
 
 .timer-cloud-trust-note {
@@ -4758,8 +4733,8 @@ html[data-dark="true"] .p-btn.analytics-btn:hover {
   gap: 8px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(52, 211, 153, 0.15);
+  background: color-mix(in srgb, var(--green) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--soft) 18%, transparent);
   font-size: 11px;
   color: var(--muted);
   line-height: 1.4;

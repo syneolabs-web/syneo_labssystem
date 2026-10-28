@@ -4019,12 +4019,10 @@ export default function SyneolabApp() {
                   </span>
                 </div>
                 <div className="milestone-track">
-                  <div className="milestone-bar" style={{ width: `${todayTargetPct}%` }}>
-                    <span className="milestone-shine" />
-                  </div>
+                  <div className="milestone-bar" style={{ width: `${todayTargetPct}%` }} />
                 </div>
                 <div className="milestone-sub">
-                  <span>{todayTargetPct >= 100 ? 'Daily target completed! 🏆' : `${Math.max(0, 8.0 - userTodayHours).toFixed(1)}h remaining to daily goal`}</span>
+                  <span>{todayTargetPct >= 100 ? 'Daily target completed!' : `${Math.max(0, 8.0 - userTodayHours).toFixed(1)}h remaining to daily goal`}</span>
                   {activeClock && <span>In since {fmtTime(activeClock.start * 1000)}</span>}
                 </div>
               </div>
