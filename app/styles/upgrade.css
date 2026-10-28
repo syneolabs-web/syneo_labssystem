@@ -3849,4 +3849,321 @@ html[data-dark="true"] .modal .timer-metric.break b {
   color: #fbbf24 !important;
 }
 
+/* ============================================================
+   REFINED TEAM MEMBER CARD (LINEAR / APPLE DESIGN PHILOSOPHY)
+   ============================================================ */
+.card.person {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px 18px !important;
+  border-radius: 18px !important;
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--deep) 3%, transparent);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  overflow: hidden;
+  text-align: center;
+}
+
+.card.person:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--green) 35%, var(--line));
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--deep) 8%, transparent);
+}
+
+/* Presence chip pinned to top right */
+.person-header-status {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+}
+
+.person-presence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  user-select: none;
+  letter-spacing: 0.2px;
+}
+
+.person-presence-chip.working {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.person-presence-chip.on-break {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.person-presence-chip.offline {
+  background: color-mix(in srgb, var(--bg) 80%, var(--white));
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot.dot-working {
+  background: var(--green);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+}
+
+.status-dot.dot-break {
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+.status-dot.dot-offline {
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+/* Avatar Wrap */
+.person-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+
+.card.person h3 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.3px;
+  margin: 0 0 4px !important;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.person-role {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  opacity: 0.85;
+  margin-bottom: 3px;
+  line-height: 1.35;
+}
+
+.person-email {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+/* Curated tags row */
+.person-tags {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.person-tags .tag {
+  font-size: 10px !important;
+  padding: 3px 8px !important;
+  border-radius: 12px !important;
+  font-weight: 550 !important;
+  line-height: 1.2;
+}
+
+.person-tags .dept-tag {
+  background: color-mix(in srgb, var(--bg) 85%, var(--white));
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.person-tags .admin-tag {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.person-tags .streak-tag {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+html[data-dark="true"] .person-tags .streak-tag {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+/* Live shift focus pill */
+.person-live-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: var(--green);
+  font-size: 11px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.person-live-banner b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Performance Bento Card */
+.person-stats-card {
+  background: color-mix(in srgb, var(--bg) 65%, var(--white));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.person-stats-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.p-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.p-stat-val {
+  display: block;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.p-stat-label {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.p-stat-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--line);
+}
+
+/* Progress inside stats card */
+.p-progress-box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.p-progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.p-progress-head b {
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.p-progress-bar {
+  height: 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--line) 85%, transparent);
+  overflow: hidden;
+}
+
+.p-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Action toolbar */
+.person-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.p-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--ink);
+  transition: all 0.16s ease;
+  user-select: none;
+}
+
+.p-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--soft);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--deep) 6%, transparent);
+}
+
+.p-btn.analytics-btn {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.28);
+  color: var(--green);
+}
+
+.p-btn.analytics-btn:hover {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: var(--green);
+}
+
+html[data-dark="true"] .p-btn.analytics-btn {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+
+html[data-dark="true"] .p-btn.analytics-btn:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #4ade80;
+}
+
+
 

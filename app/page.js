@@ -4599,75 +4599,139 @@ export default function SyneolabApp() {
                   .reduce((n, c) => n + worked(c, currentTime) / 3600, 0)
               : 0;
             const uPositions = getUserPositions(u);
+            const uStreaks = calculateMemberStreaks(u.id, state.standups || [], state.clocks || [], todayStr, currentTime);
+            const doneTasksCount = uTasks.filter(t => t.status === 'Done').length;
+            const taskCompletionRate = uTasks.length ? Math.round((doneTasksCount / uTasks.length) * 100) : 0;
 
             return (
               <article key={u.id} className="card person">
-                <Avatar user={u} big />
+                {/* Live attendance chip in top right */}
+                <div className="person-header-status">
+                  {liveClock ? (
+                    liveClock.break_start ? (
+                      <span className="person-presence-chip on-break" title="Member is currently on break">
+                        <i className="status-dot dot-break" />
+                        <span>On break</span>
+                      </span>
+                    ) : (
+                      <span className="person-presence-chip working" title={liveProject ? `Clocked in · Working on ${liveProject}` : 'Clocked in & active'}>
+                        <i className="status-dot dot-working" />
+                        <span>Clocked in</span>
+                      </span>
+                    )
+                  ) : (
+                    <span className="person-presence-chip offline" title="Not currently clocked in">
+                      <i className="status-dot dot-offline" />
+                      <span>Offline</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Avatar */}
+                <div className="person-avatar-wrap">
+                  <Avatar user={u} big />
+                </div>
+
+                {/* Name & Identity */}
                 <h3>{u.name}</h3>
-                {uPositions.length > 0 && (
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', marginTop: 2 }}>
-                    {uPositions.join(' · ')}
-                  </div>
-                )}
-                <p className="sub">{u.email}</p>
-                <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }}>
-                  {uPositions.map(pos => (
-                    <span key={pos} className="tag purple">{pos}</span>
-                  ))}
-                  <span className="tag">{u.department}</span>
+                <div className="person-role">
+                  {uPositions.length > 0 ? uPositions.join(' · ') : (u.department || 'Team Member')}
+                </div>
+                <div className="person-email">{u.email}</div>
+
+                {/* Curated Meta Badges */}
+                <div className="person-tags">
+                  {u.department && <span className="tag dept-tag">{u.department}</span>}
                   {isAdmin && (
                     isTargetSuperAdmin(u) ? (
                       <span className="tag super-admin-tag"><Icon name="zap" size={11} style={{ marginRight: 3 }} />Super Admin</span>
                     ) : isTargetAdmin(u) ? (
-                      <span className="tag">Admin</span>
-                    ) : (
-                      <span className="tag">Employee</span>
-                    )
+                      <span className="tag admin-tag">Admin</span>
+                    ) : null
+                  )}
+                  {uStreaks?.checkinStreak > 0 && (
+                    <span className="tag streak-tag" title={`${uStreaks.checkinStreak}-day daily check-in streak`}>
+                      <Icon name="flame" size={11} /> {uStreaks.checkinStreak}d streak
+                    </span>
                   )}
                   {canSeeDetailedStats && (
                     <>
-                      <span className={`tag ${onTimeRate >= 85 ? 'green' : 'yellow'}`} title="On-time task rate">
+                      <span className={`tag ${onTimeRate >= 85 ? 'green' : 'yellow'}`} title="On-time deliverable rate">
                         {onTimeRate}% on-time
                       </span>
                       {blockedCount > 0 && <span className="tag red">{blockedCount} blocked</span>}
                     </>
                   )}
                 </div>
+
+                {/* Live shift banner if actively tracking */}
                 {liveClock && (
-                  <div className="sub" style={{ marginTop: 8, fontSize: 12 }}>
-                    {liveClock.break_start ? <><Icon name="coffee" size={12} style={{ marginRight: 4 }} />On break</> : liveProject ? <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Working on {liveProject}</> : <><Icon name="zap" size={12} style={{ marginRight: 4 }} />Active session</>}
+                  <div className="person-live-banner">
+                    <Icon name={liveClock.break_start ? "coffee" : "zap"} size={12} />
+                    <span>
+                      {liveClock.break_start
+                        ? 'Break timer running'
+                        : liveProject
+                        ? <>Working on <b>{liveProject}</b></>
+                        : 'Focused work session'}
+                    </span>
                   </div>
                 )}
+
+                {/* Performance Bento Container */}
                 {canSeeDetailedStats && (
-                  <>
-                    <div className="person-stats">
-                      <div>
-                        <b>{openTasks.length}</b>
-                        <span className="sub">Open tasks</span>
+                  <div className="person-stats-card">
+                    <div className="person-stats-grid">
+                      <div className="p-stat">
+                        <span className="p-stat-val">{openTasks.length}</span>
+                        <span className="p-stat-label">Open tasks</span>
                       </div>
-                      <div>
-                        <b>{uTasks.filter(t => t.status === 'Done').length}</b>
-                        <span className="sub">Completed</span>
+                      <div className="p-stat-divider" />
+                      <div className="p-stat">
+                        <span className="p-stat-val">{doneTasksCount}</span>
+                        <span className="p-stat-label">Completed</span>
                       </div>
-                      <div>
-                        <b>{totalHours.toFixed(1)}</b>
-                        <span className="sub">Hours tracked</span>
+                      <div className="p-stat-divider" />
+                      <div className="p-stat">
+                        <span className="p-stat-val">{totalHours.toFixed(1)}h</span>
+                        <span className="p-stat-label">Tracked</span>
                       </div>
                     </div>
-                    <div className="progress">
-                      <i style={{ width: `${uTasks.length ? Math.round((uTasks.filter(t => t.status === 'Done').length / uTasks.length) * 100) : 0}%` }}></i>
+
+                    <div className="p-progress-box">
+                      <div className="p-progress-head">
+                        <span>Task completion</span>
+                        <b>{taskCompletionRate}%</b>
+                      </div>
+                      <div className="p-progress-bar">
+                        <div
+                          className="p-progress-fill"
+                          style={{ width: `${taskCompletionRate}%` }}
+                        />
+                      </div>
                     </div>
-                  </>
+                  </div>
                 )}
-                <div className="actions" style={{ marginTop: canSeeDetailedStats ? 0 : 14 }}>
-                  <span className={`tag ${liveClock?.break_start ? 'yellow' : ''}`}>
-                    {liveClock ? (liveClock.break_start ? 'On break' : 'Clocked in') : 'Offline'}
-                  </span>
-                  <button className="small primary" onClick={() => setModal({ type: 'memberAnalytics', id: u.id, data: u })}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="analytics" size={12} />Analytics</span>
+
+                {/* Action Toolbar */}
+                <div className="person-actions">
+                  <button
+                    type="button"
+                    className="p-btn analytics-btn"
+                    onClick={() => setModal({ type: 'memberAnalytics', id: u.id, data: u })}
+                    title="View detailed employee analytics, streaks & work rhythm"
+                  >
+                    <Icon name="analytics" size={13} />
+                    <span>Analytics</span>
                   </button>
-                  <button className="small" onClick={() => setModal({ type: 'person', id: u.id, data: u })}>
-                    {isAdmin ? 'Profile & positions ↗' : 'View profile ↗'}
+                  <button
+                    type="button"
+                    className="p-btn profile-btn"
+                    onClick={() => setModal({ type: 'person', id: u.id, data: u })}
+                    title={isAdmin ? 'Edit member profile & assigned positions' : 'View member profile'}
+                  >
+                    <Icon name="settings" size={13} />
+                    <span>{isAdmin ? 'Profile & roles' : 'View profile'}</span>
                   </button>
                 </div>
               </article>
