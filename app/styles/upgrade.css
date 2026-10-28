@@ -3788,3 +3788,65 @@ html[data-dark="true"] .checkin-kickoff-icon {
   }
 }
 
+/* Modal Timer Metrics (Clear contrast in light & dark modes) */
+.modal .timer-metrics {
+  margin-bottom: 16px;
+}
+
+.modal .timer-metric {
+  background: var(--bg) !important;
+  border: 1px solid var(--line) !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+}
+
+.modal .timer-metric span {
+  color: var(--muted) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.6px !important;
+  text-transform: uppercase !important;
+}
+
+.modal .timer-metric b {
+  color: var(--ink) !important;
+  font-size: 15px !important;
+  font-weight: 750 !important;
+  margin-top: 4px !important;
+}
+
+.modal .timer-metric.active {
+  background: rgba(34, 197, 94, 0.08) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+}
+
+.modal .timer-metric.active span {
+  color: var(--green) !important;
+}
+
+.modal .timer-metric.active b {
+  color: var(--green) !important;
+}
+
+.modal .timer-metric.break {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.modal .timer-metric.break span {
+  color: #d97706 !important;
+}
+
+.modal .timer-metric.break b {
+  color: #d97706 !important;
+}
+
+html[data-dark="true"] .modal .timer-metric.active b {
+  color: #4ade80 !important;
+}
+
+html[data-dark="true"] .modal .timer-metric.break b {
+  color: #fbbf24 !important;
+}
+
+

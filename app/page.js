@@ -22,7 +22,7 @@ const paths = {
   bell: 'M5 17h14l-2-4V8a5 5 0 0 0-10 0v5z M10 21h4',
   play: 'M8 5l11 7-11 7z',
   pause: 'M8 5v14 M16 5v14',
-  stop: 'M6 6h12v12H6z',
+  stop: 'M7 6a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z',
   download: 'M12 3v12 M8 11l4 4 4-4 M4 17v4h16v-4',
   upload: 'M12 15V3 M8 7l4-4 4 4 M4 17v4h16v-4',
   pulse: 'M2 12h4l3-7 4 14 3-7h6',
@@ -50,18 +50,28 @@ const paths = {
   medal: 'M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M8.21 13.89L7 23l5-3 5 3-1.21-9.11'
 };
 
-const Icon = ({ name, className = 'icon', size, style, strokeWidth = 2 }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    width={size}
-    height={size}
-    style={{ display: 'inline-block', verticalAlign: '-0.15em', flexShrink: 0, ...style }}
-    aria-hidden="true"
-  >
-    <path d={paths[name] || paths.projects} fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+const Icon = ({ name, className = 'icon', size, style, strokeWidth = 2, fill }) => {
+  const isFilled = Boolean(fill) || name === 'stop';
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      style={{ display: 'inline-block', verticalAlign: '-0.15em', flexShrink: 0, ...style }}
+      aria-hidden="true"
+    >
+      <path
+        d={paths[name] || paths.projects}
+        fill={isFilled ? 'currentColor' : 'none'}
+        stroke={isFilled ? 'none' : 'currentColor'}
+        strokeWidth={isFilled ? 0 : strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
 
 const SyneoLogo = ({ size = 30, idPrefix = 'syneo' }) => (
   <svg
@@ -7990,10 +8000,10 @@ export default function SyneolabApp() {
                 placeholder="Summarize what you completed, key deliverables, PRs/designs updated, or next steps…"
               />
             </div>
-            <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-end' }}>
+            <div className="actions" style={{ marginTop: 18, justifyContent: 'flex-end', display: 'flex', gap: 10 }}>
               <button type="button" onClick={() => setModal(null)}>Continue working</button>
-              <button className="primary">
-                <Icon name="stop" /> Submit summary &amp; clock out
+              <button className="primary" type="submit">
+                <Icon name="check" size={15} /> Submit summary &amp; clock out
               </button>
             </div>
           </form>
