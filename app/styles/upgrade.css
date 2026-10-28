@@ -3602,3 +3602,189 @@ html, body {
     font-size: 7.5px !important;
   }
 }
+
+/* ============================================================
+   DAILY CHECK-IN ENFORCEMENT & AMBIENT INDICATOR STYLES
+   ============================================================ */
+.top-checkin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  user-select: none;
+  text-decoration: none;
+}
+
+.top-checkin-pill.pending {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #b45309;
+}
+
+html[data-dark="true"] .top-checkin-pill.pending {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+}
+
+.top-checkin-pill.pending:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.6);
+  transform: translateY(-1px);
+}
+
+.top-checkin-pill.completed {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.28);
+  color: var(--green);
+}
+
+html[data-dark="true"] .top-checkin-pill.completed {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+
+.top-checkin-pill.completed:hover {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.5);
+  transform: translateY(-1px);
+}
+
+.top-checkin-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.top-checkin-dot.dot-pulse {
+  background: #f59e0b;
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  animation: checkin-ambient-pulse 1.8s infinite;
+}
+
+@keyframes checkin-ambient-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+.top-checkin-dot.dot-done {
+  background: var(--green);
+}
+
+.top-checkin-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+html[data-dark="true"] .top-checkin-streak {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+/* Modal styling for Daily Check-in & Kickoff */
+.checkin-kickoff-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-dark="true"] .checkin-kickoff-icon {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.checkin-kickoff-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--light) 60%, var(--bg));
+  border: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+
+.kickoff-streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.kickoff-banner-text {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Pulse button highlight */
+.pulse-checkin-btn {
+  animation: pulse-border 2.4s infinite;
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .top-checkin-pill {
+    padding: 3px 7px !important;
+    gap: 4px !important;
+    font-size: 10px !important;
+  }
+  .top-checkin-text {
+    display: none;
+  }
+  .top-checkin-streak {
+    padding: 1px 4px !important;
+    font-size: 9.5px !important;
+    margin-left: 0;
+  }
+}
+

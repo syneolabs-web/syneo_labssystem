@@ -1002,6 +1002,13 @@ export default function SyneolabApp() {
   };
 
   const handleClock = async (action, extra = {}) => {
+    if (action === 'start') {
+      const myTodayStandup = (state.standups || []).find(s => s.owner === user?.id && isTodayStandup(s));
+      if (!myTodayStandup) {
+        setModal({ type: 'clock', data: extra });
+        return;
+      }
+    }
     if (action === 'stop' && (!extra.note || String(extra.note).trim().length < 3)) {
       requestClockOut();
       return;
@@ -1451,12 +1458,12 @@ export default function SyneolabApp() {
                 <Icon name="check" size={14} /> Edit today's check-in
               </button>
             ) : (
-              <button onClick={() => setModal({ type: 'standups', data: { date: todayStr, mood: 'Focused' } })}>
-                <Icon name="pulse" /> Daily check-in
+              <button className="primary pulse-checkin-btn" onClick={() => setModal({ type: 'clock', data: {} })}>
+                <Icon name="pulse" /> Daily check-in &amp; clock in
               </button>
             )}
             {isAdmin && (
-              <button className="primary" onClick={() => setModal({ type: 'projects', data: {} })}>
+              <button className={myTodayStandup ? "primary" : ""} onClick={() => setModal({ type: 'projects', data: {} })}>
                 <Icon name="plus" /> Add project
               </button>
             )}
@@ -2389,7 +2396,7 @@ export default function SyneolabApp() {
               ) : (
                 <>
                   <button className="start-button" onClick={() => setModal({ type: 'clock', data: {} })}>
-                    <Icon name="play" /> Clock in
+                    <Icon name="play" /> {myTodayStandup ? 'Clock in' : 'Check in & Clock in'}
                   </button>
                   <button className="break-button" disabled title="Clock in to take a break">
                     <Icon name="pause" /> Break
@@ -2402,7 +2409,9 @@ export default function SyneolabApp() {
                 ? 'Break timer is running on server. Work timer is paused until you resume or clock out.'
                 : activeClock
                 ? 'Runs on server even if you close this tab — stops only when you clock out.'
-                : 'Your timer keeps running on the server when you close this tab.'}
+                : !myTodayStandup
+                ? 'Daily check-in required at shift kickoff to maintain your streak.'
+                : 'Checked in for today. Your timer keeps running on the server when you close this tab.'}
             </div>
           </section>
         </div>
@@ -3821,6 +3830,8 @@ export default function SyneolabApp() {
       };
     });
 
+    const myTodayStandup = (state.standups || []).find(s => s.owner === user?.id && isTodayStandup(s));
+
     return (
       <>
         <div className="page-head">
@@ -3834,7 +3845,7 @@ export default function SyneolabApp() {
             </button>
             {!activeClock && (
               <button className="primary" onClick={() => setModal({ type: 'clock', data: {} })}>
-                ＋ Clock in
+                <Icon name="play" /> {myTodayStandup ? 'Clock in' : 'Check in & Clock in'}
               </button>
             )}
           </div>
@@ -3954,7 +3965,7 @@ export default function SyneolabApp() {
                   </>
                 ) : (
                   <button className="start-button" onClick={() => setModal({ type: 'clock', data: {} })}>
-                    <Icon name="play" /> Clock in
+                    <Icon name="play" /> {myTodayStandup ? 'Clock in' : 'Check in & Clock in'}
                   </button>
                 )}
               </div>
@@ -7632,14 +7643,196 @@ export default function SyneolabApp() {
       );
     }
 
-    // Clock In Dialog
+    // Clock In Dialog (Enforced Daily Check-in & Kickoff)
     if (type === 'clock') {
-      return (
-        <div className="modal" role="dialog">
-          <div className="card-head">
-            <h2>A little focus starts here</h2>
-            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal"><Icon name="x" size={15} /></button>
+      const todayStr = key(new Date());
+      const myTodayStandup = (state.standups || []).find(s => s.owner === user?.id && isTodayStandup(s));
+      const hasCheckedInToday = Boolean(myTodayStandup);
+      const myUserStreaks = user ? calculateMemberStreaks(user.id, state.standups || [], state.clocks || [], todayStr, currentTime) : null;
+      const myStreak = myUserStreaks?.checkinStreak || 0;
+
+      // Case A: User has NOT checked in today -> Enforced Daily Check-in & Shift Kickoff
+      if (!hasCheckedInToday) {
+        return (
+          <div className="modal" role="dialog" style={{ maxWidth: 520 }}>
+            <div className="card-head">
+              <div>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="modal-title-icon checkin-kickoff-icon">
+                    <Icon name="pulse" size={16} />
+                  </span>
+                  Daily Check-in &amp; Shift Kickoff
+                </h2>
+                <p className="sub" style={{ margin: '4px 0 0' }}>
+                  Set today&apos;s focus to fuel your streak and start your shift timer.
+                </p>
+              </div>
+              <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal">
+                <Icon name="x" size={15} />
+              </button>
+            </div>
+
+            <div className="checkin-kickoff-banner">
+              <div className="kickoff-streak-chip">
+                <Icon name="flame" size={13} />
+                <span><b>{myStreak}</b> day streak</span>
+              </div>
+              <div className="kickoff-banner-text">
+                Check in once a day before tracking work to share your focus and keep the entire team aligned.
+              </div>
+            </div>
+
+            <form
+              onSubmit={async e => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const title = (fd.get('title') || '').toString().trim();
+                if (title.length < 3) {
+                  showToast('Please specify your main focus for today (min 3 characters).');
+                  return;
+                }
+                const project = (fd.get('project') || '').toString();
+                const task = (fd.get('task') || '').toString();
+                const mood = (fd.get('mood') || 'Focused').toString();
+                const yesterday = (fd.get('yesterday') || '').toString().trim();
+                const blockers = (fd.get('blockers') || '').toString().trim();
+
+                try {
+                  // 1. Post daily check-in standup record
+                  await handleApi('/api/record', {
+                    kind: 'standups',
+                    body: {
+                      title,
+                      project,
+                      mood,
+                      yesterday,
+                      blockers,
+                      date: todayStr
+                    }
+                  });
+
+                  // 2. Start shift clock timer
+                  await handleApi('/api/clock', {
+                    action: 'start',
+                    project,
+                    task,
+                    note: title
+                  });
+
+                  setModal(null);
+                  await refreshState();
+                  showToast('Daily check-in posted & shift timer started. Have a productive day!');
+                } catch (err) {
+                  showToast(err.message || 'Failed to complete check-in and clock in.');
+                }
+              }}
+            >
+              <div className="field">
+                <label>
+                  Today&apos;s main focus &amp; deliverable <span className="req">*</span>
+                </label>
+                <input
+                  name="title"
+                  type="text"
+                  required
+                  minLength={3}
+                  placeholder="What is your top priority or deliverable for today?"
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="field">
+                  <label>Primary project {!isAdmin && <span className="sub">(Assigned only)</span>}</label>
+                  <select name="project" defaultValue={data.project || assignedProjects[0]?.id || ''} required={assignedProjects.length > 0}>
+                    {assignedProjects.length === 0 && (
+                      <option value="">No assigned projects yet</option>
+                    )}
+                    {assignedProjects.map(p => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="field">
+                  <label>Current energy / mood</label>
+                  <select name="mood" defaultValue="Focused">
+                    {['Focused', 'Energized', 'Heads-down', 'Need a hand'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Specific task <span className="sub">(Optional)</span></label>
+                <select name="task" defaultValue={data.task || ''}>
+                  <option value="">No specific task</option>
+                  {state.tasks.filter(t => t.status !== 'Done' && (!t.project || !data.project || t.project === data.project)).map(t => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Completed recently / Key wins <span className="sub">(Optional)</span></label>
+                <textarea
+                  name="yesterday"
+                  rows={2}
+                  placeholder="What did you ship or accomplish since your last check-in?"
+                />
+              </div>
+
+              <div className="field">
+                <label>Blockers or help needed <span className="sub">(Optional)</span></label>
+                <textarea
+                  name="blockers"
+                  rows={2}
+                  placeholder="Anything blocking you or waiting on review? Leave blank if none."
+                />
+              </div>
+
+              <div className="modal-actions" style={{ marginTop: 18, display: 'flex', gap: 10, alignItems: 'center' }}>
+                <button type="submit" className="primary" style={{ flex: 1 }}>
+                  <Icon name="play" /> Check in &amp; Clock in
+                </button>
+              </div>
+              <p className="sub" style={{ textAlign: 'center', fontSize: 11, margin: '8px 0 0' }}>
+                Submitting posts your daily standup and starts your live workspace work timer.
+              </p>
+            </form>
           </div>
+        );
+      }
+
+      // Case B: User has ALREADY checked in today -> Standard Clock In with confirmation badge
+      return (
+        <div className="modal" role="dialog" style={{ maxWidth: 480 }}>
+          <div className="card-head">
+            <div>
+              <h2>Start work session</h2>
+              <p className="sub" style={{ margin: '4px 0 0' }}>A little focus starts here.</p>
+            </div>
+            <button className="icon-btn-ghost close-btn" onClick={() => setModal(null)} aria-label="Close modal">
+              <Icon name="x" size={15} />
+            </button>
+          </div>
+
+          <div className="note" style={{ marginBottom: 14, background: 'rgba(34, 197, 94, 0.08)', borderColor: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 12px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Icon name="check" size={13} style={{ color: 'var(--green)', flexShrink: 0 }} />
+              <span><b>Checked in today:</b> &ldquo;{myTodayStandup.title}&rdquo; ({myTodayStandup.mood || 'Focused'})</span>
+            </span>
+            <button
+              type="button"
+              className="small"
+              style={{ flexShrink: 0, height: 26, padding: '0 8px', fontSize: 11 }}
+              onClick={() => setModal({ type: 'standups', id: myTodayStandup.id, data: myTodayStandup })}
+            >
+              Edit check-in
+            </button>
+          </div>
+
           <form
             onSubmit={async e => {
               e.preventDefault();
@@ -7650,13 +7843,13 @@ export default function SyneolabApp() {
                 await refreshState();
                 showToast('Clocked in. Have a good session.');
               } catch (err) {
-                alert(err.message);
+                showToast(err.message || 'Failed to clock in');
               }
             }}
           >
             <div className="field">
               <label>Project {!isAdmin && <span className="sub">(Assigned projects only)</span>}</label>
-              <select name="project" defaultValue={assignedProjects[0]?.id || ''} required={assignedProjects.length > 0}>
+              <select name="project" defaultValue={data.project || myTodayStandup?.project || assignedProjects[0]?.id || ''} required={assignedProjects.length > 0}>
                 {assignedProjects.length === 0 && (
                   <option value="">No assigned projects yet</option>
                 )}
@@ -7667,7 +7860,7 @@ export default function SyneolabApp() {
             </div>
             <div className="field">
               <label>Task</label>
-              <select name="task">
+              <select name="task" defaultValue={data.task || ''}>
                 <option value="">No specific task</option>
                 {state.tasks.filter(t => t.status !== 'Done').map(t => (
                   <option key={t.id} value={t.id}>{t.title}</option>
@@ -7675,10 +7868,10 @@ export default function SyneolabApp() {
               </select>
             </div>
             <div className="field">
-              <label>Session focus / goal (optional at clock-in)</label>
-              <textarea name="note" placeholder="What are you planning to focus on?" />
+              <label>Session focus / note <span className="sub">(Optional)</span></label>
+              <textarea name="note" placeholder="What are you focusing on during this session?" defaultValue={data.note || ''} />
             </div>
-            <button className="primary" style={{ marginTop: 15 }}>
+            <button className="primary" style={{ marginTop: 15, width: '100%' }}>
               <Icon name="play" /> Clock in
             </button>
           </form>
@@ -8337,7 +8530,10 @@ export default function SyneolabApp() {
               }));
             }
             setModal(null);
-            showToast('Saved. Workspace is up to date.');
+            showToast(type === 'standups' && fd.get('autoClockIn') === 'on' && !activeClock
+              ? 'Daily check-in posted & shift timer started. Have a great session!'
+              : 'Saved. Workspace is up to date.'
+            );
             try {
               const saved = await handleApi('/api/record', { kind: type, id: targetId, body: { ...effectiveData, ...body } });
               if (!targetId && saved?.id && Array.isArray(state[type])) {
@@ -8345,6 +8541,17 @@ export default function SyneolabApp() {
                   ...prev,
                   [type]: prev[type].map(item => (item.id === mergedRecord.id ? { ...mergedRecord, id: saved.id } : item))
                 }));
+              }
+              if (type === 'standups' && fd.get('autoClockIn') === 'on' && !activeClock) {
+                try {
+                  await handleApi('/api/clock', {
+                    action: 'start',
+                    project: body.project || '',
+                    note: body.title || ''
+                  });
+                } catch (cErr) {
+                  console.error('Auto clock-in error:', cErr);
+                }
               }
               refreshState();
             } catch (err) {
@@ -9168,6 +9375,14 @@ export default function SyneolabApp() {
                 <label>Blockers or help needed (optional)</label>
                 <textarea name="blockers" placeholder="Anything slowing you down or waiting on review?" defaultValue={effectiveData.blockers || ''} />
               </div>
+              {!activeClock && !effectiveId && (
+                <label className="checkbox checkin-clockin-checkbox" style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '10px 12px', background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--line)' }}>
+                  <input type="checkbox" name="autoClockIn" defaultChecked />
+                  <span style={{ fontSize: 12.5 }}>
+                    <b>Also start my work timer (Clock in) now</b> with this project and focus
+                  </span>
+                </label>
+              )}
             </>
           )}
 
@@ -9738,6 +9953,36 @@ export default function SyneolabApp() {
             <span className="shortcut">⌘ K</span>
           </div>
           <div className="profile">
+            {user && (() => {
+              const myTodayStandup = (state.standups || []).find(s => s.owner === user.id && isTodayStandup(s));
+              const hasCheckedInToday = Boolean(myTodayStandup);
+              const myStreaks = calculateMemberStreaks(user.id, state.standups || [], state.clocks || [], key(new Date()), currentTime);
+              const streakDays = myStreaks?.checkinStreak || 0;
+              return (
+                <button
+                  type="button"
+                  className={`top-checkin-pill ${hasCheckedInToday ? 'completed' : 'pending'}`}
+                  onClick={() => {
+                    if (hasCheckedInToday) {
+                      setModal({ type: 'standups', id: myTodayStandup.id, data: myTodayStandup });
+                    } else {
+                      setModal({ type: 'clock', data: {} });
+                    }
+                  }}
+                  title={hasCheckedInToday ? `Checked in today: "${myTodayStandup.title}" · Click to view or edit` : 'Daily check-in pending — Click to check in & start shift'}
+                >
+                  <span className={`top-checkin-dot ${hasCheckedInToday ? 'dot-done' : 'dot-pulse'}`} />
+                  <Icon name={hasCheckedInToday ? 'check' : 'pulse'} size={12} />
+                  <span className="top-checkin-text">{hasCheckedInToday ? 'Checked in' : 'Daily check-in'}</span>
+                  {hasCheckedInToday && streakDays > 0 && (
+                    <span className="top-checkin-streak" title={`${streakDays}-day daily check-in streak`}>
+                      <Icon name="flame" size={10} /> {streakDays}d
+                    </span>
+                  )}
+                </button>
+              );
+            })()}
+
             {activeClock && (
               <div className={`top-clock-pill ${activeClock.break_start ? 'on-break' : ''}`}>
                 <button
