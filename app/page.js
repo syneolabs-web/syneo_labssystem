@@ -2364,64 +2364,88 @@ export default function SyneolabApp() {
           </section>
 
           {/* Time Tracker Card */}
-          <section className={`card timer-card ${activeClock?.break_start ? 'is-on-break' : ''}`}>
-            <div className="card-head">
-              <h3>Time tracker</h3>
-              <span className="timer-state">
-                <i></i>{activeClock ? (activeClock.break_start ? 'On break' : 'Tracking') : 'Ready'}
+          <section className={`card timer-card modern-timer-card is-dashboard ${activeClock?.break_start ? 'is-on-break' : ''}`}>
+            <div className="timer-head">
+              <div className="timer-title-group">
+                <span className="timer-icon-badge">
+                  <Icon name={activeClock?.break_start ? 'coffee' : 'clock'} size={14} />
+                </span>
+                <div>
+                  <h3 className="timer-title">Time tracker</h3>
+                  <span className="timer-sub">
+                    {activeClock
+                      ? `${state.projects.find(p => p.id === activeClock.project)?.title || 'Focused work'} · In at ${fmtTime(activeClock.start * 1000)}`
+                      : 'Make space for focused work'}
+                  </span>
+                </div>
+              </div>
+              <span className={`timer-radar-pill ${activeClock?.break_start ? 'is-break' : activeClock ? 'is-working' : 'is-idle'}`}>
+                <span className="radar-dot" />
+                <span className="radar-label">{activeClock ? (activeClock.break_start ? 'BREAK' : 'IN FLOW') : 'READY'}</span>
               </span>
             </div>
-            <p className="sub timer-project">
-              {activeClock
-                ? `${state.projects.find(p => p.id === activeClock.project)?.title || 'Focused work'} · In at ${fmtTime(activeClock.start * 1000)}`
-                : 'Make a little space for focused work.'}
-            </p>
-            <div className="time-digits">{duration(activeClock?.break_start ? activeBreakSeconds : activeClockSeconds)}</div>
+            <div className="timer-digits-hero">
+              <div className="timer-hero-value">{duration(activeClock?.break_start ? activeBreakSeconds : activeClockSeconds)}</div>
+              <div className={`timer-rhythm-wave ${activeClock && !activeClock.break_start ? 'is-active' : ''}`} aria-hidden="true">
+                <span className="wave-bar wb-1"></span>
+                <span className="wave-bar wb-2"></span>
+                <span className="wave-bar wb-3"></span>
+                <span className="wave-bar wb-4"></span>
+                <span className="wave-bar wb-5"></span>
+              </div>
+            </div>
             {activeClock && (
-              <div className="timer-metrics">
-                <div className={`timer-metric ${!activeClock.break_start ? 'active' : ''}`}>
-                  <span>Work time</span>
-                  <b>{duration(activeClockSeconds)}</b>
+              <div className="timer-bento-metrics">
+                <div className={`timer-bento-tile ${!activeClock.break_start ? 'active-work' : ''}`}>
+                  <div className="tile-eyebrow">
+                    <span className="tile-indicator dot-work" />
+                    <span>Work</span>
+                  </div>
+                  <div className="tile-value">{duration(activeClockSeconds)}</div>
                 </div>
-                <div className={`timer-metric ${activeClock.break_start ? 'active break' : ''}`}>
-                  <span>Break time</span>
-                  <b>{duration(activeBreakSeconds)}</b>
+                <div className={`timer-bento-tile ${activeClock.break_start ? 'active-break' : ''}`}>
+                  <div className="tile-eyebrow">
+                    <span className="tile-indicator dot-break" />
+                    <span>Break</span>
+                  </div>
+                  <div className="tile-value">{duration(activeBreakSeconds)}</div>
                 </div>
               </div>
             )}
-            <div className="timer-controls">
+            <div className="timer-tactile-controls">
               {activeClock ? (
                 <>
                   <button
+                    type="button"
                     onClick={() => handleClock(activeClock.break_start ? 'resume' : 'break')}
-                    className="break-button"
+                    className={`timer-action-btn ${activeClock.break_start ? 'btn-resume' : 'btn-break'}`}
                   >
-                    <Icon name={activeClock.break_start ? 'play' : 'pause'} />
-                    {activeClock.break_start ? 'Resume work' : 'Start break'}
+                    <Icon name={activeClock.break_start ? 'play' : 'coffee'} size={14} />
+                    <span>{activeClock.break_start ? 'Resume' : 'Break'}</span>
                   </button>
-                  <button className="stop" onClick={() => handleClock('stop')}>
-                    <Icon name="stop" /> Clock out
+                  <button type="button" className="timer-action-btn btn-clockout" onClick={() => handleClock('stop')}>
+                    <Icon name="stop" size={13} />
+                    <span>Clock out</span>
                   </button>
                 </>
               ) : (
-                <>
-                  <button className="start-button" onClick={() => setModal({ type: 'clock', data: {} })}>
-                    <Icon name="play" /> {myTodayStandup ? 'Clock in' : 'Check in & Clock in'}
-                  </button>
-                  <button className="break-button" disabled title="Clock in to take a break">
-                    <Icon name="pause" /> Break
-                  </button>
-                </>
+                <button type="button" className="timer-action-btn btn-clockin" onClick={() => setModal({ type: 'clock', data: {} })}>
+                  <Icon name="play" size={15} />
+                  <span>{myTodayStandup ? 'Clock in' : 'Check in & Clock in'}</span>
+                </button>
               )}
             </div>
-            <div className="timer-caption">
-              {activeClock?.break_start
-                ? 'Break timer is running on server. Work timer is paused until you resume or clock out.'
-                : activeClock
-                ? 'Runs on server even if you close this tab — stops only when you clock out.'
-                : !myTodayStandup
-                ? 'Daily check-in required at shift kickoff to maintain your streak.'
-                : 'Checked in for today. Your timer keeps running on the server when you close this tab.'}
+            <div className="timer-trust-pill">
+              <span className="trust-dot" />
+              <span>
+                {activeClock?.break_start
+                  ? 'Break timer running on server'
+                  : activeClock
+                  ? 'Cloud-synced in real time'
+                  : !myTodayStandup
+                  ? 'Daily check-in required at shift start'
+                  : 'Checked in · Server-synced'}
+              </span>
             </div>
           </section>
         </div>
@@ -3841,6 +3865,17 @@ export default function SyneolabApp() {
     });
 
     const myTodayStandup = (state.standups || []).find(s => s.owner === user?.id && isTodayStandup(s));
+    const userTodayWorkedSeconds = todayClocks
+      .filter(c => c.user_id === user.id)
+      .reduce((n, c) => n + worked(c, currentTime), 0);
+    const todayUserBreakSeconds = todayClocks
+      .filter(c => c.user_id === user.id)
+      .reduce((n, c) => n + breakDuration(c, currentTime), 0);
+    const userTodayHours = userTodayWorkedSeconds / 3600;
+    const todayTargetHours = 8.0;
+    const todayTargetPct = Math.min(100, Math.round((userTodayHours / todayTargetHours) * 100));
+    const activeProject = state.projects.find(p => p.id === activeClock?.project);
+    const activeTask = state.tasks.find(t => t.id === activeClock?.task);
 
     return (
       <>
@@ -3903,36 +3938,104 @@ export default function SyneolabApp() {
         {/* Top Grid: Live Time Tracker + 7-Day Attendance & Capacity Matrix */}
         <div className="clock-top-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-            <section className={`card timer-card ${activeClock?.break_start ? 'is-on-break' : ''}`} style={{ flex: 1, minWidth: 0 }}>
-              <div className="card-head">
-                <h3>Time tracker</h3>
-                <span className="timer-state">
-                  <i></i>{activeClock ? (activeClock.break_start ? 'On break' : 'Tracking') : 'Ready'}
+            <section className={`card timer-card modern-timer-card ${activeClock?.break_start ? 'is-on-break' : ''}`} style={{ flex: 1, minWidth: 0 }}>
+              <div className="timer-head">
+                <div className="timer-title-group">
+                  <span className="timer-icon-badge">
+                    <Icon name={activeClock?.break_start ? 'coffee' : 'clock'} size={15} />
+                  </span>
+                  <div>
+                    <h3 className="timer-title">Focus Tracker</h3>
+                    <span className="timer-sub">
+                      {activeClock
+                        ? `${activeProject?.title || 'Focused work'} · Started ${fmtTime(activeClock.start * 1000)}`
+                        : '8.0h daily milestone target'}
+                    </span>
+                  </div>
+                </div>
+                <span className={`timer-radar-pill ${activeClock?.break_start ? 'is-break' : activeClock ? 'is-working' : 'is-idle'}`}>
+                  <span className="radar-dot" />
+                  <span className="radar-label">{activeClock ? (activeClock.break_start ? 'ON BREAK' : 'IN FLOW') : 'READY'}</span>
                 </span>
               </div>
-              <p className="sub timer-project">
-                {activeClock
-                  ? `${state.projects.find(p => p.id === activeClock.project)?.title || 'Focused work'} · In at ${fmtTime(activeClock.start * 1000)}`
-                  : 'Ready when you are.'}
-              </p>
-              <div className="time-digits">{duration(activeClock?.break_start ? activeBreakSeconds : activeClockSeconds)}</div>
-              {activeClock && (
-                <>
-                  <div className="timer-metrics">
-                    <div className={`timer-metric ${!activeClock.break_start ? 'active' : ''}`}>
-                      <span>Work time</span>
-                      <b>{duration(activeClockSeconds)}</b>
-                    </div>
-                    <div className={`timer-metric ${activeClock.break_start ? 'active break' : ''}`}>
-                      <span>Break time</span>
-                      <b>{duration(activeBreakSeconds)}</b>
-                    </div>
+
+              {(activeClock?.note || activeTask?.title) ? (
+                <div className="timer-focus-banner">
+                  <span className="focus-badge">GOAL</span>
+                  <span className="focus-text">&ldquo;{activeClock?.note || activeTask?.title}&rdquo;</span>
+                </div>
+              ) : !activeClock ? (
+                <div className="timer-focus-banner idle">
+                  <Icon name="target" size={12} />
+                  <span className="focus-text">{myTodayStandup ? 'Check-in recorded · Ready for deep focus' : 'Daily check-in required to begin shift'}</span>
+                </div>
+              ) : null}
+
+              <div className="timer-digits-hero">
+                <div className="timer-hero-value">
+                  {duration(activeClock?.break_start ? activeBreakSeconds : activeClockSeconds)}
+                </div>
+                <div className={`timer-rhythm-wave ${activeClock && !activeClock.break_start ? 'is-active' : ''}`} aria-hidden="true">
+                  <span className="wave-bar wb-1"></span>
+                  <span className="wave-bar wb-2"></span>
+                  <span className="wave-bar wb-3"></span>
+                  <span className="wave-bar wb-4"></span>
+                  <span className="wave-bar wb-5"></span>
+                  <span className="wave-bar wb-6"></span>
+                  <span className="wave-bar wb-7"></span>
+                </div>
+              </div>
+
+              <div className="timer-bento-metrics">
+                <div className={`timer-bento-tile ${activeClock && !activeClock.break_start ? 'active-work' : ''}`}>
+                  <div className="tile-eyebrow">
+                    <span className="tile-indicator dot-work" />
+                    <span>Work time</span>
                   </div>
-                  <div className="timer-switch-box">
-                    <label className="sub" style={{ display: 'block', marginBottom: 6, fontSize: 11 }}>
-                      Switch active focus (without clocking out)
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div className="tile-value">{duration(activeClockSeconds)}</div>
+                  <div className="tile-foot">
+                    {activeClock ? 'Current focus stretch' : `Today: ${userTodayHours.toFixed(1)}h logged`}
+                  </div>
+                </div>
+                <div className={`timer-bento-tile ${activeClock?.break_start ? 'active-break' : ''}`}>
+                  <div className="tile-eyebrow">
+                    <span className="tile-indicator dot-break" />
+                    <span>Break time</span>
+                  </div>
+                  <div className="tile-value">{duration(activeBreakSeconds)}</div>
+                  <div className="tile-foot">
+                    {activeClock ? 'Rest & recharge' : `Break: ${duration(todayUserBreakSeconds)}`}
+                  </div>
+                </div>
+              </div>
+
+              <div className="timer-milestone-panel">
+                <div className="milestone-row">
+                  <span className="milestone-label">
+                    <Icon name="target" size={12} /> Daily Milestone
+                  </span>
+                  <span className="milestone-value">
+                    <b>{userTodayHours.toFixed(1)}h</b> / 8.0h <span className="milestone-pct">({todayTargetPct}%)</span>
+                  </span>
+                </div>
+                <div className="milestone-track">
+                  <div className="milestone-bar" style={{ width: `${todayTargetPct}%` }}>
+                    <span className="milestone-shine" />
+                  </div>
+                </div>
+                <div className="milestone-sub">
+                  <span>{todayTargetPct >= 100 ? 'Daily target completed! 🏆' : `${Math.max(0, 8.0 - userTodayHours).toFixed(1)}h remaining to daily goal`}</span>
+                  {activeClock && <span>In since {fmtTime(activeClock.start * 1000)}</span>}
+                </div>
+              </div>
+
+              {activeClock && (
+                <div className="timer-switch-deck">
+                  <div className="deck-label">
+                    <Icon name="zap" size={11} /> Switch active focus without clocking out
+                  </div>
+                  <div className="deck-grid">
+                    <div className="custom-timer-select">
                       <select
                         aria-label="Switch active project"
                         value={activeClock.project || ''}
@@ -3945,6 +4048,9 @@ export default function SyneolabApp() {
                           <option key={p.id} value={p.id}>{p.title}</option>
                         ))}
                       </select>
+                      <span className="select-chevron"><Icon name="arrow" size={10} /></span>
+                    </div>
+                    <div className="custom-timer-select">
                       <select
                         aria-label="Switch active task"
                         value={activeClock.task || ''}
@@ -3955,33 +4061,58 @@ export default function SyneolabApp() {
                           <option key={t.id} value={t.id}>{t.title}</option>
                         ))}
                       </select>
+                      <span className="select-chevron"><Icon name="arrow" size={10} /></span>
                     </div>
                   </div>
-                </>
+                </div>
               )}
-              <div className="timer-controls">
+
+              <div className="timer-tactile-controls">
                 {activeClock ? (
                   <>
                     <button
+                      type="button"
                       onClick={() => handleClock(activeClock.break_start ? 'resume' : 'break')}
-                      className="break-button"
+                      className={`timer-action-btn ${activeClock.break_start ? 'btn-resume' : 'btn-break'}`}
                     >
-                      <Icon name={activeClock.break_start ? 'play' : 'pause'} />
-                      {activeClock.break_start ? 'Resume work' : 'Start break'}
+                      <Icon name={activeClock.break_start ? 'play' : 'coffee'} size={15} />
+                      <span>{activeClock.break_start ? 'Resume work' : 'Take a break'}</span>
                     </button>
-                    <button className="stop" onClick={() => handleClock('stop')}>
-                      <Icon name="stop" /> Clock out
+                    <button
+                      type="button"
+                      className="timer-action-btn btn-clockout"
+                      onClick={() => handleClock('stop')}
+                    >
+                      <Icon name="stop" size={14} />
+                      <span>Clock out</span>
                     </button>
                   </>
                 ) : (
-                  <button className="start-button" onClick={() => setModal({ type: 'clock', data: {} })}>
-                    <Icon name="play" /> {myTodayStandup ? 'Clock in' : 'Check in & Clock in'}
+                  <button
+                    type="button"
+                    className="timer-action-btn btn-clockin"
+                    onClick={() => setModal({ type: 'clock', data: {} })}
+                  >
+                    <Icon name="play" size={16} />
+                    <span>{myTodayStandup ? 'Start focus session' : 'Check in & Start shift'}</span>
                   </button>
                 )}
               </div>
+
+              <div className="timer-trust-pill">
+                <span className="trust-dot" />
+                <span>
+                  {activeClock?.break_start
+                    ? 'Break timer running on server'
+                    : activeClock
+                    ? 'Cloud-synced in real time · Keeps ticking if you close tab'
+                    : 'Server-backed time tracking · Zero data loss'}
+                </span>
+              </div>
             </section>
-            <div className="note" style={{ margin: 0 }}>
-              Both work time and break time run on the server — even if you close this tab or sign out, your session continues until you clock out.
+            <div className="timer-cloud-trust-note">
+              <Icon name="shield" size={13} style={{ color: 'var(--green)', flexShrink: 0 }} />
+              <span>Server-backed persistence: Work and break times keep ticking continuously even if you close this browser or sign out.</span>
             </div>
           </div>
 
